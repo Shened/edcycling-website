@@ -15,7 +15,7 @@ export default function NavTabs({ isAdmin, isMember }: { isAdmin: boolean; isMem
   return (
     <div className="tabs">
       {tabs.map((t) => (
-        <Link key={t.href} href={t.href} className="tab" aria-current={path === t.href ? "page" : undefined}>
+        <Link key={t.href} href={t.href} className="tab" aria-current={(t.href === "/" ? path === "/" : path === t.href || path.startsWith(t.href + "/")) ? "page" : undefined}>
           {t.label}
         </Link>
       ))}

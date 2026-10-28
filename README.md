@@ -112,3 +112,13 @@ Os treinos podem ser de **Corrida** ou **Natação**, além dos tipos de bicicle
 Em **Gestão → Membros**, desmarca **Atleta** nas contas que só servem para gerir o site (por exemplo, o email da equipa). Essas contas continuam a poder ser admin, mas não aparecem nas presenças, no ranking nem na contagem de atletas, e não respondem "vou".
 
 **Setup:** corre `supabase/migrations/007_contas_gestao.sql`. Já marca o `teamedcycling@gmail.com` como conta de gestão.
+
+## Painel de admin
+
+`/gestao` está dividido em quatro secções:
+- **Resumo**: números da equipa, atalhos e o que precisa de atenção (convites por aceitar, presenças por registar, rascunhos).
+- **Membros**: convidar atletas, mudar roles, marcar contas de gestão, remover.
+- **Publicações**: notícias com imagem que aparecem na página inicial, em "Novidades". Podem ficar em rascunho.
+- **Eventos**: lista de eventos e quem vai a quê.
+
+**Setup:** corre `supabase/migrations/008_publicacoes.sql`, depois da 007. Cria a tabela `noticias` e o bucket público `noticias` para as imagens.
