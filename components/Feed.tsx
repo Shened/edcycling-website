@@ -8,6 +8,7 @@ import type { Evento, Post } from "@/lib/types";
 import Carrossel from "./Carrossel";
 import Texto from "./Texto";
 import Avatar from "./Avatar";
+import { avisarFeed } from "@/lib/avisos";
 import Link from "next/link";
 
 const MAX = 10;
@@ -71,8 +72,9 @@ export default function Feed({ posts, eventos, userId, isAdmin }: { posts: Post[
       paths.push(path);
     }
     setStatus("A publicar…");
-    const { error } = await sb.from("posts").insert({ autor_id: userId, legenda: texto.trim() || null, fotos: paths, evento_id: evento || null });
+    const { data: novo, error } = await sb.from("posts").insert({ autor_id: userId, legenda: texto.trim() || null, fotos: paths, evento_id: evento || null }).select("id").single();
     setBusy(false);
+    if (!error && novo) void avisarFeed((novo as { id: string }).id);
     if (error) { if (paths.length) await sb.storage.from("fotos").remove(paths); setStatus("Não foi possível publicar. Tenta outra vez."); return; }
     fotos.forEach((f) => URL.revokeObjectURL(f.url));
     setTexto(""); setFotos([]); setEvento(""); setStatus("Publicado.");

@@ -150,3 +150,21 @@ O separador **Feed** (`/fotos`) é aberto a todos os membros. Cada publicação 
 - **Página do atleta** (`/atletas/<id>`): é o que a equipa vê. Tem a foto, os dados (o peso só se a pessoa o quiser mostrar) e os números da época. Abre a partir do nome no Feed e no ranking das Estatísticas.
 
 **Setup:** corre `supabase/migrations/010_perfil_atleta.sql`, depois da 009. Cria os campos e o bucket público `avatares`.
+
+## Notificações (push e email)
+
+Em **Perfil → Definições** (`/definicoes`), cada atleta ativa o push no telemóvel e escolhe que avisos recebe, por notificação e/ou email:
+- novos eventos e treinos;
+- lembrete na véspera, para quem disse "vou" ou "talvez" (enviado todos os dias por volta das 17h UTC pelo `vercel.json → crons`);
+- alterações de data, hora ou local e cancelamentos (incluindo treinos e eventos apagados);
+- quem se junta ou sai de um evento/treino (os admins recebem todos; os outros, só onde também vão);
+- novas publicações no feed.
+
+No iPhone o push só funciona na app instalada no ecrã principal (iOS 16.4 ou mais recente).
+
+**Setup**
+1. Corre `supabase/migrations/011_notificacoes.sql`.
+2. `npm install`, que acrescenta `web-push` e `nodemailer`.
+3. Gera as chaves do push com `npx web-push generate-vapid-keys`.
+4. Junta ao `.env` e às Environment Variables da Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET` e `NEXT_PUBLIC_SITE_URL`. Vê o `.env.example`.
+5. Faz o deploy. A Vercel chama o cron com o `CRON_SECRET` automaticamente.

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
+import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos";
 
 // Formulário de criar/editar evento (só admins — o RLS garante o resto).
 export default function EventForm({ evento, onClose, dataInicial }: { evento: Evento | null; onClose: () => void; dataInicial?: string }) {
@@ -54,18 +55,23 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
       updated_at: new Date().toISOString(),
     };
     const sb = createClient();
-    const { error } = evento ? await sb.from("eventos").update(body).eq("id", evento.id) : await sb.from("eventos").insert(body);
+    const res = evento
+      ? await sb.from("eventos").update(body).eq("id", evento.id)
+      : await sb.from("eventos").insert(body).select("id").single();
     setBusy(false);
-    if (error) { setErr("Não foi possível guardar. Confirma que és admin e tenta outra vez."); return; }
+    if (res.error) { setErr("Não foi possível guardar. Confirma que és admin e tenta outra vez."); return; }
+    // Avisos (correm no servidor; não atrasam quem guardou)
+    if (evento) void avisarAlteracao("evento", evento.id, { data: evento.data, hora: evento.hora, partida: evento.partida, estado: evento.estado });
+    else if (res.data) void avisarNovo("evento", (res.data as { id: string }).id);
     onClose(); router.refresh();
   }
   async function remove() {
     if (!evento) return;
     if (!armed) { setArmed(true); return; }
     setBusy(true);
-    const { error } = await createClient().from("eventos").delete().eq("id", evento.id);
+    const erro = await apagarEventoComAviso(evento.id);
     setBusy(false);
-    if (error) { setErr("Não foi possível apagar o evento."); return; }
+    if (erro) { setErr(erro); return; }
     onClose(); router.refresh();
   }
 

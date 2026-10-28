@@ -7,6 +7,7 @@ import { fmtDate } from "@/lib/dates";
 import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
 import RoutePreview from "./RoutePreview";
 import PresencasEditor from "./PresencasEditor";
+import { apagarTreinoComAviso, avisarAlteracao, avisarInscricao, avisarNovo } from "@/lib/avisos";
 
 export const TIPOS_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo", corrida: "Corrida", natacao: "Natação" };
 export const CICLISMO = ["estrada", "gravel", "btt", "rolo"];
@@ -103,9 +104,10 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
       updated_at: new Date().toISOString(),
       ...gpxPatch,
     };
-    const { error } = treino
+    const res = treino
       ? await sb.from("treinos").update(body).eq("id", treino.id)
-      : await sb.from("treinos").insert(body);
+      : await sb.from("treinos").insert(body).select("id").single();
+    const error = res.error;
     if (error) {
       if (newPath) await sb.storage.from("gpx").remove([newPath]);
       setBusy(false);
@@ -113,6 +115,8 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
       return;
     }
     if (oldPath) await sb.storage.from("gpx").remove([oldPath]);
+    if (treino) void avisarAlteracao("treino", treino.id, { data: treino.data, hora: treino.hora, partida: treino.partida });
+    else if (res.data) void avisarNovo("treino", (res.data as { id: string }).id);
     onClose();
     router.refresh();
   }
@@ -121,10 +125,8 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
     if (!treino) return;
     if (!armed) { setArmed(true); return; }
     setBusy(true);
-    const sb = createClient();
-    const { error } = await sb.from("treinos").delete().eq("id", treino.id);
-    if (error) { setBusy(false); setErr("Não foi possível apagar o treino."); return; }
-    if (treino.gpx_path) await sb.storage.from("gpx").remove([treino.gpx_path]);
+    const erro = await apagarTreinoComAviso(treino.id); // apaga, remove o GPX e avisa quem ia
+    if (erro) { setBusy(false); setErr(erro); return; }
     onClose();
     router.refresh();
   }
@@ -223,9 +225,11 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
   async function marcar(estado: EstadoInscricao | null) {
     setMineOpt(estado);
     setBusy(true); setErr("");
+    const antes = ps.find((p) => p.user_id === userId)?.estado ?? null;
     const { error } = await createClient().rpc("marcar_treino", { p_treino: treino.id, p_estado: estado });
     setBusy(false);
     if (error) { setErr("Não foi possível guardar a tua resposta."); setMineOpt(undefined); }
+    else void avisarInscricao("treino", treino.id, antes);
     router.refresh();
   }
   async function guardar(ids: string[], convidados: string[]) {

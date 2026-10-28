@@ -28,6 +28,10 @@ export default async function PerfilPage() {
           <form action="/auth/sair" method="post"><button className="btn ghost danger">Sair</button></form>
         </span>
       </div>
+      <div className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
+        <span><span className="field-l">Notificações</span><br /><span className="empty">Avisos no telemóvel e por email: novos eventos, lembretes, alterações…</span></span>
+        <Link href="/definicoes" className="btn primary">Definições</Link>
+      </div>
       <InstalarApp />
       <Link href="/ajuda" className="btn ghost" style={{ alignSelf: "flex-start", paddingLeft: 0 }}>Ajuda: como instalar a app</Link>
     </section>

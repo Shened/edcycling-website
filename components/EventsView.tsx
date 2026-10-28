@@ -7,6 +7,7 @@ import { ESTADOS, MESES, TIPOS, daysTo, evAno, evMes, fmtDate, isPast, parseDate
 import type { EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
+import { avisarInscricao } from "@/lib/avisos";
 
 interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[] }
 
@@ -31,6 +32,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
 
   async function rsvp(evId: string, estado: EstadoInscricao | null) {
     if (!perfil) return;
+    const antes = inscricoes.find((i) => i.evento_id === evId && i.user_id === perfil.id)?.estado ?? null;
     setOtimista((o) => ({ ...o, [evId]: estado }));
     setPending(evId); setMsg("");
     const sb = createClient();
@@ -39,6 +41,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
       : await sb.from("inscricoes").delete().eq("evento_id", evId).eq("user_id", perfil.id);
     setPending(null);
     if (error) { setMsg("Não foi possível guardar a inscrição. Tenta outra vez."); setOtimista((o) => { const n = { ...o }; delete n[evId]; return n; }); }
+    else void avisarInscricao("evento", evId, antes);
     router.refresh();
   }
   function jump(id: string) {
