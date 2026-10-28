@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESTADOS, MESES, TIPOS, daysTo, evAno, evMes, fmtDate, isPast, parseDate, sortEventos, today } from "@/lib/dates";
-import type { EstadoInscricao, Evento, Inscricao, Perfil } from "@/lib/types";
+import type { EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
 import EventForm from "./EventForm";
+import PresencasEditor from "./PresencasEditor";
 
-interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean }
+interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[] }
 
-export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin }: Props) {
+export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros }: Props) {
+  const [presEv, setPresEv] = useState<Evento | null>(null);
   const router = useRouter();
   const sorted = useMemo(() => sortEventos(eventos), [eventos]);
   const years = useMemo(() => [...new Set([...eventos.map(evAno), today().getFullYear()])].sort(), [eventos]);
@@ -46,7 +48,9 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
     const g = { vai: ps.filter((p) => p.estado === "vai"), talvez: ps.filter((p) => p.estado === "talvez"), nao: ps.filter((p) => p.estado === "nao") };
     const mine = perfil ? ps.find((p) => p.user_id === perfil.id)?.estado : undefined;
     const n = e.data ? daysTo(e.data) : null;
-    const closed = e.estado === "cancelado" || e.estado === "realizado";
+    const closed = e.estado === "cancelado" || e.estado === "realizado" || !!e.presencas_fechadas;
+    const presentes = ps.filter((p) => p.presente);
+    const convidados = e.convidados ?? [];
     const d = parseDate(e.data);
     const grp = (k: keyof typeof g, lab: string, cls: string) => (
       <div className={`grp ${cls}`}>
@@ -74,7 +78,14 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
             {e.dmais != null && <div><dt>Desnível</dt><dd><span className="num">{e.dmais}</span> m D+</dd></div>}
           </dl>
           {e.notas && <p className="notes">{e.notas}</p>}
-          {isMember && (
+          {isMember && e.presencas_fechadas ? (
+            <div className="grp go">
+              <span className="gl">Foram <span className="num">{presentes.length + convidados.length}</span></span>
+              {presentes.map((p) => <span key={p.id} className={`chip${p.user_id === perfil?.id ? " me" : ""}`}>{p.perfis?.nome || "Membro"}</span>)}
+              {convidados.map((c) => <span key={c} className="chip guest">{c}</span>)}
+              {!presentes.length && !convidados.length && <span className="empty">—</span>}
+            </div>
+          ) : isMember && (
             <div className="groups">
               {grp("vai", e.estado === "realizado" ? "Foram" : "Vão", "go")}
               {grp("talvez", "Talvez", "maybe")}
@@ -99,7 +110,14 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
           )}
           <div className="evf">
             <span>{e.votos ? `${e.votos} voto${e.votos === 1 ? "" : "s"} na sondagem do grupo` : ""}</span>
-            {isAdmin && <button className="btn ghost" onClick={() => setEditing(e)}>Editar evento</button>}
+            {isAdmin && (
+              <span style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {(isPast(e) || e.estado === "realizado") && e.estado !== "cancelado" && (
+                  <button className="btn ghost" onClick={() => setPresEv(e)}>{e.presencas_fechadas ? "Editar presenças" : "Registar presenças"}</button>
+                )}
+                <button className="btn ghost" onClick={() => setEditing(e)}>Editar evento</button>
+              </span>
+            )}
           </div>
         </div>
       </article>
@@ -145,6 +163,34 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         </details>
       )}
       {editing !== undefined && <EventForm evento={editing} onClose={() => setEditing(undefined)} />}
+      {presEv && (() => {
+        const ps = inscricoes.filter((i) => i.evento_id === presEv.id);
+        const iniciais = (presEv.presencas_fechadas ? ps.filter((p) => p.presente) : ps.filter((p) => p.estado === "vai")).map((p) => p.user_id);
+        return (
+          <div className="overlay" onClick={(ev) => ev.target === ev.currentTarget && setPresEv(null)}>
+            <div className="modal" role="dialog" aria-label={`Presenças em ${presEv.titulo}`}>
+              <div className="stripe" />
+              <div className="mbody">
+                <div><p className="eyebrow" style={{ color: "var(--muted)" }}>Presenças</p><h3>{presEv.titulo}</h3></div>
+                <PresencasEditor
+                  membros={membros}
+                  iniciais={iniciais}
+                  convidadosIniciais={presEv.convidados ?? []}
+                  respostas={Object.fromEntries(ps.map((p) => [p.user_id, p.estado]))}
+                  onCancel={() => setPresEv(null)}
+                  onSave={async (ids, convidados) => {
+                    const { error } = await createClient().rpc("registar_presencas_evento", { p_evento: presEv.id, p_presentes: ids, p_convidados: convidados });
+                    if (error) return "Não foi possível guardar as presenças.";
+                    setPresEv(null);
+                    router.refresh();
+                    return null;
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </section>
   );
 }

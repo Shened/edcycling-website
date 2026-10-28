@@ -15,9 +15,9 @@ export default async function EstatisticasPage() {
     );
   }
   const [{ data: treinos }, { data: eventos }, { data: inscricoes }, { data: membros }] = await Promise.all([
-    supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,treino_participantes(user_id,estado,presente)"),
+    supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)"),
     supabase.from("eventos").select("*"),
-    supabase.from("inscricoes").select("evento_id,user_id,estado"),
+    supabase.from("inscricoes").select("evento_id,user_id,estado,presente"),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).order("nome"),
   ]);
   return (

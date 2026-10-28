@@ -8,18 +8,19 @@ import type { Evento } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "EDCycling",
-  description: "Equipa de ciclismo EDCycling — eventos, inscrições e fotos.",
+  description: "EDCycling: equipa de ciclismo desde 2023.",
 };
 export const viewport: Viewport = { themeColor: "#052F42", width: "device-width", initialScale: 1 };
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, perfil, isAdmin, isMember } = await getSession();
-  const { data } = await supabase.from("eventos").select("*");
+  // Eventos só são lidos para membros (o RLS também o garante).
+  const { data } = isMember ? await supabase.from("eventos").select("*") : { data: [] };
   const evs = (data ?? []) as Evento[];
   const nx = nextEvento(evs);
   let vai = 0;
-  if (nx && user) {
+  if (nx && isMember) {
     const { count } = await supabase.from("inscricoes").select("id", { count: "exact", head: true }).eq("evento_id", nx.id).eq("estado", "vai");
     vai = count ?? 0;
   }
@@ -46,17 +47,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <p className="eyebrow">A bicicleta como estilo de vida · est 2023</p>
               <h1>ED<span>Cycling</span></h1>
             </Link>
+            {isMember ? (
             <div className="next">
               <div className="l">Próximo evento</div>
               {nx ? (
                 <>
                   <div className="d">{nx.titulo}</div>
-                  <div className="s" suppressHydrationWarning>{quando}{user ? ` · ${vai} confirmado${vai === 1 ? "" : "s"}` : ""}</div>
+                  <div className="s" suppressHydrationWarning>{quando}{isMember ? ` · ${vai} confirmado${vai === 1 ? "" : "s"}` : ""}</div>
                 </>
               ) : (
                 <div className="d">Nada marcado</div>
               )}
             </div>
+            ) : (
+              <Link href="/entrar" className="next next-cta">
+                <div className="l">Atletas da equipa</div>
+                <div className="d">Entrar</div>
+                <div className="s">Eventos, treinos, fotos e estatísticas</div>
+              </Link>
+            )}
           </div>
           <div className="stripe" />
         </header>

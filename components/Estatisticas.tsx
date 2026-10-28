@@ -6,7 +6,7 @@ import { calcular, passoEixo, type InscricaoMin, type LinhaAtleta } from "@/lib/
 import type { Evento, Membro, Treino } from "@/lib/types";
 import { TIPOS_TREINO } from "./TreinoForm";
 
-type Col = "nome" | "treinos" | "presenca" | "km" | "dmais" | "segundos" | "eventos";
+type Col = "nome" | "treinos" | "presenca" | "km" | "dmais" | "segundos" | "eventos" | "kmCorrida" | "kmNatacao";
 const horas = (s: number) => (s ? `${Math.floor(s / 3600)}h${String(Math.round((s % 3600) / 60)).padStart(2, "0")}` : "—");
 const isoHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
@@ -71,7 +71,7 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
       </div>
 
       <div className="tiles">
-        <div className="tile"><div className="v num">{fmtKm(st.kmEquipa)}</div><div className="k">km da equipa</div></div>
+        <div className="tile"><div className="v num">{fmtKm(st.kmEquipa)}</div><div className="k">km de bicicleta</div></div>
         <div className="tile"><div className="v num">{st.dmaisEquipa.toLocaleString("pt-PT")}</div><div className="k">m de D+</div></div>
         <div className="tile"><div className="v num">{st.treinosRealizados}</div><div className="k">treinos{st.eventosRealizados ? ` · ${st.eventosRealizados} eventos` : ""}</div></div>
         <div className="tile"><div className="v num">{st.mediaAtletas.toLocaleString("pt-PT", { maximumFractionDigits: 1 })}</div><div className="k">atletas por treino</div></div>
@@ -79,8 +79,8 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
 
       <div className="panel" style={{ padding: 16 }}>
         <div className="sechead" style={{ marginBottom: 6 }}>
-          <h3 className="chart-t">Km por mês · {ano}</h3>
-          <span className="empty">Soma das voltas da equipa (treinos e eventos)</span>
+          <h3 className="chart-t">Km de bicicleta por mês · {ano}</h3>
+          <span className="empty">Voltas da equipa (treinos de bicicleta e eventos)</span>
         </div>
         <div className="chart-wrap" onMouseLeave={() => setHover(null)}>
           <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={`Km por mês em ${ano}`}>
@@ -125,7 +125,7 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
 
       {st.porTipo.length > 0 && (
         <div className="panel" style={{ padding: 16 }}>
-          <h3 className="chart-t" style={{ marginBottom: 10 }}>Km por tipo de treino</h3>
+          <h3 className="chart-t" style={{ marginBottom: 10 }}>Distância por tipo de treino</h3>
           <div className="hbars">
             {st.porTipo.map((t) => (
               <div key={t.tipo} className="hbar">
@@ -149,11 +149,13 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
               <tr>
                 <th className="r">#</th>
                 {th("nome", "Atleta", false)}
-                {th("km", "Km")}
+                {th("km", "Km bicicleta")}
                 {th("treinos", "Treinos")}
                 {th("presenca", "Presença")}
                 {th("dmais", "D+")}
                 {th("segundos", "Tempo")}
+                {st.temCorrida && th("kmCorrida", "Km corrida")}
+                {st.temNatacao && th("kmNatacao", "Km natação")}
                 {th("eventos", "Eventos")}
               </tr>
             </thead>
@@ -161,7 +163,7 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
               {atletas.map((a: LinhaAtleta, i) => (
                 <tr key={a.id} className={a.id === userId ? "me" : ""}>
                   <td className="r num muted">{i + 1}</td>
-                  <td><b>{a.nome}</b>{a.id === userId && <span className="pill admin" style={{ marginLeft: 6 }}>tu</span>}</td>
+                  <td><b>{a.nome}</b>{a.id === userId && <span className="pill admin" style={{ marginLeft: 6 }}>tu</span>}{a.convidado && <span className="pill" style={{ marginLeft: 6 }}>sem conta</span>}</td>
                   <td className="r num"><b>{fmtKm(a.km)}</b></td>
                   <td className="r num">{a.treinos}</td>
                   <td className="r">
@@ -169,16 +171,18 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
                   </td>
                   <td className="r num">{a.dmais.toLocaleString("pt-PT")}</td>
                   <td className="r num">{horas(a.segundos)}</td>
+                  {st.temCorrida && <td className="r num">{a.kmCorrida ? fmtKm(a.kmCorrida) : "—"}</td>}
+                  {st.temNatacao && <td className="r num">{a.kmNatacao ? a.kmNatacao.toLocaleString("pt-PT", { maximumFractionDigits: 2 }) : "—"}</td>}
                   <td className="r num">{a.eventos}</td>
                 </tr>
               ))}
-              {!atletas.length && <tr><td colSpan={8} className="empty">Ainda não há membros ativos.</td></tr>}
+              {!atletas.length && <tr><td colSpan={10} className="empty">Ainda não há membros ativos.</td></tr>}
             </tbody>
           </table>
         </div>
         <p className="hint" style={{ marginTop: 8 }}>
-          Conta a lista de presenças do admin; nos treinos sem presenças registadas, conta quem disse “vou”. Os km de cada treino vêm do GPX
-          {st.kmEstimados ? "; nos treinos sem GPX são usados os km planeados" : ""}. O tempo só inclui treinos com GPX.
+          Conta a lista de presenças do admin (incluindo participantes sem conta, juntados pelo nome); nos treinos sem presenças registadas, conta quem disse “vou”. Os km de cada treino vêm do GPX
+          {st.kmEstimados ? "; nos treinos sem GPX são usados os km planeados" : ""}. Km e D+ contam só bicicleta; corrida e natação têm colunas próprias. O tempo só inclui treinos com GPX.
         </p>
       </div>
     </section>

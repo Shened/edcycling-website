@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 export default function NavTabs({ isAdmin, isMember }: { isAdmin: boolean; isMember: boolean }) {
   const path = usePathname();
   const tabs = [
-    { href: "/", label: "Eventos" },
+    { href: "/", label: "Início" },
+    ...(isMember ? [{ href: "/eventos", label: "Eventos" }] : []),
     ...(isMember ? [{ href: "/treinos", label: "Treinos" }] : []),
-    { href: "/fotos", label: "Fotos" },
+    ...(isMember ? [{ href: "/fotos", label: "Fotos" }] : []),
     ...(isMember ? [{ href: "/estatisticas", label: "Estatísticas" }] : []),
     ...(isAdmin ? [{ href: "/gestao", label: "Gestão" }] : []),
   ];

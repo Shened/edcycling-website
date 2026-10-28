@@ -2,7 +2,7 @@
 
 Next.js 15 (App Router) + Supabase (auth, Postgres, Storage), pronto para a Vercel.
 
-- **Eventos** (`/`): calendário público. Membros veem quem vai e respondem Vou / Talvez / Não vou.
+- **Eventos** (`/`): calendário só para membros. Membros veem quem vai e respondem Vou / Talvez / Não vou.
 - **Fotos** (`/fotos`): feed privado da equipa. As fotos são reduzidas no browser antes do upload.
 - **Gestão** (`/gestao`): só admins. Criar e editar eventos, aprovar contas, dar role de admin, grelha "quem vai a quê".
 - **Entrar** (`/entrar`): login sem password, com magic link por email. Contas novas ficam *pendentes* até um admin aprovar.
@@ -91,3 +91,18 @@ Separador **Treinos** (só membros): calendário com vista de mês e de semana. 
   - nos eventos realizados contam os inscritos com "vou" e os km do evento.
 
 **Setup:** corre `supabase/migrations/004_presencas_treinos.sql` no SQL Editor (depois da 003).
+
+
+## Página de apresentação e privacidade
+
+- `/` é a página pública da equipa: quem somos, números gerais (atletas, km e treinos do ano) e contacto. Os textos estão em `lib/equipa.ts`.
+- **Eventos, treinos, fotos e estatísticas são só para membros.** Sem conta não se vê nenhuma data nem local, nem no site nem pela API. Os números da página pública vêm da função `resumo_publico()`, que só devolve totais.
+- **Presenças**: em treinos e eventos já passados, o admin regista quem participou. Escolhe da lista de atletas ou escreve o nome de quem não tem conta. Esses nomes também entram no ranking, marcados como "sem conta".
+
+**Setup:** corre `supabase/migrations/005_privacidade_presencas.sql`, depois da 004.
+
+## Corrida e natação
+
+Os treinos podem ser de **Corrida** ou **Natação**, além dos tipos de bicicleta. O ritmo aparece em min/km na corrida e em min/100 m na natação. Nas estatísticas, km e D+ contam só bicicleta; corrida e natação têm colunas próprias no ranking.
+
+**Setup:** corre `supabase/migrations/006_corrida_natacao.sql`, depois da 005.

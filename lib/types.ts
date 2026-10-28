@@ -26,6 +26,8 @@ export interface Evento {
   dmais: number | null;
   notas: string | null;
   votos: number | null;
+  presencas_fechadas?: boolean;
+  convidados?: string[];
 }
 
 export interface Inscricao {
@@ -33,6 +35,7 @@ export interface Inscricao {
   evento_id: string;
   user_id: string;
   estado: EstadoInscricao;
+  presente?: boolean | null;
   perfis: { nome: string } | null;
 }
 
@@ -48,7 +51,7 @@ export interface Post {
   url?: string | null;
 }
 
-export type TipoTreino = "estrada" | "gravel" | "btt" | "rolo";
+export type TipoTreino = "estrada" | "gravel" | "btt" | "rolo" | "corrida" | "natacao";
 export type Intensidade = "leve" | "moderado" | "intenso";
 
 export interface Treino {
@@ -69,6 +72,7 @@ export interface Treino {
   criador_id: string;
   perfis: { nome: string } | null;
   presencas_fechadas?: boolean;
+  convidados?: string[];
   treino_participantes?: Participante[];
 }
 

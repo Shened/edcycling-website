@@ -6,8 +6,17 @@ import { fmtDuracao, fmtKm, parseGpx, type GpxInfo } from "@/lib/gpx";
 import { fmtDate } from "@/lib/dates";
 import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
 import RoutePreview from "./RoutePreview";
+import PresencasEditor from "./PresencasEditor";
 
-export const TIPOS_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo" };
+export const TIPOS_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo", corrida: "Corrida", natacao: "Natação" };
+export const CICLISMO = ["estrada", "gravel", "btt", "rolo"];
+
+/** Velocidade média na unidade habitual de cada desporto. */
+export function ritmo(tipo: string, km: number, s: number): { v: string; u: string } {
+  if (tipo === "corrida") { const p = s / km; return { v: `${Math.floor(p / 60)}:${String(Math.round(p % 60)).padStart(2, "0")}`, u: "min/km" }; }
+  if (tipo === "natacao") { const p = s / (km * 10); return { v: `${Math.floor(p / 60)}:${String(Math.round(p % 60)).padStart(2, "0")}`, u: "min/100 m" }; }
+  return { v: (km / (s / 3600)).toFixed(1), u: "km/h média" };
+}
 export const INTENSIDADES: Record<string, string> = { leve: "Leve", moderado: "Moderado", intenso: "Intenso" };
 
 interface Props { treino: Treino | null; data: string; userId: string; isAdmin: boolean; membros: Membro[]; hoje: string; onClose: () => void }
@@ -89,7 +98,7 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
       tipo: f.tipo,
       intensidade: f.intensidade || null,
       partida: f.partida.trim() || null,
-      km_plano: f.km_plano ? Math.round(+f.km_plano) : null,
+      km_plano: f.km_plano ? Math.round(+f.km_plano * 100) / 100 : null,
       notas: f.notas.trim() || null,
       updated_at: new Date().toISOString(),
       ...gpxPatch,
@@ -145,7 +154,7 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
               <div className="field"><label htmlFor="tTipo">Tipo</label><select id="tTipo" value={f.tipo} onChange={set("tipo")}>{Object.entries(TIPOS_TREINO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
               <div className="field"><label htmlFor="tInt">Intensidade</label><select id="tInt" value={f.intensidade} onChange={set("intensidade")}><option value="">—</option>{Object.entries(INTENSIDADES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
               <div className="field"><label htmlFor="tPartida">Ponto de encontro</label><input id="tPartida" type="text" maxLength={80} value={f.partida} onChange={set("partida")} /></div>
-              <div className="field"><label htmlFor="tKm">Km planeados</label><input id="tKm" type="number" min={0} value={f.km_plano} onChange={set("km_plano")} /></div>
+              <div className="field"><label htmlFor="tKm">Distância planeada (km)</label><input id="tKm" type="number" min={0} step={0.1} value={f.km_plano} onChange={set("km_plano")} /></div>
               <div className="field full"><label htmlFor="tNotas">Notas</label><textarea id="tNotas" maxLength={800} placeholder="Séries, ritmo, paragem para café…" value={f.notas} onChange={set("notas")} /></div>
             </div>
           </fieldset>
@@ -165,9 +174,9 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
               <>
                 <div className="gpx-stats">
                   <div><b className="num">{fmtKm(shown.km)}</b><span>km</span></div>
-                  <div><b className="num">{shown.dmais.toLocaleString("pt-PT")}</b><span>m D+</span></div>
+                  {f.tipo !== "natacao" && <div><b className="num">{shown.dmais.toLocaleString("pt-PT")}</b><span>m D+</span></div>}
                   {shown.duracaoS ? <div><b className="num">{fmtDuracao(shown.duracaoS)}</b><span>tempo</span></div> : null}
-                  {shown.duracaoS ? <div><b className="num">{(shown.km / (shown.duracaoS / 3600)).toFixed(1)}</b><span>km/h média</span></div> : null}
+                  {shown.duracaoS && shown.km > 0 ? (() => { const r = ritmo(f.tipo, shown.km, shown.duracaoS); return <div><b className="num">{r.v}</b><span>{r.u}</span></div>; })() : null}
                 </div>
                 {shown.pontos.length > 1 && <RoutePreview pontos={shown.pontos} />}
                 {gpxFile ? (
@@ -208,7 +217,6 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [editar, setEditar] = useState(false);
-  const [sel, setSel] = useState<Set<string>>(new Set());
 
   async function marcar(estado: EstadoInscricao | null) {
     setBusy(true); setErr("");
@@ -217,62 +225,36 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
     if (error) setErr("Não foi possível guardar a tua resposta.");
     router.refresh();
   }
-  function abrir() {
-    const ini = fechadas ? ps.filter((p) => p.presente).map((p) => p.user_id) : ps.filter((p) => p.estado === "vai").map((p) => p.user_id);
-    setSel(new Set(ini)); setEditar(true); setErr("");
-  }
-  function toggle(id: string) {
-    setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  }
-  async function guardar() {
-    setBusy(true); setErr("");
-    const { error } = await createClient().rpc("registar_presencas", { p_treino: treino.id, p_presentes: [...sel] });
-    setBusy(false);
-    if (error) { setErr("Não foi possível guardar as presenças."); return; }
+  async function guardar(ids: string[], convidados: string[]) {
+    const { error } = await createClient().rpc("registar_presencas", { p_treino: treino.id, p_presentes: ids, p_convidados: convidados });
+    if (error) return "Não foi possível guardar as presenças.";
     setEditar(false);
     router.refresh();
+    return null;
   }
+  const iniciais = fechadas ? ps.filter((p) => p.presente).map((p) => p.user_id) : ps.filter((p) => p.estado === "vai").map((p) => p.user_id);
+  const respostas = Object.fromEntries(ps.map((p) => [p.user_id, p.estado]));
+  const convidados = treino.convidados ?? [];
 
   const chips = (list: string[]) => list.length
     ? list.map((id) => nome(id)).sort((a, b) => a.localeCompare(b, "pt")).map((n, i) => <span key={i} className="chip">{n}</span>)
     : <span className="empty">—</span>;
   const g = (e: EstadoInscricao) => ps.filter((p) => p.estado === e).map((p) => p.user_id);
   const presentes = ps.filter((p) => p.presente).map((p) => p.user_id);
-  const resposta: Record<string, string> = { vai: "disse vou", talvez: "talvez", nao: "não ia" };
 
   return (
     <div className="gpx">
       <div className="gpx-h">
-        <span className="field-l">{fechadas ? `Presenças · ${presentes.length}` : "Quem vai"}</span>
+        <span className="field-l">{fechadas ? `Presenças · ${presentes.length + convidados.length}` : "Quem vai"}</span>
         {isAdmin && passado && !editar && (
-          <button type="button" className="btn" onClick={abrir}>{fechadas ? "Editar presenças" : "Registar presenças"}</button>
+          <button type="button" className="btn" onClick={() => { setErr(""); setEditar(true); }}>{fechadas ? "Editar presenças" : "Registar presenças"}</button>
         )}
       </div>
 
       {editar ? (
-        <>
-          <p className="hint" style={{ margin: 0 }}>Marca quem esteve no treino. Esta lista é a que conta para as estatísticas.</p>
-          <div className="checks">
-            {membros.map((m) => {
-              const r = ps.find((p) => p.user_id === m.id)?.estado;
-              return (
-                <label key={m.id} className="check">
-                  <input type="checkbox" checked={sel.has(m.id)} onChange={() => toggle(m.id)} />
-                  <span>{m.nome || "Membro"}</span>
-                  {r && <span className="r">{resposta[r]}</span>}
-                </label>
-              );
-            })}
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <button type="button" className="btn primary" disabled={busy} aria-busy={busy} onClick={guardar}>
-              {busy ? <><span className="spinner" aria-hidden="true" />A guardar…</> : `Guardar presenças (${sel.size})`}
-            </button>
-            <button type="button" className="btn" onClick={() => setEditar(false)}>Cancelar</button>
-          </div>
-        </>
+        <PresencasEditor membros={membros} iniciais={iniciais} convidadosIniciais={convidados} respostas={respostas} onSave={guardar} onCancel={() => setEditar(false)} />
       ) : fechadas ? (
-        <div className="grp go">{chips(presentes)}</div>
+        <div className="grp go">{presentes.length || !convidados.length ? chips(presentes) : null}{convidados.map((c) => <span key={c} className="chip guest">{c}</span>)}</div>
       ) : (
         <div className="groups">
           <div className="grp go"><span className="gl">Vão <span className="num">{g("vai").length}</span></span>{chips(g("vai"))}</div>

@@ -25,7 +25,7 @@ export default function PasswordForm({ id, nome, novo }: { id: string; nome: str
       return;
     }
     await sb.from("perfis").update({ ativo: true, ...(novo && n.trim() ? { nome: n.trim() } : {}) }).eq("id", id);
-    router.push("/");
+    router.push("/eventos");
     router.refresh();
   }
 

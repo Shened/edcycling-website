@@ -69,7 +69,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
   }
   function goToday() { const d = new Date(); d.setHours(0, 0, 0, 0); setCursor(d); }
 
-  const nAtletas = (t: Treino) => (t.treino_participantes ?? []).filter((p) => (t.presencas_fechadas ? p.presente : p.estado === "vai")).length;
+  const nAtletas = (t: Treino) => (t.treino_participantes ?? []).filter((p) => (t.presencas_fechadas ? p.presente : p.estado === "vai")).length + (t.presencas_fechadas ? t.convidados?.length ?? 0 : 0);
   const kmLabel = (t: Treino) => (t.km != null ? `${fmtKm(Number(t.km))} km` : t.km_plano ? `~${t.km_plano} km` : "");
 
   function Chip({ t, e }: { t?: Treino; e?: Evento }) {
@@ -223,7 +223,7 @@ function EventoInfo({ e, onClose }: { e: Evento; onClose: () => void }) {
             {e.km != null && <div><dt>Distância</dt><dd>{e.km} km</dd></div>}
           </dl>
           {e.notas && <p className="notes">{e.notas}</p>}
-          <div className="mactions"><a className="btn" href={`/#e-${e.id}`}>Ver e inscrever-me</a><button type="button" className="btn" onClick={onClose}>Fechar</button></div>
+          <div className="mactions"><a className="btn" href={`/eventos#e-${e.id}`}>Ver e inscrever-me</a><button type="button" className="btn" onClick={onClose}>Fechar</button></div>
         </div>
       </div>
     </div>

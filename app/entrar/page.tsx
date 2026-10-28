@@ -21,7 +21,7 @@ export default function Entrar() {
     setBusy(true); setErr("");
     const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
     if (error) { setBusy(false); setErr("Email ou password errados."); return; }
-    router.push("/");
+    router.push("/eventos");
     router.refresh();
   }
 
