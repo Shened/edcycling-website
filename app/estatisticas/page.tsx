@@ -18,7 +18,7 @@ export default async function EstatisticasPage() {
     supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)"),
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("evento_id,user_id,estado,presente"),
-    supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).order("nome"),
+    supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true).order("nome"),
   ]);
   return (
     <Estatisticas

@@ -25,6 +25,13 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
   const [ano, setAno] = useState(nx ? evAno(nx) : today().getFullYear());
   const years = [...new Set([...eventos.map(evAno), today().getFullYear()])].sort();
 
+  async function setAtleta(id: string, valor: boolean) {
+    setMsg("");
+    const { error } = await createClient().rpc("set_atleta", { target: id, valor });
+    if (error) setMsg("Não foi possível mudar a opção de atleta.");
+    router.refresh();
+  }
+
   function convidar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -98,12 +105,13 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
           <div className="field" style={{ flex: "1 1 160px" }}><label htmlFor="cNome">Nome</label><input id="cNome" name="nome" type="text" maxLength={40} placeholder="ex.: Fábio" /></div>
           <div className="field" style={{ flex: "2 1 220px" }}><label htmlFor="cEmail">Email</label><input id="cEmail" name="email" type="email" required placeholder="nome@exemplo.com" /></div>
           <div className="field" style={{ flex: "0 1 130px" }}><label htmlFor="cRole">Role</label><select id="cRole" name="role" defaultValue="membro"><option value="membro">Membro</option><option value="admin">Admin</option></select></div>
+          <label className="check" style={{ flex: "0 1 auto" }} title="Desmarca para contas só de gestão (ex.: email da equipa)"><input type="checkbox" name="atleta" defaultChecked /> <span>É atleta</span></label>
           <button className="btn primary" disabled={pendingInvite} aria-busy={pendingInvite}>{pendingInvite ? <><span className="spinner" aria-hidden="true" />A enviar…</> : "Enviar convite"}</button>
           {convite && <div className="notice" style={{ flexBasis: "100%", background: convite.ok ? "var(--go-soft)" : undefined }}>{convite.msg}</div>}
         </form>
         <div className="tw">
           <table>
-            <thead><tr><th>Nome</th><th>Email</th><th>Estado</th><th>Role</th><th></th></tr></thead>
+            <thead><tr><th>Nome</th><th>Email</th><th>Estado</th><th>Role</th><th className="c">Atleta</th><th></th></tr></thead>
             <tbody>
               {[...pendentes, ...perfis.filter((p) => p.role !== "pendente")].map((p) => (
                 <tr key={p.id}>
@@ -116,6 +124,9 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
                         {Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
                     )}
+                  </td>
+                  <td className="c">
+                    <input type="checkbox" aria-label={`${p.nome} é atleta`} checked={p.atleta !== false} onChange={(e) => setAtleta(p.id, e.target.checked)} style={{ accentColor: "var(--go)", width: 16, height: 16 }} />
                   </td>
                   <td>
                     {p.id === meId ? <span className="empty">És tu</span> : (

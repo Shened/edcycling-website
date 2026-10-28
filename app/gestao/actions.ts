@@ -21,6 +21,7 @@ export async function convidarMembro(form: FormData): Promise<Resultado> {
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const nome = String(form.get("nome") ?? "").trim();
   const role = form.get("role") === "admin" ? "admin" : "membro";
+  const atleta = form.get("atleta") === "on";
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, msg: "Esse email não parece válido." };
 
   let admin;
@@ -37,7 +38,7 @@ export async function convidarMembro(form: FormData): Promise<Resultado> {
     return { ok: false, msg: `Não foi possível enviar o convite (${m}).` };
   }
   // O trigger cria o perfil como "pendente"; aqui fica já com o role escolhido.
-  await admin.from("perfis").upsert({ id: data.user.id, email, nome: nome || email.split("@")[0], role, ativo: false }, { onConflict: "id" });
+  await admin.from("perfis").upsert({ id: data.user.id, email, nome: nome || email.split("@")[0], role, ativo: false, atleta }, { onConflict: "id" });
   revalidatePath("/gestao");
   return { ok: true, msg: `Convite enviado para ${email}.` };
 }

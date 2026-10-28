@@ -9,6 +9,7 @@ export interface Perfil {
   email: string | null;
   role: Role;
   ativo?: boolean;
+  atleta?: boolean;
   created_at?: string;
 }
 

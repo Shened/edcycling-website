@@ -94,7 +94,9 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
           )}
           {!closed && (
             <div className="rsvp">
-              {isMember ? (
+              {isMember && perfil && !membros.some((m) => m.id === perfil.id) ? (
+                <span>Conta de gestão: não conta como atleta.</span>
+              ) : isMember ? (
                 <>
                   <span className="lbl">A tua resposta:</span>
                   <button className={`btn${mine === "vai" ? " on-go" : ""}`} disabled={pending === e.id} onClick={() => rsvp(e.id, mine === "vai" ? null : "vai")}>Vou</button>

@@ -62,6 +62,7 @@ export function calcular(
 
   const kmT = (t: Treino) => (t.km != null ? Number(t.km) : t.km_plano ?? 0);
   const atletas = new Map<string, LinhaAtleta>();
+  const atletaIds = new Set(membros.map((m) => m.id)); // contas de gestão não contam
   const linha = (id: string, nomeConvidado?: string) => {
     let l = atletas.get(id);
     if (!l) {
@@ -87,7 +88,7 @@ export function calcular(
     porMes[mesDe(t.data) - 1].treinos += 1;
     const tp = tipos.get(t.tipo) ?? { tipo: t.tipo, km: 0, treinos: 0 };
     tp.km += km; tp.treinos += 1; tipos.set(t.tipo, tp);
-    const ps = presentes(t).map((u) => linha(u));
+    const ps = presentes(t).filter((u) => atletaIds.has(u)).map((u) => linha(u));
     if (t.presencas_fechadas) (t.convidados ?? []).forEach((c) => ps.push(convidado(c)));
     somaAtletas += ps.length;
     for (const l of ps) {
@@ -104,6 +105,7 @@ export function calcular(
     porMes[(e.data ? mesDe(e.data) : e.mes) - 1].km += km;
     const foram = inscricoes
       .filter((i) => i.evento_id === e.id && (e.presencas_fechadas ? i.presente === true : i.estado === "vai"))
+      .filter((i) => atletaIds.has(i.user_id))
       .map((i) => linha(i.user_id));
     if (e.presencas_fechadas) (e.convidados ?? []).forEach((c) => foram.push(convidado(c)));
     for (const l of foram) {

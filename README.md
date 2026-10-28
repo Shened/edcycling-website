@@ -106,3 +106,9 @@ Separador **Treinos** (só membros): calendário com vista de mês e de semana. 
 Os treinos podem ser de **Corrida** ou **Natação**, além dos tipos de bicicleta. O ritmo aparece em min/km na corrida e em min/100 m na natação. Nas estatísticas, km e D+ contam só bicicleta; corrida e natação têm colunas próprias no ranking.
 
 **Setup:** corre `supabase/migrations/006_corrida_natacao.sql`, depois da 005.
+
+## Contas de gestão
+
+Em **Gestão → Membros**, desmarca **Atleta** nas contas que só servem para gerir o site (por exemplo, o email da equipa). Essas contas continuam a poder ser admin, mas não aparecem nas presenças, no ranking nem na contagem de atletas, e não respondem "vou".
+
+**Setup:** corre `supabase/migrations/007_contas_gestao.sql`. Já marca o `teamedcycling@gmail.com` como conta de gestão.

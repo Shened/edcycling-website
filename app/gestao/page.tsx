@@ -9,7 +9,7 @@ export default async function Gestao() {
   const [{ data: eventos }, { data: insc }, { data: perfis }, { count }] = await Promise.all([
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("id,evento_id,user_id,estado,perfis(nome)"),
-    supabase.from("perfis").select("id,nome,email,role,ativo,created_at").order("created_at", { ascending: true }),
+    supabase.from("perfis").select("id,nome,email,role,ativo,atleta,created_at").order("created_at", { ascending: true }),
     supabase.from("posts").select("id", { count: "exact", head: true }),
   ]);
   return (

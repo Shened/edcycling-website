@@ -263,7 +263,7 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
         </div>
       )}
 
-      {!fechadas && !editar && (
+      {!fechadas && !editar && membros.some((m) => m.id === userId) && (
         <div className="rsvp" style={{ paddingTop: 8 }}>
           <span className="lbl">A tua resposta:</span>
           <button type="button" className={`btn${mine === "vai" ? " on-go" : ""}`} disabled={busy} onClick={() => marcar(mine === "vai" ? null : "vai")}>Vou</button>
