@@ -8,6 +8,7 @@ create table if not exists public.perfis (
   nome text not null default '',
   email text,
   role text not null default 'pendente' check (role in ('pendente','membro','admin')),
+  ativo boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -93,7 +94,7 @@ alter table public.eventos enable row level security;
 alter table public.inscricoes enable row level security;
 alter table public.posts enable row level security;
 
--- perfis: membros veem a equipa; cada um vê o seu; só o nome é editável pelo próprio.
+-- perfis: membros veem a equipa; cada um vê o seu; o próprio só edita nome e ativo.
 drop policy if exists perfis_select on public.perfis;
 create policy perfis_select on public.perfis for select to authenticated
   using (id = auth.uid() or public.is_member());
@@ -101,7 +102,7 @@ drop policy if exists perfis_update_own on public.perfis;
 create policy perfis_update_own on public.perfis for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());
 revoke update on public.perfis from authenticated;
-grant update (nome) on public.perfis to authenticated;
+grant update (nome, ativo) on public.perfis to authenticated;
 
 -- eventos: calendário público; só admins escrevem.
 drop policy if exists eventos_select on public.eventos;

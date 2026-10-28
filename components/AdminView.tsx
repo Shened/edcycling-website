@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ESTADOS, MESES, TIPOS, evAno, evMes, isPast, sortEventos, today } from "@/lib/dates";
 import type { Evento, Inscricao, Perfil, Role } from "@/lib/types";
 import EventForm from "./EventForm";
+import { convidarMembro, removerMembro } from "@/app/gestao/actions";
 
 const ROLES: Record<Role, string> = { pendente: "Pendente", membro: "Membro", admin: "Admin" };
 
@@ -12,13 +13,36 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
   const router = useRouter();
   const [editing, setEditing] = useState<Evento | null | undefined>(undefined);
   const [msg, setMsg] = useState("");
+  const [convite, setConvite] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [pendingInvite, startInvite] = useTransition();
+  const [armedRm, setArmedRm] = useState<string | null>(null);
   const sorted = sortEventos(eventos);
   const up = sorted.filter((e) => !isPast(e) && e.estado !== "cancelado");
   const pendentes = perfis.filter((p) => p.role === "pendente");
+  const porAtivar = perfis.filter((p) => !p.ativo);
   const vai = inscricoes.filter((i) => i.estado === "vai" && up.some((e) => e.id === i.evento_id)).length;
   const nx = up[0];
   const [ano, setAno] = useState(nx ? evAno(nx) : today().getFullYear());
   const years = [...new Set([...eventos.map(evAno), today().getFullYear()])].sort();
+
+  function convidar(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    setConvite(null);
+    startInvite(async () => {
+      const r = await convidarMembro(fd);
+      setConvite(r);
+      if (r.ok) { form.reset(); router.refresh(); }
+    });
+  }
+  async function remover(id: string) {
+    if (armedRm !== id) { setArmedRm(id); return; }
+    setArmedRm(null);
+    const r = await removerMembro(id);
+    setMsg(r.ok ? "" : r.msg);
+    router.refresh();
+  }
 
   async function setRole(id: string, role: Role) {
     setMsg("");
@@ -39,7 +63,7 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
       <div className="tiles">
         <div className="tile"><div className="v num">{up.length}</div><div className="k">Próximos eventos</div></div>
         <div className="tile"><div className="v num">{vai}</div><div className="k">Inscrições confirmadas</div></div>
-        <div className={`tile${pendentes.length ? " alert" : ""}`}><div className="v num">{pendentes.length}</div><div className="k">Contas por aprovar</div></div>
+        <div className="tile"><div className="v num">{porAtivar.length}</div><div className="k">Convites pendentes</div></div>
         <div className="tile"><div className="v num">{fotos}</div><div className="k">Fotos no feed</div></div>
       </div>
 
@@ -69,24 +93,33 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
       </div>
 
       <div>
-        <div className="sechead" style={{ marginBottom: 10 }}><h2 style={{ fontSize: 24 }}>Membros</h2><span className="empty">Aprova quem se registou e escolhe os admins.</span></div>
+        <div className="sechead" style={{ marginBottom: 10 }}><h2 style={{ fontSize: 24 }}>Membros</h2><span className="empty">Só entra quem for convidado.</span></div>
+        <form className="panel" onSubmit={convidar} style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-end", marginBottom: 12, padding: 14 }}>
+          <div className="field" style={{ flex: "1 1 160px" }}><label htmlFor="cNome">Nome</label><input id="cNome" name="nome" type="text" maxLength={40} placeholder="ex.: Fábio" /></div>
+          <div className="field" style={{ flex: "2 1 220px" }}><label htmlFor="cEmail">Email</label><input id="cEmail" name="email" type="email" required placeholder="nome@exemplo.com" /></div>
+          <div className="field" style={{ flex: "0 1 130px" }}><label htmlFor="cRole">Role</label><select id="cRole" name="role" defaultValue="membro"><option value="membro">Membro</option><option value="admin">Admin</option></select></div>
+          <button className="btn primary" disabled={pendingInvite}>{pendingInvite ? "A enviar…" : "Enviar convite"}</button>
+          {convite && <div className="notice" style={{ flexBasis: "100%", background: convite.ok ? "var(--go-soft)" : undefined }}>{convite.msg}</div>}
+        </form>
         <div className="tw">
           <table>
-            <thead><tr><th>Nome</th><th>Email</th><th>Role</th><th></th></tr></thead>
+            <thead><tr><th>Nome</th><th>Email</th><th>Estado</th><th>Role</th><th></th></tr></thead>
             <tbody>
               {[...pendentes, ...perfis.filter((p) => p.role !== "pendente")].map((p) => (
                 <tr key={p.id}>
                   <td><b>{p.nome || "—"}</b></td>
                   <td>{p.email}</td>
-                  <td><span className={`pill ${p.role}`}>{ROLES[p.role]}</span></td>
+                  <td>{p.ativo ? <span className="empty">Ativo</span> : <span className="pill pendente">Convite enviado</span>}</td>
+                  <td>
+                    {p.id === meId ? <span className={`pill ${p.role}`}>{ROLES[p.role]}</span> : (
+                      <select aria-label={`Role de ${p.nome}`} value={p.role} onChange={(e) => setRole(p.id, e.target.value as Role)}>
+                        {Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
+                    )}
+                  </td>
                   <td>
                     {p.id === meId ? <span className="empty">És tu</span> : (
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {p.role === "pendente" && <button className="btn primary" onClick={() => setRole(p.id, "membro")}>Aprovar</button>}
-                        <select aria-label={`Role de ${p.nome}`} value={p.role} onChange={(e) => setRole(p.id, e.target.value as Role)}>
-                          {Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                        </select>
-                      </div>
+                      <button className="btn ghost danger" onClick={() => remover(p.id)}>{armedRm === p.id ? "Confirmar remoção" : "Remover"}</button>
                     )}
                   </td>
                 </tr>

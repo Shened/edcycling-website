@@ -6,7 +6,7 @@ export async function getSession() {
   const { data: { user } } = await supabase.auth.getUser();
   let perfil: Perfil | null = null;
   if (user) {
-    const { data } = await supabase.from("perfis").select("id,nome,email,role").eq("id", user.id).single();
+    const { data } = await supabase.from("perfis").select("id,nome,email,role,ativo").eq("id", user.id).single();
     perfil = (data as Perfil) ?? null;
   }
   const isMember = perfil?.role === "membro" || perfil?.role === "admin";

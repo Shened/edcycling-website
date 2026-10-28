@@ -8,6 +8,7 @@ export interface Perfil {
   nome: string;
   email: string | null;
   role: Role;
+  ativo?: boolean;
   created_at?: string;
 }
 

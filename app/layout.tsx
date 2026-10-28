@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const quando = nx
     ? nx.data
       ? `${fmtDate(nx.data)} · ${n === 0 ? "é hoje" : n === 1 ? "amanhã" : `faltam ${n} dias`}`
-      : `${MESES_L[evMes(nx) - 1]} ${evAno(nx)} · data por marcar`
+      : `${MESES_L[evMes(nx) - 1]} ${evAno(nx)} · data a definir`
     : "";
 
   return (
@@ -43,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="topo" aria-hidden="true" />
           <div className="in">
             <Link href="/" className="brand">
-              <p className="eyebrow">Equipa de ciclismo · desde 2023</p>
+              <p className="eyebrow">A bicicleta como estilo de vida · est 2023</p>
               <h1>ED<span>Cycling</span></h1>
             </Link>
             <div className="next">

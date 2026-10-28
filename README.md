@@ -50,3 +50,18 @@ Na Vercel: **Project → Settings → Domains → Add** (ex.: `edcycling.pt`). S
 
 - **Emails de login**: o plano gratuito do Supabase limita o envio a poucos emails por hora. Para a equipa toda, liga um SMTP em *Authentication → Emails → SMTP Settings* (Resend, Brevo, etc.).
 - **Segurança**: está toda nas regras RLS (`schema.sql`). Só admins escrevem eventos, cada membro só gere a sua inscrição, e as fotos são privadas, servidas por URLs assinados que expiram em 1 hora.
+
+
+## Login com password e convites
+
+Não há registo público: só entra quem um admin convidar na página **Gestão → Membros**.
+
+1. **SQL**: se já tinhas corrido o `schema.sql` antes desta versão, corre `supabase/migrations/002_convites_password.sql`.
+2. **Desligar o registo público**: em *Authentication → Sign In / Providers*, desliga **Allow new users to sign up**. Os convites continuam a funcionar.
+3. **Templates de email**: em *Authentication → Emails*:
+   - **Invite user**: assunto "Convite para a EDCycling", corpo = `supabase/email-templates/convite.html`
+   - **Reset Password**: assunto "Password nova — EDCycling", corpo = `supabase/email-templates/recuperar-password.html`
+4. **Chave secreta**: em *Project Settings → API Keys → Secret keys*, copia a chave para `SUPABASE_SECRET_KEY`, no `.env` e na Vercel. Nunca lhe ponhas o prefixo `NEXT_PUBLIC_`.
+5. **Site URL**: em *Authentication → URL Configuration*, mete o URL da Vercel. Os links dos emails usam esse endereço.
+
+Quem já tinha conta (por exemplo, os admins) define a password em **Perfil → Alterar password**, ou em "Esqueci-me da password" no ecrã de entrar.

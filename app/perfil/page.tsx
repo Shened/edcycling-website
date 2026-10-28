@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import PerfilForm from "@/components/PerfilForm";
 import { getSession } from "@/lib/session";
 
@@ -13,6 +14,7 @@ export default async function PerfilPage() {
         <div><span className={`pill ${perfil.role}`}>{roles[perfil.role]}</span></div>
         <p className="empty" style={{ margin: 0 }}>{perfil.email}</p>
         <PerfilForm id={perfil.id} nome={perfil.nome} />
+        <Link href="/definir-password" className="btn" style={{ alignSelf: "flex-start" }}>Alterar password</Link>
       </div>
     </section>
   );

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Convite EDCycling</title>
+</head>
+<body style="margin:0;padding:0;background:#EEF2F5;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Foste convidado para o site da equipa EDCycling. Cria a tua conta em menos de um minuto.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF2F5;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#FFFFFF;border-radius:14px;overflow:hidden;">
+        <!-- Cabeçalho -->
+        <tr>
+          <td bgcolor="#052F42" style="background:#052F42;padding:28px 32px 24px;">
+            <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9FC0CD;font-weight:bold;">Equipa de ciclismo · desde 2023</p>
+            <p style="margin:0;font-family:'Arial Narrow','Helvetica Neue',Arial,sans-serif;font-size:40px;line-height:1;font-style:italic;font-weight:900;letter-spacing:-0.5px;text-transform:uppercase;color:#FFFFFF;">ED<span style="color:#F0609A;">Cycling</span></p>
+          </td>
+        </tr>
+        <!-- Fita azul → lilás → rosa (cor sólida em clientes sem gradiente) -->
+        <tr>
+          <td height="6" bgcolor="#8A6FA8" style="height:6px;line-height:6px;font-size:0;background:#8A6FA8;background-image:linear-gradient(90deg,#316287,#8A6FA8 52%,#E3407A);">&nbsp;</td>
+        </tr>
+        <!-- Conteúdo -->
+        <tr>
+          <td style="padding:32px 32px 8px;font-family:Arial,Helvetica,sans-serif;color:#0A2633;">
+            <h1 style="margin:0 0 14px;font-family:'Arial Narrow','Helvetica Neue',Arial,sans-serif;font-size:30px;line-height:1.1;font-style:italic;font-weight:900;text-transform:uppercase;color:#0A2633;">Mantém-te na roda!</h1>
+            <p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#0A2633;">Foste convidado para o site da equipa EDCycling.</p>
+            <p style="margin:0 0 26px;font-size:16px;line-height:1.55;color:#0A2633;">Cria a tua conta para veres o calendário de passeios, te inscreveres nos eventos e partilhares as fotos das voltas.</p>
+          </td>
+        </tr>
+        <!-- Botão -->
+        <tr>
+          <td style="padding:0 32px 28px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" bgcolor="#E3407A" style="border-radius:8px;background:#E3407A;">
+                  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/definir-password" target="_blank" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:8px;">Criar conta</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Link alternativo -->
+        <tr>
+          <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;">
+            <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#557080;">Se o botão não funcionar, copia este endereço para o browser:</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;"><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/definir-password" style="color:#316287;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=invite&amp;next=/definir-password</a></p>
+          </td>
+        </tr>
+        <!-- Assinatura -->
+        <tr>
+          <td style="padding:22px 32px 30px;border-top:1px solid #D2DCE2;font-family:Arial,Helvetica,sans-serif;">
+            <p style="margin:0 0 2px;font-size:15px;color:#557080;">Cumprimentos,</p>
+            <p style="margin:0;font-family:'Arial Narrow','Helvetica Neue',Arial,sans-serif;font-size:20px;font-style:italic;font-weight:900;text-transform:uppercase;color:#0A2633;">A equipa EDCycling</p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:18px 0 0;max-width:560px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#7A909C;">Recebeste este email porque um admin da EDCycling te convidou. Se não estavas à espera, podes ignorá-lo. Se o link expirar, pede um novo convite a um admin.</p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
