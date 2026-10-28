@@ -212,17 +212,20 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
   const ps = treino.treino_participantes ?? [];
   const fechadas = !!treino.presencas_fechadas;
   const nome = (id: string) => membros.find((m) => m.id === id)?.nome || "Membro";
-  const mine = ps.find((p) => p.user_id === userId)?.estado;
+  const [mineOpt, setMineOpt] = useState<EstadoInscricao | null | undefined>(undefined);
+  useEffect(() => setMineOpt(undefined), [treino]);
+  const mine = mineOpt !== undefined ? mineOpt ?? undefined : ps.find((p) => p.user_id === userId)?.estado;
   const passado = hoje ? treino.data <= hoje : false;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [editar, setEditar] = useState(false);
 
   async function marcar(estado: EstadoInscricao | null) {
+    setMineOpt(estado);
     setBusy(true); setErr("");
     const { error } = await createClient().rpc("marcar_treino", { p_treino: treino.id, p_estado: estado });
     setBusy(false);
-    if (error) setErr("Não foi possível guardar a tua resposta.");
+    if (error) { setErr("Não foi possível guardar a tua resposta."); setMineOpt(undefined); }
     router.refresh();
   }
   async function guardar(ids: string[], convidados: string[]) {
@@ -266,9 +269,9 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
       {!fechadas && !editar && membros.some((m) => m.id === userId) && (
         <div className="rsvp" style={{ paddingTop: 8 }}>
           <span className="lbl">A tua resposta:</span>
-          <button type="button" className={`btn${mine === "vai" ? " on-go" : ""}`} disabled={busy} onClick={() => marcar(mine === "vai" ? null : "vai")}>Vou</button>
-          <button type="button" className={`btn${mine === "talvez" ? " on-maybe" : ""}`} disabled={busy} onClick={() => marcar(mine === "talvez" ? null : "talvez")}>Talvez</button>
-          <button type="button" className={`btn${mine === "nao" ? " on-no" : ""}`} disabled={busy} onClick={() => marcar(mine === "nao" ? null : "nao")}>Não vou</button>
+          <button type="button" className={`btn${mine === "vai" ? " on-go" : ""}`} onClick={() => !busy && marcar(mine === "vai" ? null : "vai")}>Vou</button>
+          <button type="button" className={`btn${mine === "talvez" ? " on-maybe" : ""}`} onClick={() => !busy && marcar(mine === "talvez" ? null : "talvez")}>Talvez</button>
+          <button type="button" className={`btn${mine === "nao" ? " on-no" : ""}`} onClick={() => !busy && marcar(mine === "nao" ? null : "nao")}>Não vou</button>
         </div>
       )}
       {err && <div className="notice">{err}</div>}

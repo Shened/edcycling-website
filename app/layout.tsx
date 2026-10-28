@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { Barlow_Condensed, JetBrains_Mono, Public_Sans } from "next/font/google";
 import "./globals.css";
+
+// Tipos de letra servidos pelo próprio site (sem pedido extra ao Google em cada visita).
+const barlow = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "600", "700", "800"], style: ["normal", "italic"], variable: "--font-barlow", display: "swap" });
+const publicSans = Public_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-public", display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], weight: ["500"], variable: "--font-jetbrains", display: "swap" });
 import NavTabs from "@/components/NavTabs";
 import { getSession } from "@/lib/session";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, nextEvento } from "@/lib/dates";
@@ -16,7 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, perfil, isAdmin, isMember } = await getSession();
   // Eventos só são lidos para membros (o RLS também o garante).
-  const { data } = isMember ? await supabase.from("eventos").select("*") : { data: [] };
+  const { data } = isMember ? await supabase.from("eventos").select("id,titulo,data,mes,ano,estado") : { data: [] };
   const evs = (data ?? []) as Evento[];
   const nx = nextEvento(evs);
   let vai = 0;
@@ -32,13 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     : "";
 
   return (
-    <html lang="pt-PT">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,700;1,800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" />
-      </head>
+    <html lang="pt-PT" className={`${barlow.variable} ${publicSans.variable} ${jetbrains.variable}`}>
       <body>
         <header className="hero">
           <div className="topo" aria-hidden="true" />

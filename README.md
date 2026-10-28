@@ -122,3 +122,10 @@ Em **Gestão → Membros**, desmarca **Atleta** nas contas que só servem para g
 - **Eventos**: lista de eventos e quem vai a quê.
 
 **Setup:** corre `supabase/migrations/008_publicacoes.sql`, depois da 007. Cria a tabela `noticias` e o bucket público `noticias` para as imagens.
+
+## Desempenho
+
+- **Região**: o `vercel.json` põe as funções em `dub1` (Dublin), junto ao Supabase em EU West (Irlanda). Se o teu projeto Supabase estiver noutra região, troca para a mais próxima (por exemplo, `fra1` para Frankfurt).
+- **Sessão**: lida uma só vez por pedido (`lib/session.ts`, com `cache`), com `getClaims()`. Com as chaves JWT assimétricas do Supabase (*Project Settings → JWT Keys*), o token é validado sem ir ao servidor de autenticação.
+- **Tipos de letra**: servidos pelo próprio site com `next/font`, sem pedidos ao Google em cada visita.
+- **Carregamento**: `app/loading.tsx` mostra um esqueleto da página enquanto chegam os dados, e as respostas Vou / Talvez / Não vou mudam logo, antes da confirmação do servidor.

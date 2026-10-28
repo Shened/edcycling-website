@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -25,15 +25,20 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const byMonth: Record<number, Evento[]> = {};
   sorted.filter((e) => evAno(e) === ano && e.estado !== "cancelado").forEach((e) => (byMonth[evMes(e)] ??= []).push(e));
 
+  // Resposta otimista: o botão muda logo, o servidor confirma depois.
+  const [otimista, setOtimista] = useState<Record<string, EstadoInscricao | null>>({});
+  useEffect(() => setOtimista({}), [inscricoes]);
+
   async function rsvp(evId: string, estado: EstadoInscricao | null) {
     if (!perfil) return;
+    setOtimista((o) => ({ ...o, [evId]: estado }));
     setPending(evId); setMsg("");
     const sb = createClient();
     const { error } = estado
       ? await sb.from("inscricoes").upsert({ evento_id: evId, user_id: perfil.id, estado, updated_at: new Date().toISOString() }, { onConflict: "evento_id,user_id" })
       : await sb.from("inscricoes").delete().eq("evento_id", evId).eq("user_id", perfil.id);
     setPending(null);
-    if (error) setMsg("Não foi possível guardar a inscrição. Tenta outra vez.");
+    if (error) { setMsg("Não foi possível guardar a inscrição. Tenta outra vez."); setOtimista((o) => { const n = { ...o }; delete n[evId]; return n; }); }
     router.refresh();
   }
   function jump(id: string) {
@@ -46,7 +51,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   function Card({ e }: { e: Evento }) {
     const ps = inscricoes.filter((i) => i.evento_id === e.id).sort((a, b) => (a.perfis?.nome ?? "").localeCompare(b.perfis?.nome ?? "", "pt"));
     const g = { vai: ps.filter((p) => p.estado === "vai"), talvez: ps.filter((p) => p.estado === "talvez"), nao: ps.filter((p) => p.estado === "nao") };
-    const mine = perfil ? ps.find((p) => p.user_id === perfil.id)?.estado : undefined;
+    const mine = e.id in otimista ? otimista[e.id] ?? undefined : perfil ? ps.find((p) => p.user_id === perfil.id)?.estado : undefined;
     const n = e.data ? daysTo(e.data) : null;
     const closed = e.estado === "cancelado" || e.estado === "realizado" || !!e.presencas_fechadas;
     const presentes = ps.filter((p) => p.presente);
@@ -99,9 +104,9 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
               ) : isMember ? (
                 <>
                   <span className="lbl">A tua resposta:</span>
-                  <button className={`btn${mine === "vai" ? " on-go" : ""}`} disabled={pending === e.id} onClick={() => rsvp(e.id, mine === "vai" ? null : "vai")}>Vou</button>
-                  <button className={`btn${mine === "talvez" ? " on-maybe" : ""}`} disabled={pending === e.id} onClick={() => rsvp(e.id, mine === "talvez" ? null : "talvez")}>Talvez</button>
-                  <button className={`btn${mine === "nao" ? " on-no" : ""}`} disabled={pending === e.id} onClick={() => rsvp(e.id, mine === "nao" ? null : "nao")}>Não vou</button>
+                  <button className={`btn${mine === "vai" ? " on-go" : ""}`} onClick={() => pending !== e.id && rsvp(e.id, mine === "vai" ? null : "vai")}>Vou</button>
+                  <button className={`btn${mine === "talvez" ? " on-maybe" : ""}`} onClick={() => pending !== e.id && rsvp(e.id, mine === "talvez" ? null : "talvez")}>Talvez</button>
+                  <button className={`btn${mine === "nao" ? " on-no" : ""}`} onClick={() => pending !== e.id && rsvp(e.id, mine === "nao" ? null : "nao")}>Não vou</button>
                 </>
               ) : perfil ? (
                 <span>A tua conta está à espera de aprovação de um admin para te poderes inscrever.</span>
