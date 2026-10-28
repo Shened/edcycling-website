@@ -137,3 +137,16 @@ Em **Gestão → Membros**, desmarca **Atleta** nas contas que só servem para g
 - No telemóvel, os membros têm uma barra de navegação em baixo (`components/MobileNav.tsx`).
 - O botão **Instalar app** está no **Perfil**. No iPhone aparecem as instruções do Safari.
 - Para trocar os ícones pelo símbolo oficial da equipa, substitui os PNG mantendo os mesmos tamanhos (192, 512 e 512 maskable com margem de segurança).
+
+## Feed de publicações
+
+O separador **Feed** (`/fotos`) é aberto a todos os membros. Cada publicação pode ter texto, até 10 fotos em carrossel, ou as duas coisas, e pode estar ligada a um evento. As fotos são reduzidas no telemóvel antes do envio e podem ser reordenadas antes de publicar. Quem publicou, ou um admin, pode apagar.
+
+**Setup:** corre `supabase/migrations/009_feed_publicacoes.sql`, depois da 008. As fotos antigas passam automaticamente para o novo formato.
+
+## Perfil de atleta
+
+- **Perfil** (`/perfil`, também na barra de baixo do telemóvel): foto (recortada em quadrado), nome, data de nascimento (mostra a idade), FTP, peso (calcula os W/kg), FC máxima, altura, localidade, bicicleta, apresentação, link do Strava e tamanhos de equipamento. Mostra também as zonas de potência calculadas a partir do FTP.
+- **Página do atleta** (`/atletas/<id>`): é o que a equipa vê. Tem a foto, os dados (o peso só se a pessoa o quiser mostrar) e os números da época. Abre a partir do nome no Feed e no ranking das Estatísticas.
+
+**Setup:** corre `supabase/migrations/010_perfil_atleta.sql`, depois da 009. Cria os campos e o bucket público `avatares`.
