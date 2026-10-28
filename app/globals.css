@@ -484,9 +484,12 @@ th[aria-sort="ascending"],th[aria-sort="descending"]{color:var(--ink)}
 .car-track::-webkit-scrollbar{display:none}
 .car-track img{flex:0 0 100%;width:100%;aspect-ratio:var(--ratio,1);max-height:75vh;object-fit:contain;scroll-snap-align:center;display:block;user-select:none}
 .car-n{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;border-radius:99px;padding:2px 8px}
-.car-btn{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:rgba(255,255,255,.85);color:#0A2633;font-size:20px;line-height:1;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.car-btn{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;padding:0;border:0;border-radius:50%;background:rgba(5,22,30,.55);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:background .15s,opacity .15s}
+.car-btn:hover{background:rgba(5,22,30,.8)}
+.car-btn svg{display:block}
+.car-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .car-btn:disabled{opacity:0;pointer-events:none}
-.car-btn.prev{left:10px}.car-btn.next{right:10px}
+.car-btn.prev{left:12px}.car-btn.next{right:12px}
 .car-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;pointer-events:none}
 .car-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.5)}
 .car-dots span.on{background:#fff}

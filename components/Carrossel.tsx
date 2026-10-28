@@ -25,8 +25,8 @@ export default function Carrossel({ urls, alt }: { urls: string[]; alt: string }
       {n > 1 && (
         <>
           <span className="car-n num" aria-hidden="true">{i + 1}/{n}</span>
-          <button type="button" className="car-btn prev" aria-label="Foto anterior" disabled={i === 0} onClick={() => go(i - 1)}>‹</button>
-          <button type="button" className="car-btn next" aria-label="Foto seguinte" disabled={i === n - 1} onClick={() => go(i + 1)}>›</button>
+          <button type="button" className="car-btn prev" aria-label="Foto anterior" disabled={i === 0} onClick={() => go(i - 1)}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
+          <button type="button" className="car-btn next" aria-label="Foto seguinte" disabled={i === n - 1} onClick={() => go(i + 1)}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
           <div className="car-dots" aria-hidden="true">{urls.map((u, k) => <span key={u} className={k === i ? "on" : ""} />)}</div>
         </>
       )}
