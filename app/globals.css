@@ -189,3 +189,9 @@ textarea{min-height:70px;resize:vertical}
 .auth h2{font-size:34px;text-transform:uppercase;font-style:italic}
 
 @media (prefers-reduced-motion:no-preference){.ev.flash{animation:fl 1.2s ease}@keyframes fl{0%{box-shadow:0 0 0 3px var(--pink)}100%{box-shadow:0 0 0 0 transparent}}}
+
+/* indicador de carregamento nos botões */
+.spinner{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;display:inline-block;flex:none;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:2s}}
+.btn[aria-busy="true"]{cursor:progress;opacity:.85}

@@ -26,7 +26,7 @@ export default function Recuperar() {
       ) : (
         <form className="panel" onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="field"><label htmlFor="email">Email da tua conta</label><input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-          <button className="btn primary" disabled={state === "busy"} style={{ justifyContent: "center" }}>{state === "busy" ? "A enviar…" : "Enviar link"}</button>
+          <button className="btn primary" disabled={state === "busy"} aria-busy={state === "busy"} style={{ justifyContent: "center" }}>{state === "busy" ? <><span className="spinner" aria-hidden="true" />A enviar…</> : "Enviar link"}</button>
           <Link href="/entrar" style={{ fontSize: 14 }}>Voltar a entrar</Link>
         </form>
       )}

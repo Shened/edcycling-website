@@ -98,7 +98,7 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
           <div className="field" style={{ flex: "1 1 160px" }}><label htmlFor="cNome">Nome</label><input id="cNome" name="nome" type="text" maxLength={40} placeholder="ex.: Fábio" /></div>
           <div className="field" style={{ flex: "2 1 220px" }}><label htmlFor="cEmail">Email</label><input id="cEmail" name="email" type="email" required placeholder="nome@exemplo.com" /></div>
           <div className="field" style={{ flex: "0 1 130px" }}><label htmlFor="cRole">Role</label><select id="cRole" name="role" defaultValue="membro"><option value="membro">Membro</option><option value="admin">Admin</option></select></div>
-          <button className="btn primary" disabled={pendingInvite}>{pendingInvite ? "A enviar…" : "Enviar convite"}</button>
+          <button className="btn primary" disabled={pendingInvite} aria-busy={pendingInvite}>{pendingInvite ? <><span className="spinner" aria-hidden="true" />A enviar…</> : "Enviar convite"}</button>
           {convite && <div className="notice" style={{ flexBasis: "100%", background: convite.ok ? "var(--go-soft)" : undefined }}>{convite.msg}</div>}
         </form>
         <div className="tw">

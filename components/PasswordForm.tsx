@@ -34,7 +34,7 @@ export default function PasswordForm({ id, nome, novo }: { id: string; nome: str
       {novo && <div className="field"><label htmlFor="nome">Nome na equipa</label><input id="nome" type="text" maxLength={40} required value={n} onChange={(e) => setN(e.target.value)} /></div>}
       <div className="field"><label htmlFor="p1">Password nova</label><input id="p1" type="password" autoComplete="new-password" minLength={8} required value={p1} onChange={(e) => setP1(e.target.value)} /><span className="hint">Pelo menos 8 caracteres.</span></div>
       <div className="field"><label htmlFor="p2">Repetir password</label><input id="p2" type="password" autoComplete="new-password" minLength={8} required value={p2} onChange={(e) => setP2(e.target.value)} /></div>
-      <button className="btn primary" disabled={busy} style={{ justifyContent: "center" }}>{busy ? "A guardar…" : novo ? "Entrar na equipa" : "Guardar password"}</button>
+      <button className="btn primary" disabled={busy} aria-busy={busy} style={{ justifyContent: "center" }}>{busy ? <><span className="spinner" aria-hidden="true" />A guardar…</> : novo ? "Entrar na equipa" : "Guardar password"}</button>
       {err && <div className="notice">{err}</div>}
     </form>
   );
