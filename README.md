@@ -129,3 +129,11 @@ Em **Gestão → Membros**, desmarca **Atleta** nas contas que só servem para g
 - **Sessão**: lida uma só vez por pedido (`lib/session.ts`, com `cache`), com `getClaims()`. Com as chaves JWT assimétricas do Supabase (*Project Settings → JWT Keys*), o token é validado sem ir ao servidor de autenticação.
 - **Tipos de letra**: servidos pelo próprio site com `next/font`, sem pedidos ao Google em cada visita.
 - **Carregamento**: `app/loading.tsx` mostra um esqueleto da página enquanto chegam os dados, e as respostas Vou / Talvez / Não vou mudam logo, antes da confirmação do servidor.
+
+## App no telemóvel (PWA)
+
+- `app/manifest.ts`, os ícones em `public/icons/`, `app/apple-icon.png` e `app/favicon.ico` fazem do site uma app instalável. A app abre em `/eventos`.
+- `public/sw.js` guarda os ficheiros estáticos e mostra `public/offline.html` quando não há rede. Não guarda páginas com dados da equipa. Só é registado em produção.
+- No telemóvel, os membros têm uma barra de navegação em baixo (`components/MobileNav.tsx`).
+- O botão **Instalar app** está no **Perfil**. No iPhone aparecem as instruções do Safari.
+- Para trocar os ícones pelo símbolo oficial da equipa, substitui os PNG mantendo os mesmos tamanhos (192, 512 e 512 maskable com margem de segurança).

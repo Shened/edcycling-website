@@ -399,3 +399,35 @@ th[aria-sort="ascending"],th[aria-sort="descending"]{color:var(--ink)}
 @keyframes sk{0%{background-position:100% 0}100%{background-position:-100% 0}}
 @media (prefers-reduced-motion:reduce){.sk{animation:none}}
 @media (max-width:640px){.sk-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* telemóvel: barra de navegação em baixo, topo compacto, safe areas */
+.mnav{display:none}
+@media (max-width:640px){
+  .has-mnav .nav .tabs{display:none}
+  .has-mnav .nav{position:static}
+  .has-mnav .nav .in{justify-content:flex-end}
+  .has-mnav main{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+  .mnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
+    padding:4px max(6px,env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  .mnav-i{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;text-decoration:none;color:var(--muted);font-size:10.5px;font-weight:600;letter-spacing:.02em}
+  .mnav-i span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .mnav-i[aria-current="page"]{color:var(--pink)}
+  .mnav-i[aria-current="page"] svg{stroke-width:2.2}
+  .mnav-i:active{background:var(--sunk)}
+  /* topo mais baixo nas páginas internas */
+  .hero .in{padding-block:14px 14px;gap:10px}
+  .hero .eyebrow{display:none}
+  .brand h1{font-size:44px}
+  .next{padding:8px 12px;width:100%}
+  .next .d{font-size:20px}
+  .next .s{font-size:12px}
+  /* gráfico legível */
+  .chart .tick{font-size:19px}
+  .chart .val{font-size:21px}
+  .sortbtn{padding:8px 0}
+  .overlay{padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+}
+/* app instalada: o topo fica por baixo da barra de estado do iPhone */
+.hero{padding-top:env(safe-area-inset-top,0px)}
+@media (display-mode: standalone){.nav{top:env(safe-area-inset-top,0px)}}
+

@@ -8,6 +8,8 @@ const barlow = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "600", "70
 const publicSans = Public_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-public", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], weight: ["500"], variable: "--font-jetbrains", display: "swap" });
 import NavTabs from "@/components/NavTabs";
+import RegistarSW from "@/components/RegistarSW";
+import MobileNav from "@/components/MobileNav";
 import { getSession } from "@/lib/session";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, nextEvento } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
@@ -15,8 +17,11 @@ import type { Evento } from "@/lib/types";
 export const metadata: Metadata = {
   title: "EDCycling",
   description: "EDCycling: equipa de ciclismo desde 2023.",
+  applicationName: "EDCycling",
+  appleWebApp: { capable: true, title: "EDCycling", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
 };
-export const viewport: Viewport = { themeColor: "#052F42", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#052F42", width: "device-width", initialScale: 1, viewportFit: "cover" };
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -39,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="pt-PT" className={`${barlow.variable} ${publicSans.variable} ${jetbrains.variable}`}>
-      <body>
+      <body className={isMember ? "has-mnav" : undefined}>
         <header className="hero">
           <div className="topo" aria-hidden="true" />
           <div className="in">
@@ -85,6 +90,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </nav>
         <main className="in">{children}</main>
+        <MobileNav isAdmin={isAdmin} isMember={isMember} />
+        <RegistarSW />
       </body>
     </html>
   );
