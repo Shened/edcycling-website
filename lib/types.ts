@@ -68,4 +68,14 @@ export interface Treino {
   trajeto: [number, number][] | null;
   criador_id: string;
   perfis: { nome: string } | null;
+  presencas_fechadas?: boolean;
+  treino_participantes?: Participante[];
 }
+
+export interface Participante {
+  user_id: string;
+  estado: EstadoInscricao;
+  presente: boolean | null;
+}
+
+export interface Membro { id: string; nome: string }

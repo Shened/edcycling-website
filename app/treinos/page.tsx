@@ -1,7 +1,7 @@
 import Link from "next/link";
 import TrainingCalendar from "@/components/TrainingCalendar";
 import { getSession } from "@/lib/session";
-import type { Evento, Treino } from "@/lib/types";
+import type { Evento, Membro, Treino } from "@/lib/types";
 
 export default async function TreinosPage() {
   const { supabase, perfil, isMember, isAdmin } = await getSession();
@@ -15,12 +15,13 @@ export default async function TreinosPage() {
       </section>
     );
   }
-  const [{ data: treinos }, { data: eventos }] = await Promise.all([
+  const [{ data: treinos }, { data: eventos }, { data: membros }] = await Promise.all([
     supabase
       .from("treinos")
-      .select("id,titulo,data,hora,tipo,intensidade,partida,km_plano,notas,gpx_path,km,dmais,duracao_s,trajeto,criador_id,perfis(nome)")
+      .select("id,titulo,data,hora,tipo,intensidade,partida,km_plano,notas,gpx_path,km,dmais,duracao_s,trajeto,criador_id,perfis(nome),presencas_fechadas,treino_participantes(user_id,estado,presente)")
       .order("data", { ascending: true }),
     supabase.from("eventos").select("*").not("data", "is", null),
+    supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).order("nome"),
   ]);
   return (
     <TrainingCalendar
@@ -28,6 +29,7 @@ export default async function TreinosPage() {
       eventos={(eventos ?? []) as Evento[]}
       isAdmin={isAdmin}
       userId={perfil!.id}
+      membros={(membros ?? []) as Membro[]}
     />
   );
 }

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ESTADOS, MESES, MESES_L, TIPOS } from "@/lib/dates";
 import { fmtKm } from "@/lib/gpx";
-import type { Evento, Treino } from "@/lib/types";
+import type { Evento, Membro, Treino } from "@/lib/types";
 import TreinoForm, { TIPOS_TREINO } from "./TreinoForm";
 import EventForm from "./EventForm";
 
@@ -19,9 +19,9 @@ type Modal =
   | { k: "evento"; evento: Evento | null; data: string }
   | null;
 
-interface Props { treinos: Treino[]; eventos: Evento[]; isAdmin: boolean; userId: string }
+interface Props { treinos: Treino[]; eventos: Evento[]; isAdmin: boolean; userId: string; membros: Membro[] }
 
-export default function TrainingCalendar({ treinos, eventos, isAdmin, userId }: Props) {
+export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, membros }: Props) {
   const [view, setView] = useState<"mes" | "semana">("mes");
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
   const [modal, setModal] = useState<Modal>(null);
@@ -69,6 +69,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId }: 
   }
   function goToday() { const d = new Date(); d.setHours(0, 0, 0, 0); setCursor(d); }
 
+  const nAtletas = (t: Treino) => (t.treino_participantes ?? []).filter((p) => (t.presencas_fechadas ? p.presente : p.estado === "vai")).length;
   const kmLabel = (t: Treino) => (t.km != null ? `${fmtKm(Number(t.km))} km` : t.km_plano ? `~${t.km_plano} km` : "");
 
   function Chip({ t, e }: { t?: Treino; e?: Evento }) {
@@ -92,6 +93,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId }: 
       <button type="button" className={`wk-card treino${t.km != null ? " done" : ""}`} onClick={() => setModal({ k: "treino", treino: t, data: t.data })}>
         <span className="tt">{t.titulo}</span>
         <span className="mt">{[t.hora?.slice(0, 5), TIPOS_TREINO[t.tipo], kmLabel(t), t.dmais ? `${t.dmais} m D+` : ""].filter(Boolean).join(" · ")}</span>
+        {nAtletas(t) > 0 && <span className="mt">{nAtletas(t)} atleta{nAtletas(t) === 1 ? "" : "s"}{t.presencas_fechadas ? " (presenças)" : ""}</span>}
         {t.km == null && t.data < hoje && <span className="mt">Sem GPX</span>}
       </button>
     );
@@ -105,6 +107,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId }: 
   }
 
   const diaModal = modal?.k === "dia" ? byDay.get(modal.data) : undefined;
+  const treinoAtual = modal?.k === "treino" && modal.treino ? treinos.find((t) => t.id === modal.treino!.id) ?? modal.treino : null;
 
   return (
     <section className="view">
@@ -197,7 +200,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId }: 
           </div>
         </div>
       )}
-      {modal?.k === "treino" && <TreinoForm treino={modal.treino} data={modal.data} userId={userId} isAdmin={isAdmin} onClose={() => setModal(null)} />}
+      {modal?.k === "treino" && <TreinoForm key={modal.treino?.id ?? "novo"} treino={treinoAtual} data={modal.data} userId={userId} isAdmin={isAdmin} membros={membros} hoje={hoje} onClose={() => setModal(null)} />}
       {modal?.k === "evento" && (isAdmin
         ? <EventForm evento={modal.evento} dataInicial={modal.data} onClose={() => setModal(null)} />
         : modal.evento && <EventoInfo e={modal.evento} onClose={() => setModal(null)} />)}

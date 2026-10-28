@@ -4,15 +4,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fmtDuracao, fmtKm, parseGpx, type GpxInfo } from "@/lib/gpx";
 import { fmtDate } from "@/lib/dates";
-import type { Treino } from "@/lib/types";
+import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
 import RoutePreview from "./RoutePreview";
 
 export const TIPOS_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo" };
 export const INTENSIDADES: Record<string, string> = { leve: "Leve", moderado: "Moderado", intenso: "Intenso" };
 
-interface Props { treino: Treino | null; data: string; userId: string; isAdmin: boolean; onClose: () => void }
+interface Props { treino: Treino | null; data: string; userId: string; isAdmin: boolean; membros: Membro[]; hoje: string; onClose: () => void }
 
-export default function TreinoForm({ treino, data, userId, isAdmin, onClose }: Props) {
+export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoje, onClose }: Props) {
   const router = useRouter();
   const canEdit = !treino || treino.criador_id === userId || isAdmin;
   const [f, setF] = useState({
@@ -181,6 +181,8 @@ export default function TreinoForm({ treino, data, userId, isAdmin, onClose }: P
             )}
           </div>
 
+          {treino && <Participantes treino={treino} userId={userId} isAdmin={isAdmin} membros={membros} hoje={hoje} />}
+
           {treino && <p className="empty" style={{ margin: 0 }}>Criado por {treino.perfis?.nome || "um membro"}{!canEdit ? ". Só quem criou ou um admin pode alterar." : ""}</p>}
           {err && <div className="notice">{err}</div>}
           <div className="mactions">
@@ -192,6 +194,102 @@ export default function TreinoForm({ treino, data, userId, isAdmin, onClose }: P
           </div>
         </div>
       </form>
+    </div>
+  );
+}
+
+function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Treino; userId: string; isAdmin: boolean; membros: Membro[]; hoje: string }) {
+  const router = useRouter();
+  const ps = treino.treino_participantes ?? [];
+  const fechadas = !!treino.presencas_fechadas;
+  const nome = (id: string) => membros.find((m) => m.id === id)?.nome || "Membro";
+  const mine = ps.find((p) => p.user_id === userId)?.estado;
+  const passado = hoje ? treino.data <= hoje : false;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [editar, setEditar] = useState(false);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+
+  async function marcar(estado: EstadoInscricao | null) {
+    setBusy(true); setErr("");
+    const { error } = await createClient().rpc("marcar_treino", { p_treino: treino.id, p_estado: estado });
+    setBusy(false);
+    if (error) setErr("Não foi possível guardar a tua resposta.");
+    router.refresh();
+  }
+  function abrir() {
+    const ini = fechadas ? ps.filter((p) => p.presente).map((p) => p.user_id) : ps.filter((p) => p.estado === "vai").map((p) => p.user_id);
+    setSel(new Set(ini)); setEditar(true); setErr("");
+  }
+  function toggle(id: string) {
+    setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+  async function guardar() {
+    setBusy(true); setErr("");
+    const { error } = await createClient().rpc("registar_presencas", { p_treino: treino.id, p_presentes: [...sel] });
+    setBusy(false);
+    if (error) { setErr("Não foi possível guardar as presenças."); return; }
+    setEditar(false);
+    router.refresh();
+  }
+
+  const chips = (list: string[]) => list.length
+    ? list.map((id) => nome(id)).sort((a, b) => a.localeCompare(b, "pt")).map((n, i) => <span key={i} className="chip">{n}</span>)
+    : <span className="empty">—</span>;
+  const g = (e: EstadoInscricao) => ps.filter((p) => p.estado === e).map((p) => p.user_id);
+  const presentes = ps.filter((p) => p.presente).map((p) => p.user_id);
+  const resposta: Record<string, string> = { vai: "disse vou", talvez: "talvez", nao: "não ia" };
+
+  return (
+    <div className="gpx">
+      <div className="gpx-h">
+        <span className="field-l">{fechadas ? `Presenças · ${presentes.length}` : "Quem vai"}</span>
+        {isAdmin && passado && !editar && (
+          <button type="button" className="btn" onClick={abrir}>{fechadas ? "Editar presenças" : "Registar presenças"}</button>
+        )}
+      </div>
+
+      {editar ? (
+        <>
+          <p className="hint" style={{ margin: 0 }}>Marca quem esteve no treino. Esta lista é a que conta para as estatísticas.</p>
+          <div className="checks">
+            {membros.map((m) => {
+              const r = ps.find((p) => p.user_id === m.id)?.estado;
+              return (
+                <label key={m.id} className="check">
+                  <input type="checkbox" checked={sel.has(m.id)} onChange={() => toggle(m.id)} />
+                  <span>{m.nome || "Membro"}</span>
+                  {r && <span className="r">{resposta[r]}</span>}
+                </label>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button type="button" className="btn primary" disabled={busy} aria-busy={busy} onClick={guardar}>
+              {busy ? <><span className="spinner" aria-hidden="true" />A guardar…</> : `Guardar presenças (${sel.size})`}
+            </button>
+            <button type="button" className="btn" onClick={() => setEditar(false)}>Cancelar</button>
+          </div>
+        </>
+      ) : fechadas ? (
+        <div className="grp go">{chips(presentes)}</div>
+      ) : (
+        <div className="groups">
+          <div className="grp go"><span className="gl">Vão <span className="num">{g("vai").length}</span></span>{chips(g("vai"))}</div>
+          {g("talvez").length > 0 && <div className="grp maybe"><span className="gl">Talvez <span className="num">{g("talvez").length}</span></span>{chips(g("talvez"))}</div>}
+          {g("nao").length > 0 && <div className="grp no"><span className="gl">Não vão <span className="num">{g("nao").length}</span></span>{chips(g("nao"))}</div>}
+        </div>
+      )}
+
+      {!fechadas && !editar && (
+        <div className="rsvp" style={{ paddingTop: 8 }}>
+          <span className="lbl">A tua resposta:</span>
+          <button type="button" className={`btn${mine === "vai" ? " on-go" : ""}`} disabled={busy} onClick={() => marcar(mine === "vai" ? null : "vai")}>Vou</button>
+          <button type="button" className={`btn${mine === "talvez" ? " on-maybe" : ""}`} disabled={busy} onClick={() => marcar(mine === "talvez" ? null : "talvez")}>Talvez</button>
+          <button type="button" className={`btn${mine === "nao" ? " on-no" : ""}`} disabled={busy} onClick={() => marcar(mine === "nao" ? null : "nao")}>Não vou</button>
+        </div>
+      )}
+      {err && <div className="notice">{err}</div>}
     </div>
   );
 }

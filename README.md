@@ -76,3 +76,18 @@ Separador **Treinos** (só membros): calendário com vista de mês e de semana. 
 - Quem criou o treino (ou um admin) pode editá-lo e apagá-lo.
 
 **Setup:** corre `supabase/migrations/003_treinos.sql` no SQL Editor. Cria a tabela `treinos` e o bucket privado `gpx`.
+
+
+## Presenças e estatísticas
+
+- **Treinos**: cada membro responde Vou / Talvez / Não vou. Depois do treino, um admin abre **Registar presenças** e marca quem foi. Essa lista passa a ser a oficial.
+- **Estatísticas** (`/estatisticas`), por época:
+  - km da equipa, D+, treinos, média de atletas por treino;
+  - km por mês e km por tipo de treino;
+  - ranking de atletas (km, treinos, % de presença, D+, tempo, eventos), ordenável por qualquer coluna.
+- **Regras**:
+  - conta a lista do admin; nos treinos sem presenças registadas, conta quem disse "vou";
+  - os km vêm do GPX; sem GPX, usam-se os km planeados;
+  - nos eventos realizados contam os inscritos com "vou" e os km do evento.
+
+**Setup:** corre `supabase/migrations/004_presencas_treinos.sql` no SQL Editor (depois da 003).
