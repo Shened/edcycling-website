@@ -54,3 +54,27 @@ export async function removerMembro(id: string): Promise<Resultado> {
   revalidatePath("/gestao");
   return { ok: true, msg: "Membro removido." };
 }
+
+// Volta a enviar o convite a quem ainda não o aceitou (link novo, mesmos dados).
+export async function reenviarConvite(id: string): Promise<Resultado> {
+  const { isAdmin } = await getSession();
+  if (!isAdmin) return { ok: false, msg: "Só admins podem reenviar convites." };
+  let admin;
+  try { admin = createAdminClient(); } catch { return { ok: false, msg: "Falta configurar a SUPABASE_SECRET_KEY no servidor." }; }
+  const { data: p } = await admin.from("perfis").select("email,nome,role,atleta,ativo").eq("id", id).single();
+  if (!p?.email) return { ok: false, msg: "Não encontrei esse membro." };
+  if (p.ativo) return { ok: false, msg: "Essa pessoa já aceitou o convite." };
+  // Um convite pendente não pode ser reenviado diretamente: apaga-se a conta por ativar e convida-se de novo.
+  const del = await admin.auth.admin.deleteUser(id);
+  if (del.error) return { ok: false, msg: "Não foi possível preparar o novo convite." };
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(p.email, {
+    data: { nome: p.nome },
+    redirectTo: `${await siteUrl()}/definir-password`,
+  });
+  if (error || !data.user) {
+    return { ok: false, msg: /rate/i.test(error?.message ?? "") ? "Limite de emails atingido. Tenta daqui a uma hora." : `Não foi possível reenviar (${error?.message ?? "erro"}).` };
+  }
+  await admin.from("perfis").upsert({ id: data.user.id, email: p.email, nome: p.nome, role: p.role, atleta: p.atleta, ativo: false }, { onConflict: "id" });
+  revalidatePath("/gestao/membros");
+  return { ok: true, msg: `Convite reenviado para ${p.email}.` };
+}

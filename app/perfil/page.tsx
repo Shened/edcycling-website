@@ -18,6 +18,7 @@ export default async function PerfilPage() {
         <Link href="/definir-password" className="btn" style={{ alignSelf: "flex-start" }}>Alterar password</Link>
       </div>
       <InstalarApp />
+      <Link href="/ajuda" className="btn ghost" style={{ alignSelf: "flex-start", paddingLeft: 0 }}>Ajuda: como instalar a app</Link>
     </section>
   );
 }

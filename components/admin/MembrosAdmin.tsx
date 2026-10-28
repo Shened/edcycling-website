@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Perfil, Role } from "@/lib/types";
-import { convidarMembro, removerMembro } from "@/app/gestao/actions";
+import { convidarMembro, reenviarConvite, removerMembro } from "@/app/gestao/actions";
 
 const ROLES: Record<Role, string> = { pendente: "Pendente", membro: "Membro", admin: "Admin" };
 
@@ -14,6 +14,15 @@ export default function MembrosAdmin({ perfis, meId }: { perfis: Perfil[]; meId:
   const [pendingInvite, startInvite] = useTransition();
   const [armedRm, setArmedRm] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
+  const [reenviando, setReenviando] = useState<string | null>(null);
+
+  async function reenviar(id: string) {
+    setReenviando(id); setMsg("");
+    const r = await reenviarConvite(id);
+    setReenviando(null);
+    setConvite(r);
+    router.refresh();
+  }
 
   const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const lista = perfis
@@ -96,7 +105,14 @@ export default function MembrosAdmin({ perfis, meId }: { perfis: Perfil[]; meId:
                   </td>
                   <td>
                     {p.id === meId ? <span className="empty">És tu</span> : (
-                      <button className="btn ghost danger" onClick={() => remover(p.id)}>{armedRm === p.id ? "Confirmar remoção" : "Remover"}</button>
+                      <span style={{ display: "flex", gap: 4 }}>
+                        {!p.ativo && (
+                          <button className="btn ghost" disabled={reenviando === p.id} aria-busy={reenviando === p.id} onClick={() => reenviar(p.id)}>
+                            {reenviando === p.id ? <><span className="spinner" aria-hidden="true" />A enviar…</> : "Reenviar convite"}
+                          </button>
+                        )}
+                        <button className="btn ghost danger" onClick={() => remover(p.id)}>{armedRm === p.id ? "Confirmar remoção" : "Remover"}</button>
+                      </span>
                     )}
                   </td>
                 </tr>

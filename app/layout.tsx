@@ -90,6 +90,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </nav>
         <main className="in">{children}</main>
+        <footer className="foot in">
+          <span>EDCycling · desde 2023</span>
+          <Link href="/ajuda">Ajuda e instalar a app</Link>
+        </footer>
         <MobileNav isAdmin={isAdmin} isMember={isMember} />
         <RegistarSW />
       </body>
