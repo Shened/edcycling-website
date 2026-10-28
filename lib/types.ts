@@ -47,3 +47,25 @@ export interface Post {
   eventos: { titulo: string } | null;
   url?: string | null;
 }
+
+export type TipoTreino = "estrada" | "gravel" | "btt" | "rolo";
+export type Intensidade = "leve" | "moderado" | "intenso";
+
+export interface Treino {
+  id: string;
+  titulo: string;
+  data: string;
+  hora: string | null;
+  tipo: TipoTreino;
+  intensidade: Intensidade | null;
+  partida: string | null;
+  km_plano: number | null;
+  notas: string | null;
+  gpx_path: string | null;
+  km: number | null;
+  dmais: number | null;
+  duracao_s: number | null;
+  trajeto: [number, number][] | null;
+  criador_id: string;
+  perfis: { nome: string } | null;
+}

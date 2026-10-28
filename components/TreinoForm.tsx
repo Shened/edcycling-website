@@ -1,0 +1,197 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { fmtDuracao, fmtKm, parseGpx, type GpxInfo } from "@/lib/gpx";
+import { fmtDate } from "@/lib/dates";
+import type { Treino } from "@/lib/types";
+import RoutePreview from "./RoutePreview";
+
+export const TIPOS_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo" };
+export const INTENSIDADES: Record<string, string> = { leve: "Leve", moderado: "Moderado", intenso: "Intenso" };
+
+interface Props { treino: Treino | null; data: string; userId: string; isAdmin: boolean; onClose: () => void }
+
+export default function TreinoForm({ treino, data, userId, isAdmin, onClose }: Props) {
+  const router = useRouter();
+  const canEdit = !treino || treino.criador_id === userId || isAdmin;
+  const [f, setF] = useState({
+    titulo: treino?.titulo ?? "",
+    data: treino?.data ?? data,
+    hora: treino?.hora?.slice(0, 5) ?? "",
+    tipo: treino?.tipo ?? "estrada",
+    intensidade: treino?.intensidade ?? "",
+    partida: treino?.partida ?? "",
+    km_plano: treino?.km_plano?.toString() ?? "",
+    notas: treino?.notas ?? "",
+  });
+  const [gpxFile, setGpxFile] = useState<File | null>(null);
+  const [gpx, setGpx] = useState<GpxInfo | null>(null);
+  const [removeGpx, setRemoveGpx] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const [err, setErr] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setF((p) => ({ ...p, [k]: e.target.value }));
+
+  const guardado = treino?.gpx_path && !removeGpx && !gpx && treino.km != null
+    ? { km: Number(treino.km), dmais: treino.dmais ?? 0, duracaoS: treino.duracao_s, pontos: treino.trajeto ?? [] }
+    : null;
+  const shown = gpx ?? guardado;
+
+  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setErr("");
+    if (file.size > 20 * 1024 * 1024) { setErr("O ficheiro GPX é demasiado grande (máx. 20 MB)."); return; }
+    try {
+      const info = parseGpx(await file.text());
+      setGpx(info);
+      setGpxFile(file);
+      setRemoveGpx(false);
+      setF((p) => ({ ...p, titulo: p.titulo || info.nome || "" }));
+    } catch {
+      setErr("Não consegui ler esse ficheiro. Confirma que é um .gpx exportado do Garmin, Strava ou Komoot.");
+    }
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canEdit) return;
+    setBusy(true); setErr("");
+    const sb = createClient();
+    let gpxPatch: Record<string, unknown> = {};
+    let oldPath: string | null = null;
+    let newPath: string | null = null;
+    if (gpxFile && gpx) {
+      newPath = `${userId}/${crypto.randomUUID()}.gpx`;
+      const up = await sb.storage.from("gpx").upload(newPath, gpxFile, { contentType: "application/gpx+xml" });
+      if (up.error) { setBusy(false); setErr("Não foi possível enviar o GPX. Tenta outra vez."); return; }
+      gpxPatch = { gpx_path: newPath, km: gpx.km, dmais: gpx.dmais, duracao_s: gpx.duracaoS, trajeto: gpx.pontos };
+      oldPath = treino?.gpx_path ?? null;
+    } else if (removeGpx) {
+      gpxPatch = { gpx_path: null, km: null, dmais: null, duracao_s: null, trajeto: null };
+      oldPath = treino?.gpx_path ?? null;
+    }
+    const body = {
+      titulo: f.titulo.trim() || `Treino de ${TIPOS_TREINO[f.tipo].toLowerCase()}`,
+      data: f.data,
+      hora: f.hora || null,
+      tipo: f.tipo,
+      intensidade: f.intensidade || null,
+      partida: f.partida.trim() || null,
+      km_plano: f.km_plano ? Math.round(+f.km_plano) : null,
+      notas: f.notas.trim() || null,
+      updated_at: new Date().toISOString(),
+      ...gpxPatch,
+    };
+    const { error } = treino
+      ? await sb.from("treinos").update(body).eq("id", treino.id)
+      : await sb.from("treinos").insert(body);
+    if (error) {
+      if (newPath) await sb.storage.from("gpx").remove([newPath]);
+      setBusy(false);
+      setErr("Não foi possível guardar o treino. Tenta outra vez.");
+      return;
+    }
+    if (oldPath) await sb.storage.from("gpx").remove([oldPath]);
+    onClose();
+    router.refresh();
+  }
+
+  async function remove() {
+    if (!treino) return;
+    if (!armed) { setArmed(true); return; }
+    setBusy(true);
+    const sb = createClient();
+    const { error } = await sb.from("treinos").delete().eq("id", treino.id);
+    if (error) { setBusy(false); setErr("Não foi possível apagar o treino."); return; }
+    if (treino.gpx_path) await sb.storage.from("gpx").remove([treino.gpx_path]);
+    onClose();
+    router.refresh();
+  }
+
+  async function download() {
+    if (!treino?.gpx_path) return;
+    const nome = (treino.titulo || "treino").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+    const { data } = await createClient().storage.from("gpx").createSignedUrl(treino.gpx_path, 60, { download: `${nome}-${treino.data}.gpx` });
+    if (data?.signedUrl) window.location.href = data.signedUrl;
+    else setErr("Não foi possível descarregar o GPX.");
+  }
+
+  return (
+    <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <form className="modal" onSubmit={save} autoComplete="off">
+        <div className="stripe" />
+        <div className="mbody">
+          <div>
+            <p className="eyebrow" style={{ color: "var(--muted)" }}>{treino ? "Treino" : "Novo treino"} · <span suppressHydrationWarning>{fmtDate(f.data, { weekday: "long", day: "numeric", month: "long" })}</span></p>
+            <h3>{treino ? treino.titulo : "Planear treino"}</h3>
+          </div>
+          <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+            <div className="fgrid">
+              <div className="field full"><label htmlFor="tTitulo">Título</label><input id="tTitulo" type="text" maxLength={60} placeholder="ex.: Subida à Senhora do Salto" value={f.titulo} onChange={set("titulo")} /></div>
+              <div className="field"><label htmlFor="tData">Data</label><input id="tData" type="date" required value={f.data} onChange={set("data")} /></div>
+              <div className="field"><label htmlFor="tHora">Hora de saída</label><input id="tHora" type="time" value={f.hora} onChange={set("hora")} /></div>
+              <div className="field"><label htmlFor="tTipo">Tipo</label><select id="tTipo" value={f.tipo} onChange={set("tipo")}>{Object.entries(TIPOS_TREINO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+              <div className="field"><label htmlFor="tInt">Intensidade</label><select id="tInt" value={f.intensidade} onChange={set("intensidade")}><option value="">—</option>{Object.entries(INTENSIDADES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+              <div className="field"><label htmlFor="tPartida">Ponto de encontro</label><input id="tPartida" type="text" maxLength={80} value={f.partida} onChange={set("partida")} /></div>
+              <div className="field"><label htmlFor="tKm">Km planeados</label><input id="tKm" type="number" min={0} value={f.km_plano} onChange={set("km_plano")} /></div>
+              <div className="field full"><label htmlFor="tNotas">Notas</label><textarea id="tNotas" maxLength={800} placeholder="Séries, ritmo, paragem para café…" value={f.notas} onChange={set("notas")} /></div>
+            </div>
+          </fieldset>
+
+          <div className="gpx">
+            <div className="gpx-h">
+              <span className="field-l">Treino feito (GPX)</span>
+              {canEdit && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button type="button" className="btn" onClick={() => fileRef.current?.click()}>{shown ? "Substituir GPX" : "Carregar GPX"}</button>
+                  {shown && <button type="button" className="btn ghost danger" onClick={() => { setGpx(null); setGpxFile(null); setRemoveGpx(true); }}>Remover</button>}
+                </div>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" hidden onChange={pick} />
+            {shown ? (
+              <>
+                <div className="gpx-stats">
+                  <div><b className="num">{fmtKm(shown.km)}</b><span>km</span></div>
+                  <div><b className="num">{shown.dmais.toLocaleString("pt-PT")}</b><span>m D+</span></div>
+                  {shown.duracaoS ? <div><b className="num">{fmtDuracao(shown.duracaoS)}</b><span>tempo</span></div> : null}
+                  {shown.duracaoS ? <div><b className="num">{(shown.km / (shown.duracaoS / 3600)).toFixed(1)}</b><span>km/h média</span></div> : null}
+                </div>
+                {shown.pontos.length > 1 && <RoutePreview pontos={shown.pontos} />}
+                {gpxFile ? (
+                  <span className="hint">{gpxFile.name} · {gpx?.inicio && gpx.inicio !== f.data ? <>o GPX é de {fmtDate(gpx.inicio, { day: "numeric", month: "short" })} · </> : null}por guardar</span>
+                ) : treino?.gpx_path ? (
+                  <button type="button" className="btn ghost" style={{ alignSelf: "flex-start", paddingLeft: 0 }} onClick={download}>Descarregar GPX</button>
+                ) : null}
+              </>
+            ) : (
+              <p className="empty" style={{ margin: 0 }}>{removeGpx ? "O GPX vai ser removido quando guardares." : "Depois da volta, carrega o GPX (Garmin, Strava, Komoot…) para contar os km feitos."}</p>
+            )}
+          </div>
+
+          {treino && <p className="empty" style={{ margin: 0 }}>Criado por {treino.perfis?.nome || "um membro"}{!canEdit ? ". Só quem criou ou um admin pode alterar." : ""}</p>}
+          {err && <div className="notice">{err}</div>}
+          <div className="mactions">
+            {treino && canEdit ? <button type="button" className="btn ghost danger" onClick={remove} disabled={busy}>{armed ? "Confirmar: apagar" : "Apagar treino"}</button> : <span />}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" className="btn" onClick={onClose}>{canEdit ? "Cancelar" : "Fechar"}</button>
+              {canEdit && <button type="submit" className="btn primary" disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />A guardar…</> : "Guardar"}</button>}
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}

@@ -14,7 +14,7 @@ export const viewport: Viewport = { themeColor: "#052F42", width: "device-width"
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, user, perfil, isAdmin } = await getSession();
+  const { supabase, user, perfil, isAdmin, isMember } = await getSession();
   const { data } = await supabase.from("eventos").select("*");
   const evs = (data ?? []) as Evento[];
   const nx = nextEvento(evs);
@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         <nav className="nav" aria-label="Secções">
           <div className="in">
-            <NavTabs isAdmin={isAdmin} />
+            <NavTabs isAdmin={isAdmin} isMember={isMember} />
             <div className="who">
               {perfil ? (
                 <>

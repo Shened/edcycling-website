@@ -6,16 +6,17 @@ import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
 
 // Formulário de criar/editar evento (só admins — o RLS garante o resto).
-export default function EventForm({ evento, onClose }: { evento: Evento | null; onClose: () => void }) {
+export default function EventForm({ evento, onClose, dataInicial }: { evento: Evento | null; onClose: () => void; dataInicial?: string }) {
+  const d0 = parseDate(dataInicial);
   const router = useRouter();
   const now = new Date();
   const [f, setF] = useState({
     titulo: evento?.titulo ?? "",
     tipo: evento?.tipo ?? "passeio",
     estado: evento?.estado ?? "proposta",
-    data: evento?.data ?? "",
-    mes: evento ? evMes(evento) : now.getMonth() + 1,
-    ano: evento ? evAno(evento) : now.getFullYear(),
+    data: evento?.data ?? dataInicial ?? "",
+    mes: evento ? evMes(evento) : (d0 ?? now).getMonth() + 1,
+    ano: evento ? evAno(evento) : (d0 ?? now).getFullYear(),
     hora: evento?.hora ?? "",
     partida: evento?.partida ?? "",
     km: evento?.km?.toString() ?? "",

@@ -65,3 +65,14 @@ Não há registo público: só entra quem um admin convidar na página **Gestão
 5. **Site URL**: em *Authentication → URL Configuration*, mete o URL da Vercel. Os links dos emails usam esse endereço.
 
 Quem já tinha conta (por exemplo, os admins) define a password em **Perfil → Alterar password**, ou em "Esqueci-me da password" no ecrã de entrar.
+
+
+## Treinos
+
+Separador **Treinos** (só membros): calendário com vista de mês e de semana. Clicar num dia abre o modal para criar um treino, ou um evento se fores admin. Os eventos com data aparecem no mesmo calendário.
+
+- Cada treino pode ter um **GPX**. O site calcula no browser os km, o D+ (ignora variações abaixo de 3 m), o tempo e a média, e mostra o traçado.
+- O topo do calendário soma os km e o D+ feitos no mês ou na semana visível, e também os km planeados.
+- Quem criou o treino (ou um admin) pode editá-lo e apagá-lo.
+
+**Setup:** corre `supabase/migrations/003_treinos.sql` no SQL Editor. Cria a tabela `treinos` e o bucket privado `gpx`.
