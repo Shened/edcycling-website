@@ -44,12 +44,13 @@ export interface Post {
   id: string;
   autor_id: string;
   legenda: string | null;
-  foto_path: string;
+  foto_path: string | null;
+  fotos: string[];
   evento_id: string | null;
   created_at: string;
-  perfis: { nome: string } | null;
+  perfis: { nome: string; avatar_path?: string | null } | null;
   eventos: { titulo: string } | null;
-  url?: string | null;
+  urls?: string[];
 }
 
 export type TipoTreino = "estrada" | "gravel" | "btt" | "rolo" | "corrida" | "natacao";

@@ -4,28 +4,34 @@ import { getSession } from "@/lib/session";
 import { sortEventos } from "@/lib/dates";
 import type { Evento, Post } from "@/lib/types";
 
-export default async function Fotos() {
+// Feed da equipa: publicações com texto e/ou fotos, opcionalmente ligadas a um evento.
+export default async function FeedPage() {
   const { supabase, perfil, isMember, isAdmin } = await getSession();
   if (!isMember) {
     return (
       <section className="view">
-        <div className="sechead"><h2>Fotos da equipa</h2></div>
+        <div className="sechead"><h2>Feed da equipa</h2></div>
         <p className="empty">
-          {perfil ? "As fotos ficam visíveis assim que um admin aprovar a tua conta." : <>As fotos são só para a equipa. <Link href="/entrar">Entra</Link> para as veres.</>}
+          {perfil ? "O feed fica visível assim que a tua conta estiver ativa." : <>O feed é só para a equipa. <Link href="/entrar">Entra</Link> para o veres.</>}
         </p>
       </section>
     );
   }
   const [{ data: postsRaw }, { data: eventos }] = await Promise.all([
-    supabase.from("posts").select("id,autor_id,legenda,foto_path,evento_id,created_at,perfis(nome),eventos(titulo)").order("created_at", { ascending: false }).limit(120),
-    supabase.from("eventos").select("*"),
+    supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,evento_id,created_at,perfis(nome,avatar_path),eventos(titulo)").order("created_at", { ascending: false }).limit(60),
+    supabase.from("eventos").select("id,titulo,data,mes,ano,estado,tipo"),
   ]);
   const posts = (postsRaw ?? []) as unknown as Post[];
-  if (posts.length) {
-    const { data: signed } = await supabase.storage.from("fotos").createSignedUrls(posts.map((p) => p.foto_path), 60 * 60);
-    const map = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
-    posts.forEach((p) => (p.url = map.get(p.foto_path) ?? null));
+  const paths = [...new Set(posts.flatMap((p) => (p.fotos?.length ? p.fotos : p.foto_path ? [p.foto_path] : [])))];
+  const map = new Map<string, string>();
+  if (paths.length) {
+    const { data: signed } = await supabase.storage.from("fotos").createSignedUrls(paths, 60 * 60);
+    (signed ?? []).forEach((s) => { if (s.path && s.signedUrl) map.set(s.path, s.signedUrl); });
   }
+  posts.forEach((p) => {
+    const lista = p.fotos?.length ? p.fotos : p.foto_path ? [p.foto_path] : [];
+    p.urls = lista.map((f) => map.get(f)).filter((u): u is string => !!u);
+  });
   const evs = sortEventos((eventos ?? []) as Evento[]).filter((e) => e.estado !== "cancelado");
   return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} />;
 }

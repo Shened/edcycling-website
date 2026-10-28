@@ -7,7 +7,7 @@
 <title>Convite EDCycling</title>
 </head>
 <body style="margin:0;padding:0;background:#EEF2F5;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Foste convidado para o site da equipa EDCycling. Cria a tua conta em menos de um minuto.</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{ if .Data.nome }}Olá {{ .Data.nome }}, foste{{ else }}Foste{{ end }} convidado para o site da equipa EDCycling. Cria a tua conta em menos de um minuto.</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF2F5;">
   <tr>
     <td align="center" style="padding:32px 16px;">
@@ -27,7 +27,7 @@
         <tr>
           <td style="padding:32px 32px 8px;font-family:Arial,Helvetica,sans-serif;color:#0A2633;">
             <h1 style="margin:0 0 14px;font-family:'Arial Narrow','Helvetica Neue',Arial,sans-serif;font-size:30px;line-height:1.1;font-style:italic;font-weight:900;text-transform:uppercase;color:#0A2633;">Mantém-te na roda!</h1>
-            <p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#0A2633;">Foste convidado para o site da equipa EDCycling.</p>
+            <p style="margin:0 0 14px;font-size:16px;line-height:1.55;color:#0A2633;">{{ if .Data.nome }}Olá {{ .Data.nome }}, foste{{ else }}Foste{{ end }} convidado para o site da equipa EDCycling.</p>
             <p style="margin:0 0 26px;font-size:16px;line-height:1.55;color:#0A2633;">Cria a tua conta para veres o calendário de passeios, te inscreveres nos eventos e partilhares as fotos das voltas.</p>
           </td>
         </tr>

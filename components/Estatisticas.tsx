@@ -163,7 +163,7 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
               {atletas.map((a: LinhaAtleta, i) => (
                 <tr key={a.id} className={a.id === userId ? "me" : ""}>
                   <td className="r num muted">{i + 1}</td>
-                  <td><b>{a.nome}</b>{a.id === userId && <span className="pill admin" style={{ marginLeft: 6 }}>tu</span>}{a.convidado && <span className="pill" style={{ marginLeft: 6 }}>sem conta</span>}</td>
+                  <td>{a.convidado ? <b>{a.nome}</b> : <a className="who-link" href={`/atletas/${a.id}`}><b>{a.nome}</b></a>}{a.id === userId && <span className="pill admin" style={{ marginLeft: 6 }}>tu</span>}{a.convidado && <span className="pill" style={{ marginLeft: 6 }}>sem conta</span>}</td>
                   <td className="r num"><b>{fmtKm(a.km)}</b></td>
                   <td className="r num">{a.treinos}</td>
                   <td className="r">
