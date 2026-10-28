@@ -28,7 +28,7 @@ npm run dev                  # http://localhost:3000
 
 1. Faz push desta pasta para um repositório GitHub.
 2. Em https://vercel.com: **Add New → Project**, escolhe o repositório (deteta Next.js sozinho).
-3. Em **Environment Variables**, adiciona `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. Em **Environment Variables**, adiciona `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 4. Clica em **Deploy**.
 5. Se o URL final for diferente do que puseste no passo 1.3, atualiza o Supabase com o URL certo.
 
