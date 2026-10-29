@@ -23,7 +23,6 @@ export default function MobileNav({ isMember }: { isAdmin?: boolean; isMember: b
     { href: "/fotos", label: "Feed", icon: I.fotos },
     { href: "/atletas", label: "Atletas", icon: I.atletas },
     { href: "/estatisticas", label: "Números", icon: I.stats },
-    { href: "/perfil", label: "Perfil", icon: I.perfil },
   ];
   return (
     <nav className="mnav" aria-label="Secções">

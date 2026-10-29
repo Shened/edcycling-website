@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ESTADOS, MESES, MESES_L, TIPOS, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib/dates";
+import { MESES_L, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib/dates";
 import { avisarInscricao } from "@/lib/avisos";
 import type { EstadoInscricao, Evento, Inscricao, Membro, Post } from "@/lib/types";
 import Avatar from "./Avatar";
@@ -11,6 +11,9 @@ import EventForm from "./EventForm";
 import PostCard from "./PostCard";
 import PresencasEditor from "./PresencasEditor";
 import Texto from "./Texto";
+import MenuAcoes from "./MenuAcoes";
+import { useEsc } from "./useEsc";
+import { Resposta, estadoFrase } from "./EventoCartao";
 
 type Insc = Inscricao & { perfis: { nome: string; avatar_path?: string | null } | null };
 interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean }
@@ -28,6 +31,8 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
   const [mine, setMine] = useState<EstadoInscricao | null>(meuServidor);
   const [busy, setBusy] = useState(false);
   useEffect(() => setMine(meuServidor), [meuServidor]);
+  const fecharPres = useCallback(() => setPres(false), []);
+  useEsc(pres, fecharPres);
 
   const fechadas = !!e.presencas_fechadas;
   const closed = e.estado === "cancelado" || e.estado === "realizado" || fechadas;
@@ -64,100 +69,114 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
     setArmedPost(null); router.refresh();
   }
 
+  async function partilhar() {
+    const url = window.location.href;
+    if (navigator.share) { try { await navigator.share({ title: e.titulo, url }); return; } catch { /* cancelado */ } }
+    await copiar();
+  }
+  const acoes = isAdmin ? [
+    { label: "Editar evento", onClick: () => setEditar(true) },
+    ...((passado || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPres(true) }] : []),
+  ] : [];
+  const mostraResp = !closed && souAtleta;
+
   const Pessoa = ({ i }: { i: Insc }) => (
-    <Link href={`/atletas/${i.user_id}`} className={`pchip${i.user_id === eu.id ? " me" : ""}`}>
-      <Avatar nome={i.perfis?.nome || "?"} path={i.perfis?.avatar_path} size={26} />
-      <span>{i.perfis?.nome || "Membro"}</span>
-    </Link>
+    <li>
+      <Link href={`/atletas/${i.user_id}`} className="pessoa">
+        <Avatar nome={i.perfis?.nome || "?"} path={i.perfis?.avatar_path} size={36} />
+        <span className="pessoa-n">{i.perfis?.nome || "Membro"}{i.user_id === eu.id && <span className="pessoa-tu"> (tu)</span>}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+      </Link>
+    </li>
   );
+  const Linha = ({ icon, t, s, extra }: { icon: React.ReactNode; t: React.ReactNode; s: string; extra?: React.ReactNode }) => (
+    <li className="evd-l">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon}</svg>
+      <span className="evd-t"><b>{t}</b><span>{s}</span></span>
+      {extra}
+    </li>
+  );
+  const frase = estadoFrase(e) + (n !== null && n >= 0 && !closed ? (n === 0 ? ", é hoje" : n === 1 ? ", é amanhã" : `, faltam ${n} dias`) : "");
 
   return (
-    <section className="view ev-page">
-      <Link href="/eventos" className="btn ghost" style={{ alignSelf: "flex-start", paddingLeft: 0 }}>‹ Eventos</Link>
+    <section className={`view ev-page${mostraResp ? " com-resp" : ""}`}>
+      <Link href="/eventos" className="ev-voltar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+        Eventos
+      </Link>
 
-      <header className={`ev-hero st-${e.estado}`}>
-        <div className="bib" suppressHydrationWarning>
-          {d ? (<><span className="n">{d.getDate()}</span><span className="m">{MESES[evMes(e) - 1]}</span><span className="w">{fmtDate(e.data, { weekday: "short" }).replace(".", "")}</span></>)
-             : (<><span className="n">{String(evMes(e)).padStart(2, "0")}</span><span className="m">{MESES[evMes(e) - 1]}</span><span className="w num">{evAno(e)}</span></>)}
-        </div>
-        <div className="ev-hero-b">
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <span className="pill tipo">{TIPOS[e.tipo] ?? "Passeio"}</span>
-            <span className={`pill ${e.estado}`}>{ESTADOS[e.estado] ?? "Proposta"}</span>
-            {n !== null && n >= 0 && !closed && <span className="pill" suppressHydrationWarning>{n === 0 ? "É hoje" : n === 1 ? "Amanhã" : `Faltam ${n} dias`}</span>}
+      <header className={`ev-cabeca st-${e.estado}`}>
+        <div className="topo" aria-hidden="true" />
+        <div className="ev-cabeca-scrim" aria-hidden="true" />
+        <div className="ev-cabeca-in">
+          <div className="ev-cabeca-t">
+            <p suppressHydrationWarning>{frase}</p>
+            <h1>{e.titulo}</h1>
           </div>
-          <h2 className="big" style={{ fontSize: "clamp(34px,7vw,60px)" }}>{e.titulo}</h2>
+          <div className="ev-cabeca-a">
+            <button type="button" className="ico-btn mac-btn claro" onClick={partilhar} aria-label={copiado ? "Link copiado" : "Partilhar evento"} title={copiado ? "Link copiado" : "Partilhar"}>
+              {copiado
+                ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>
+                : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>}
+            </button>
+            <MenuAcoes acoes={acoes} label={`Ações para ${e.titulo}`} claro />
+          </div>
         </div>
       </header>
+      <p className="sr-only" aria-live="polite">{copiado ? "Link copiado" : ""}</p>
 
-      <dl className="nums nums-auto">
-        <div><dt>Data</dt><dd className="sm" suppressHydrationWarning>{e.data ? fmtDate(e.data, { weekday: "long", day: "numeric", month: "long" }) : `${MESES_L[evMes(e) - 1]} ${evAno(e)} · a definir`}</dd></div>
-        {e.hora && <div><dt>Saída</dt><dd className="num">{e.hora.slice(0, 5)}</dd></div>}
-        {e.partida && <div><dt>Encontro</dt><dd className="sm">{e.partida}</dd></div>}
-        {e.km != null && <div><dt>Distância</dt><dd className="num">{e.km} km</dd></div>}
-        {e.dmais != null && <div><dt>Desnível</dt><dd className="num">{e.dmais} m</dd></div>}
-      </dl>
+      <div className="evd-grid">
+        <div className="evd-main">
+          <ul className="evd-lista">
+            <Linha
+              icon={<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>}
+              t={<span suppressHydrationWarning>{d ? fmtDate(e.data, { weekday: "long", day: "numeric", month: "long", year: evAno(e) !== new Date().getFullYear() ? "numeric" : undefined }) : `${MESES_L[evMes(e) - 1]} de ${evAno(e)}`}</span>}
+              s={e.hora ? `Saída às ${e.hora.slice(0, 5)}` : d ? "Hora por definir" : "Dia por marcar"}
+              extra={e.data && e.estado !== "cancelado" ? <a className="evd-cal" href={`/eventos/${e.id}/ics`}>Adicionar ao calendário</a> : undefined}
+            />
+            {e.partida && <Linha icon={<><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>} t={e.partida} s="Ponto de encontro" />}
+            {e.km != null && <Linha icon={<path d="M3 17l5-6 4 4 4-7 5 9" />} t={<>{Number(e.km).toLocaleString("pt-PT")}&nbsp;km</>} s="Distância" />}
+            {e.dmais != null && <Linha icon={<path d="M3 20 10 8l4 6 3-4 4 10z" />} t={<>{Number(e.dmais).toLocaleString("pt-PT")}&nbsp;m</>} s="Desnível positivo" />}
+          </ul>
 
-      <div className="ev-acoes">
-        {!closed && souAtleta && (
-          <div className="ev-grupo">
-            <span className="field-l">A tua resposta</span>
-            <div className="seg" role="group" aria-label="A tua resposta">
-              <button className={`btn${mine === "vai" ? " on-go" : ""}`} aria-pressed={mine === "vai"} onClick={() => rsvp(mine === "vai" ? null : "vai")}>Vou</button>
-              <button className={`btn${mine === "talvez" ? " on-maybe" : ""}`} aria-pressed={mine === "talvez"} onClick={() => rsvp(mine === "talvez" ? null : "talvez")}>Talvez</button>
-              <button className={`btn${mine === "nao" ? " on-no" : ""}`} aria-pressed={mine === "nao"} onClick={() => rsvp(mine === "nao" ? null : "nao")}>Não vou</button>
+          {e.notas && <div className="evd-bloco"><h2>Informações</h2><Texto texto={e.notas} /></div>}
+
+          {msg && <div className="notice" role="alert">{msg}</div>}
+
+          {mostraResp && (
+            <div className="evd-resp">
+              <span>Vais a este evento?</span>
+              <Resposta mine={mine} onPick={rsvp} busy={busy} titulo={e.titulo} />
             </div>
-          </div>
-        )}
-        <div className="ev-links">
-          {e.data && e.estado !== "cancelado" && (
-            <a className="btn" href={`/eventos/${e.id}/ics`}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg>
-              Adicionar ao calendário
-            </a>
           )}
-          <button type="button" className="btn" onClick={copiar}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>
-            {copiado ? "Link copiado" : "Copiar link"}
-          </button>
+          {!closed && !souAtleta && <p className="empty">Conta de gestão: não responde como atleta.</p>}
         </div>
-        {isAdmin && (
-          <div className="ev-admin">
-            <span className="field-l">Gestão</span>
-            <div className="ev-links">
-              <button className="btn ghost" onClick={() => setEditar(true)}>Editar evento</button>
-              {(passado || e.estado === "realizado") && e.estado !== "cancelado" && <button className="btn ghost" onClick={() => setPres(true)}>{fechadas ? "Editar presenças" : "Registar presenças"}</button>}
-            </div>
-          </div>
-        )}
-      </div>
-      {msg && <div className="notice">{msg}</div>}
 
-      {e.notas && <div className="panel"><span className="field-l">Informações</span><Texto texto={e.notas} /></div>}
-
-      <div className="panel ev-part">
-        {fechadas ? (
-          <>
-            <span className="field-l">Foram · {presentes.length + convidados.length}</span>
-            <div className="pchips">
-              {presentes.map((i) => <Pessoa key={i.id} i={i} />)}
-              {convidados.map((c) => <span key={c} className="pchip guest"><Avatar nome={c} size={26} /><span>{c}</span></span>)}
-              {!presentes.length && !convidados.length && <span className="empty">—</span>}
-            </div>
-          </>
-        ) : (
-          <>
-            <div><span className="field-l" style={{ color: "var(--go)" }}>Vão · {g.vai.length}</span><div className="pchips">{g.vai.length ? g.vai.map((i) => <Pessoa key={i.id} i={i} />) : <span className="empty">Ainda ninguém. Sê o primeiro!</span>}</div></div>
-            {g.talvez.length > 0 && <div><span className="field-l" style={{ color: "var(--maybe)" }}>Talvez · {g.talvez.length}</span><div className="pchips">{g.talvez.map((i) => <Pessoa key={i.id} i={i} />)}</div></div>}
-            {g.nao.length > 0 && <div><span className="field-l" style={{ color: "var(--no)" }}>Não vão · {g.nao.length}</span><div className="pchips">{g.nao.map((i) => <Pessoa key={i.id} i={i} />)}</div></div>}
-          </>
-        )}
+        <div className="evd-bloco evd-gente">
+          {fechadas ? (
+            <>
+              <h2>Foram {presentes.length + convidados.length}</h2>
+              <ul className="pessoas">
+                {presentes.map((i) => <Pessoa key={i.id} i={i} />)}
+                {convidados.map((c) => <li key={c}><span className="pessoa"><Avatar nome={c} size={36} /><span className="pessoa-n">{c}<span className="pessoa-tu"> (convidado)</span></span></span></li>)}
+              </ul>
+              {!presentes.length && !convidados.length && <p className="empty">Sem presenças registadas.</p>}
+            </>
+          ) : (
+            <>
+              <h2>{g.vai.length ? `Vão ${g.vai.length}` : "Quem vai"}</h2>
+              {g.vai.length ? <ul className="pessoas">{g.vai.map((i) => <Pessoa key={i.id} i={i} />)}</ul> : <p className="evc-ninguem">Ainda ninguém respondeu. Sê o primeiro.</p>}
+              {g.talvez.length > 0 && <><h3>Talvez {g.talvez.length}</h3><ul className="pessoas">{g.talvez.map((i) => <Pessoa key={i.id} i={i} />)}</ul></>}
+              {g.nao.length > 0 && <><h3>Não vão {g.nao.length}</h3><ul className="pessoas">{g.nao.map((i) => <Pessoa key={i.id} i={i} />)}</ul></>}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="ev-posts">
         <div className="sechead" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 24 }}>Fotos e publicações</h2>
-          <Link className="btn primary" href={`/fotos?evento=${e.id}`}>+ Publicar sobre este evento</Link>
+          <h2 style={{ fontSize: 26 }}>Fotos e publicações</h2>
+          <Link className="btn" href={`/fotos?evento=${e.id}`}>Publicar sobre este evento</Link>
         </div>
         {posts.length ? (
           <div className="feed-list">
@@ -169,7 +188,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
       {editar && <EventForm evento={e} onClose={() => { setEditar(false); router.refresh(); }} />}
       {pres && (
         <div className="overlay" onClick={(ev) => ev.target === ev.currentTarget && setPres(false)}>
-          <div className="modal" role="dialog" aria-label={`Presenças em ${e.titulo}`}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label={`Presenças em ${e.titulo}`}>
             <div className="stripe" />
             <div className="mbody">
               <div><p className="eyebrow" style={{ color: "var(--muted)" }}>Presenças</p><h3>{e.titulo}</h3></div>

@@ -38,7 +38,7 @@ export interface Inscricao {
   user_id: string;
   estado: EstadoInscricao;
   presente?: boolean | null;
-  perfis: { nome: string } | null;
+  perfis: { nome: string; avatar_path?: string | null } | null;
 }
 
 export interface Post {

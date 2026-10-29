@@ -7,7 +7,7 @@ import "./globals.css";
 const barlow = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "600", "700", "800"], style: ["normal", "italic"], variable: "--font-barlow", display: "swap" });
 const publicSans = Public_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-public", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], weight: ["500"], variable: "--font-jetbrains", display: "swap" });
-import NavTabs from "@/components/NavTabs";
+import Cabecalho from "@/components/Cabecalho";
 import RegistarSW from "@/components/RegistarSW";
 import MobileNav from "@/components/MobileNav";
 import { getSession } from "@/lib/session";
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "EDCycling", statusBarStyle: "black-translucent" },
   formatDetection: { telephone: false },
 };
-export const viewport: Viewport = { themeColor: "#052F42", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: dark)", color: "#031D29" }, { media: "(prefers-color-scheme: light)", color: "#052F42" }], width: "device-width", initialScale: 1, viewportFit: "cover" };
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -45,61 +45,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="pt-PT" className={`${barlow.variable} ${publicSans.variable} ${jetbrains.variable}`}>
       <body className={isMember ? "has-mnav" : undefined}>
-        <header className="hero">
-          <div className="topo" aria-hidden="true" />
-          <div className="in">
-            <Link href="/" className="brand">
-              <p className="eyebrow">A bicicleta como estilo de vida · est 2023</p>
-              <h1>ED<span>Cycling</span></h1>
-            </Link>
-            {isMember ? (
-            <div className="next">
-              <div className="l">Próximo evento</div>
-              {nx ? (
-                <>
-                  <div className="d">{nx.titulo}</div>
-                  <div className="s" suppressHydrationWarning>{quando}{isMember ? ` · ${vai} confirmado${vai === 1 ? "" : "s"}` : ""}</div>
-                </>
-              ) : (
-                <div className="d">Nada marcado</div>
-              )}
-            </div>
-            ) : (
-              <Link href="/entrar" className="next next-cta">
-                <div className="l">Atletas da equipa</div>
-                <div className="d">Entrar</div>
-                <div className="s">Eventos, treinos, fotos e estatísticas</div>
-              </Link>
-            )}
-          </div>
-          <div className="stripe" />
-        </header>
-        <nav className="nav" aria-label="Secções">
-          <div className="in">
-            <NavTabs isAdmin={isAdmin} isMember={isMember} />
-            <div className="who">
-              {perfil ? (
-                <>
-                  <Link href="/perfil" className="btn ghost"><b>{perfil.nome || "Perfil"}</b></Link>
-                  {isAdmin && (
-                    <Link href="/gestao" className="btn ghost ico-defs" aria-label="Gestão" title="Painel de gestão">
-                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></svg>
-                    </Link>
-                  )}
-                  {isMember && (
-                    <Link href="/definicoes" className="btn ghost ico-defs" aria-label="Definições" title="Definições">
-                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
-                    </Link>
-                  )}
-                  <form action="/auth/sair" method="post"><button className="btn ghost">Sair</button></form>
-                </>
-              ) : (
-                <Link href="/entrar" className="btn primary">Entrar</Link>
-              )}
-            </div>
-          </div>
-        </nav>
-        <main className="in">{children}</main>
+        <a href="#conteudo" className="skip">Saltar para o conteúdo</a>
+        <Cabecalho
+          isMember={isMember}
+          isAdmin={isAdmin}
+          perfil={perfil ? { nome: perfil.nome, avatar_path: perfil.avatar_path ?? null } : null}
+          proximo={nx ? { titulo: nx.titulo, quando: `${quando} · ${vai} confirmado${vai === 1 ? "" : "s"}` } : null}
+        />
+        <main className="in" id="conteudo">{children}</main>
         <footer className="foot in">
           <span>EDCycling · desde 2023</span>
           <Link href="/ajuda">Ajuda e instalar a app</Link>

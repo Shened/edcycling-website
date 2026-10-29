@@ -18,7 +18,7 @@ export default async function EventosPage() {
   }
   const [{ data: eventos }, { data: inscricoes }, { data: membros }] = await Promise.all([
     supabase.from("eventos").select("*"),
-    supabase.from("inscricoes").select("id,evento_id,user_id,estado,presente,perfis(nome)"),
+    supabase.from("inscricoes").select("id,evento_id,user_id,estado,presente,perfis(nome,avatar_path)"),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true).order("nome"),
   ]);
   return (

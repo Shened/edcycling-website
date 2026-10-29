@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEsc } from "./useEsc";
 import { ESTADOS, MESES, MESES_L, TIPOS } from "@/lib/dates";
 import { fmtKm } from "@/lib/gpx";
 import type { Evento, Membro, Treino } from "@/lib/types";
@@ -25,6 +26,8 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
   const [view, setView] = useState<"mes" | "semana">("mes");
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
   const [modal, setModal] = useState<Modal>(null);
+  const fecharDia = useCallback(() => setModal(null), []);
+  useEsc(modal?.k === "dia", fecharDia);
   const [hoje, setHoje] = useState("");
   useEffect(() => setHoje(iso(new Date())), []);
 
@@ -179,7 +182,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
 
       {modal?.k === "dia" && (
         <div className="overlay" onClick={(e) => e.target === e.currentTarget && setModal(null)}>
-          <div className="modal" role="dialog" aria-label={longDate(modal.data)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label={longDate(modal.data)}>
             <div className="stripe" />
             <div className="mbody">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
@@ -209,9 +212,10 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
 }
 
 function EventoInfo({ e, onClose }: { e: Evento; onClose: () => void }) {
+  useEsc(true, onClose);
   return (
     <div className="overlay" onClick={(ev) => ev.target === ev.currentTarget && onClose()}>
-      <div className="modal" role="dialog" aria-label={e.titulo}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label={e.titulo}>
         <div className="stripe" />
         <div className="mbody">
           <p className="eyebrow" style={{ color: "var(--muted)" }}>{TIPOS[e.tipo]} · {ESTADOS[e.estado]}</p>

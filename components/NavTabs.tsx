@@ -2,26 +2,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function NavTabs({ isAdmin, isMember }: { isAdmin: boolean; isMember: boolean }) {
+// Secções principais (no computador). Perfil, Definições e Gestão ficam no menu da conta.
+export default function NavTabs({ isMember }: { isAdmin?: boolean; isMember: boolean }) {
   const path = usePathname();
+  if (!isMember) return <nav className="tabs" aria-label="Secções" />;
   const tabs = [
-    { href: "/", label: "Início" },
-    ...(isMember ? [{ href: "/eventos", label: "Eventos" }] : []),
-    ...(isMember ? [{ href: "/treinos", label: "Treinos" }] : []),
-    ...(isMember ? [{ href: "/fotos", label: "Feed" }] : []),
-    ...(isMember ? [{ href: "/atletas", label: "Atletas" }] : []),
-    ...(isMember ? [{ href: "/estatisticas", label: "Estatísticas" }] : []),
-    ...(isMember ? [{ href: "/perfil", label: "Perfil" }] : []),
-    ...(isMember ? [{ href: "/definicoes", label: "Definições" }] : []),
-    ...(isAdmin ? [{ href: "/gestao", label: "Gestão" }] : []),
+    { href: "/eventos", label: "Eventos" },
+    { href: "/treinos", label: "Treinos" },
+    { href: "/fotos", label: "Feed" },
+    { href: "/atletas", label: "Atletas" },
+    { href: "/estatisticas", label: "Números" },
   ];
   return (
-    <div className="tabs">
+    <nav className="tabs" aria-label="Secções">
       {tabs.map((t) => (
-        <Link key={t.href} href={t.href} className="tab" aria-current={(t.href === "/" ? path === "/" : path === t.href || path.startsWith(t.href + "/")) ? "page" : undefined}>
+        <Link key={t.href} href={t.href} className="tab" aria-current={path === t.href || path.startsWith(t.href + "/") ? "page" : undefined}>
           {t.label}
         </Link>
       ))}
-    </div>
+    </nav>
   );
 }
