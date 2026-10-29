@@ -18,7 +18,7 @@ export default async function TreinosPage() {
   const [{ data: treinos }, { data: eventos }, { data: membros }] = await Promise.all([
     supabase
       .from("treinos")
-      .select("id,titulo,data,hora,tipo,intensidade,partida,km_plano,notas,gpx_path,km,dmais,duracao_s,trajeto,criador_id,perfis(nome),presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)")
+      .select("id,titulo,data,hora,tipo,intensidade,partida,km_plano,notas,gpx_path,km,dmais,duracao_s,trajeto,criador_id,perfis!treinos_criador_id_fkey(nome),presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)")
       .order("data", { ascending: true }),
     supabase.from("eventos").select("*").not("data", "is", null),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true).order("nome"),

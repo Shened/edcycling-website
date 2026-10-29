@@ -120,7 +120,7 @@ export async function avisarFeed(postId: string): Promise<void> {
     const { user } = await getSession();
     if (!user) return;
     const admin = createAdminClient();
-    const { data: p } = await admin.from("posts").select("id,autor_id,legenda,fotos,evento_id,perfis(nome),eventos(titulo)").eq("id", postId).single();
+    const { data: p } = await admin.from("posts").select("id,autor_id,legenda,fotos,evento_id,perfis!posts_autor_id_fkey(nome),eventos(titulo)").eq("id", postId).single();
     if (!p || p.autor_id !== user.id) return;
     const nome = (p.perfis as unknown as { nome: string } | null)?.nome || "Alguém da equipa";
     const ev = (p.eventos as unknown as { titulo: string } | null)?.titulo;
