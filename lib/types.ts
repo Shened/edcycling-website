@@ -30,6 +30,7 @@ export interface Evento {
   votos: number | null;
   presencas_fechadas?: boolean;
   convidados?: string[];
+  tema?: string | null;
 }
 
 export interface Inscricao {

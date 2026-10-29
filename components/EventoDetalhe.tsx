@@ -12,6 +12,7 @@ import PostCard from "./PostCard";
 import PresencasEditor from "./PresencasEditor";
 import Texto from "./Texto";
 import MenuAcoes from "./MenuAcoes";
+import { TemaDeco } from "@/lib/temas";
 import { useEsc } from "./useEsc";
 import { Resposta, estadoFrase } from "./EventoCartao";
 
@@ -105,9 +106,10 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
         Eventos
       </Link>
 
-      <header className={`ev-cabeca st-${e.estado}`}>
+      <header className={`ev-cabeca st-${e.estado}${e.tema ? ` tema tema-${e.tema}` : ""}`}>
         <div className="topo" aria-hidden="true" />
         <div className="ev-cabeca-scrim" aria-hidden="true" />
+        <TemaDeco tema={e.tema} />
         <div className="ev-cabeca-in">
           <div className="ev-cabeca-t">
             <p suppressHydrationWarning>{frase}</p>

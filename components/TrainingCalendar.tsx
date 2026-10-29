@@ -96,7 +96,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
       </button>
     );
     if (e) return (
-      <button type="button" className={`cal-chip evento st-${e.estado}`} title={`${e.titulo} · ${ESTADOS[e.estado]}`}
+      <button type="button" className={`cal-chip evento st-${e.estado}${e.tema ? ` tema-${e.tema}` : ""}`} title={`${e.titulo} · ${ESTADOS[e.estado]}`}
         onClick={(ev) => { ev.stopPropagation(); setModal({ k: "evento", evento: e, data: e.data! }); }}>
         <span className="t">{e.titulo}</span>
       </button>

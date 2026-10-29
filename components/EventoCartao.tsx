@@ -4,6 +4,7 @@ import { ESTADOS, MESES, MESES_L, TIPOS, daysTo, evAno, evMes, fmtDate, parseDat
 import type { EstadoInscricao, Evento, Inscricao } from "@/lib/types";
 import Avatar from "./Avatar";
 import MenuAcoes, { type Acao } from "./MenuAcoes";
+import { TemaDeco } from "@/lib/temas";
 
 type Insc = Inscricao & { perfis: { nome: string; avatar_path?: string | null } | null };
 
@@ -40,6 +41,7 @@ export function DataBloco({ e, grande }: { e: Evento; grande?: boolean }) {
     <div className={`evc-data${grande ? " grande" : ""}`} suppressHydrationWarning>
       <div className="topo" aria-hidden="true" />
       <div className="evc-scrim" aria-hidden="true" />
+      <TemaDeco tema={e.tema} />
       <div className="evc-data-in">
         {d ? <span className="evc-dia">{d.getDate()}</span> : <span className="evc-dia mes">{MESES[evMes(e) - 1]}</span>}
         <span className="evc-dl">
@@ -104,7 +106,7 @@ export default function EventoCartao({ e, insc, euId, mine, podeResponder, aviso
     ? `Foram ${presentes.length + nConv} atleta${presentes.length + nConv === 1 ? "" : "s"}.`
     : quemVai(vai, talvez, euId);
   return (
-    <article className={`evc st-${e.estado}`} id={`e-${e.id}`}>
+    <article className={`evc st-${e.estado}${e.tema ? ` tema tema-${e.tema}` : ""}`} id={`e-${e.id}`}>
       <DataBloco e={e} />
       <div className="evc-b">
         <div className="evc-top">

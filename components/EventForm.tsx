@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
 import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos";
+import { TEMAS, temaSugerido } from "@/lib/temas";
 
 // Formulário de criar/editar evento (só admins — o RLS garante o resto).
 export default function EventForm({ evento, onClose, dataInicial }: { evento: Evento | null; onClose: () => void; dataInicial?: string }) {
@@ -23,6 +24,7 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
     km: evento?.km?.toString() ?? "",
     dmais: evento?.dmais?.toString() ?? "",
     notas: evento?.notas ?? "",
+    tema: evento?.tema ?? "",
   });
   const [busy, setBusy] = useState(false);
   const [armed, setArmed] = useState(false);
@@ -44,6 +46,8 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
     });
   };
 
+  const sug = temaSugerido(f.data);
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!f.titulo.trim()) return;
@@ -51,7 +55,7 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
     const body = {
       titulo: f.titulo.trim(), tipo: f.tipo, estado: f.estado, data: f.data || null,
       mes: +f.mes, ano: +f.ano, hora: f.hora || null, partida: f.partida.trim() || null,
-      km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null,
+      km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null, tema: f.tema || null,
       updated_at: new Date().toISOString(),
     };
     const sb = createClient();
@@ -96,6 +100,16 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
             <div className="field"><label htmlFor="fPartida">Ponto de encontro</label><input id="fPartida" type="text" maxLength={80} value={f.partida} onChange={set("partida")} /></div>
             <div className="field"><label htmlFor="fKm">Distância (km)</label><input id="fKm" type="number" min={0} value={f.km} onChange={set("km")} /></div>
             <div className="field"><label htmlFor="fDmais">Desnível (m D+)</label><input id="fDmais" type="number" min={0} step={10} value={f.dmais} onChange={set("dmais")} /></div>
+            <div className="field full"><label htmlFor="fTema">Tema festivo</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <select id="fTema" style={{ flex: "1 1 180px" }} value={f.tema} onChange={set("tema")}>
+                  <option value="">Sem tema</option>
+                  {Object.entries(TEMAS).map(([k, t]) => <option key={k} value={k}>{t.label}</option>)}
+                </select>
+                {!f.tema && sug && <button type="button" className="btn" onClick={() => setF((p) => ({ ...p, tema: sug }))}>Usar tema de {TEMAS[sug].label}</button>}
+              </div>
+              <span className="hint">Muda as cores do cartão e da página do evento.</span>
+            </div>
             <div className="field full"><label htmlFor="fNotas">Notas</label><textarea id="fNotas" maxLength={800} placeholder="Almoço, carro de apoio, equipamento a levar…" value={f.notas} onChange={set("notas")} /></div>
           </div>
           {err && <div className="notice">{err}</div>}
