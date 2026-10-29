@@ -54,7 +54,7 @@ export default async function Resumo() {
                 <li key={p.id}><span className="pill pendente">Convite</span><span><b>{p.nome || p.email}</b> ainda não aceitou o convite.</span><Link href="/gestao/membros">Ver</Link></li>
               ))}
               {semPresEventos.map((e) => (
-                <li key={e.id}><span className="pill tipo">Evento</span><span>Registar presenças em <b>{e.titulo}</b>.</span><Link href={`/eventos#e-${e.id}`}>Abrir</Link></li>
+                <li key={e.id}><span className="pill tipo">Evento</span><span>Registar presenças em <b>{e.titulo}</b>.</span><Link href={`/eventos/${e.id}`}>Abrir</Link></li>
               ))}
               {semPresTreinos.map((t) => (
                 <li key={t.id}><span className="pill tipo">Treino</span><span>Registar presenças em <b>{t.titulo}</b> ({fmtDate(t.data, { day: "numeric", month: "short" })}).</span><Link href="/treinos">Abrir</Link></li>
@@ -73,7 +73,7 @@ export default async function Resumo() {
                 <li key={e.id}>
                   <span className="num muted" style={{ minWidth: 64 }}>{e.data ? fmtDate(e.data, { day: "numeric", month: "short" }) : `${MESES[evMes(e) - 1]} ${evAno(e)}`}</span>
                   <span><b>{e.titulo}</b> · <span className="c-vai num">{vai(e.id)}</span> vão</span>
-                  <Link href={`/eventos#e-${e.id}`}>Ver</Link>
+                  <Link href={`/eventos/${e.id}`}>Ver</Link>
                 </li>
               ))}
             </ul>

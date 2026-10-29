@@ -223,7 +223,7 @@ function EventoInfo({ e, onClose }: { e: Evento; onClose: () => void }) {
             {e.km != null && <div><dt>Distância</dt><dd>{e.km} km</dd></div>}
           </dl>
           {e.notas && <p className="notes">{e.notas}</p>}
-          <div className="mactions"><a className="btn" href={`/eventos#e-${e.id}`}>Ver e inscrever-me</a><button type="button" className="btn" onClick={onClose}>Fechar</button></div>
+          <div className="mactions"><a className="btn" href={`/eventos/${e.id}`}>Ver e inscrever-me</a><button type="button" className="btn" onClick={onClose}>Fechar</button></div>
         </div>
       </div>
     </div>

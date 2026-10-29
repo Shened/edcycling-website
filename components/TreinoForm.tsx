@@ -244,7 +244,7 @@ function Participantes({ treino, userId, isAdmin, membros, hoje }: { treino: Tre
   const convidados = treino.convidados ?? [];
 
   const chips = (list: string[]) => list.length
-    ? list.map((id) => nome(id)).sort((a, b) => a.localeCompare(b, "pt")).map((n, i) => <span key={i} className="chip">{n}</span>)
+    ? list.map((id) => ({ id, n: nome(id) })).sort((a, b) => a.n.localeCompare(b.n, "pt")).map((x) => <a key={x.id} href={`/atletas/${x.id}`} className="chip chip-link">{x.n}</a>)
     : <span className="empty">—</span>;
   const g = (e: EstadoInscricao) => ps.filter((p) => p.estado === e).map((p) => p.user_id);
   const presentes = ps.filter((p) => p.presente).map((p) => p.user_id);

@@ -5,7 +5,8 @@ import { sortEventos } from "@/lib/dates";
 import type { Evento, Post } from "@/lib/types";
 
 // Feed da equipa: publicações com texto e/ou fotos, opcionalmente ligadas a um evento.
-export default async function FeedPage() {
+export default async function FeedPage({ searchParams }: { searchParams: Promise<{ evento?: string }> }) {
+  const { evento: eventoInicial } = await searchParams;
   const { supabase, perfil, isMember, isAdmin } = await getSession();
   if (!isMember) {
     return (
@@ -46,5 +47,5 @@ export default async function FeedPage() {
   });
   const evs = sortEventos((eventos ?? []) as Evento[]).filter((e) => e.estado !== "cancelado");
   const eu = { id: perfil!.id, nome: perfil!.nome || "Eu", avatar: (perfil as { avatar_path?: string | null }).avatar_path ?? null };
-  return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} eu={eu} />;
+  return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} eu={eu} eventoInicial={eventoInicial ?? ""} />;
 }

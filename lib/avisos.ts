@@ -20,7 +20,7 @@ export async function avisarNovo(kind: Kind, id: string): Promise<void> {
         tipo: "novo", chave: `novo:evento:${id}`,
         titulo: `Novo evento: ${e.titulo}`,
         corpo: `${quando(e)}${e.partida ? ` · ${e.partida}` : ""}. Diz se vais.`,
-        url: `/eventos#e-${id}`,
+        url: `/eventos/${id}`,
         destinatarios: sem(await membrosAtivos(admin), user.id),
       });
     } else {
@@ -56,7 +56,7 @@ export async function avisarAlteracao(kind: Kind, id: string, antes: Antes): Pro
     const cancelado = kind === "evento" && r.estado === "cancelado" && antes.estado !== "cancelado";
     if (!cancelado && !mudouData && !mudouHora && !mudouLocal) return;
     if (!cancelado && r.data && r.data < hojeLisboa()) return; // já passou
-    const url = kind === "evento" ? `/eventos#e-${id}` : "/treinos";
+    const url = kind === "evento" ? `/eventos/${id}` : "/treinos";
     const dest = sem(await inscritos(admin, kind, id), user.id);
     await enviarAviso(cancelado ? {
       tipo: "alteracao", chave: `cancel:${kind}:${id}`,
@@ -161,7 +161,7 @@ export async function avisarInscricao(kind: Kind, id: string, antes: string | nu
       tipo: "inscricao", chave: `insc:${kind}:${id}:${user.id}:${agora ?? "sai"}:${hojeLisboa()}`,
       titulo: frase,
       corpo: `${total} atleta${total === 1 ? "" : "s"} confirmado${total === 1 ? "" : "s"}.`,
-      url: kind === "evento" ? `/eventos#e-${id}` : "/treinos",
+      url: kind === "evento" ? `/eventos/${id}` : "/treinos",
       destinatarios: dest,
     });
   } catch { /* nada */ }

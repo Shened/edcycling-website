@@ -37,7 +37,7 @@ export default function EventosAdmin({ eventos, inscricoes }: { eventos: Evento[
                     <td className="c num">{e.presencas_fechadas ? foram : "—"}</td>
                     <td style={{ display: "flex", gap: 4 }}>
                       <button className="btn ghost" onClick={() => setEditing(e)}>Editar</button>
-                      <a className="btn ghost" href={`/eventos#e-${e.id}`}>Ver</a>
+                      <a className="btn ghost" href={`/eventos/${e.id}`}>Ver</a>
                     </td>
                   </tr>
                 );

@@ -63,7 +63,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
     const grp = (k: keyof typeof g, lab: string, cls: string) => (
       <div className={`grp ${cls}`}>
         <span className="gl">{lab} <span className="num">{g[k].length}</span></span>
-        {g[k].length ? g[k].map((p) => <span key={p.id} className={`chip${p.user_id === perfil?.id ? " me" : ""}`}>{p.perfis?.nome || "Membro"}</span>) : <span className="empty">—</span>}
+        {g[k].length ? g[k].map((p) => <Link key={p.id} href={`/atletas/${p.user_id}`} className={`chip chip-link${p.user_id === perfil?.id ? " me" : ""}`}>{p.perfis?.nome || "Membro"}</Link>) : <span className="empty">—</span>}
       </div>
     );
     return (
@@ -74,7 +74,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         </div>
         <div className="evb">
           <div className="evh">
-            <h3>{e.titulo}</h3>
+            <h3><Link href={`/eventos/${e.id}`} className="who-link">{e.titulo}</Link></h3>
             <span className="pill tipo">{TIPOS[e.tipo] ?? "Passeio"}</span>
             <span className={`pill ${e.estado}`}>{ESTADOS[e.estado] ?? "Proposta"}</span>
           </div>
@@ -89,7 +89,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
           {isMember && e.presencas_fechadas ? (
             <div className="grp go">
               <span className="gl">Foram <span className="num">{presentes.length + convidados.length}</span></span>
-              {presentes.map((p) => <span key={p.id} className={`chip${p.user_id === perfil?.id ? " me" : ""}`}>{p.perfis?.nome || "Membro"}</span>)}
+              {presentes.map((p) => <Link key={p.id} href={`/atletas/${p.user_id}`} className={`chip chip-link${p.user_id === perfil?.id ? " me" : ""}`}>{p.perfis?.nome || "Membro"}</Link>)}
               {convidados.map((c) => <span key={c} className="chip guest">{c}</span>)}
               {!presentes.length && !convidados.length && <span className="empty">—</span>}
             </div>
@@ -126,6 +126,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
                   <button className="btn ghost" onClick={() => setPresEv(e)}>{e.presencas_fechadas ? "Editar presenças" : "Registar presenças"}</button>
                 )}
                 <button className="btn ghost" onClick={() => setEditing(e)}>Editar evento</button>
+                <Link className="btn ghost" href={`/eventos/${e.id}`}>Abrir</Link>
               </span>
             )}
           </div>

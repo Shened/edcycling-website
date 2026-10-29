@@ -1,6 +1,6 @@
 // Service worker simples: guarda os ficheiros estáticos e mostra uma página
 // quando não há rede. Não guarda páginas com dados da equipa.
-const CACHE = "edc-v2";
+const CACHE = "edc-v4";
 const OFFLINE = "/offline.html";
 const PRECACHE = [OFFLINE, "/icons/icon-192.png", "/topo-gondomar.svg"];
 

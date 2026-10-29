@@ -12,11 +12,11 @@ const MAX = 10;
 interface Escolhida { id: string; blob: Blob; url: string }
 
 
-export default function Feed({ posts, eventos, userId, isAdmin, eu }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null } }) {
+export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicial = "" }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null }; eventoInicial?: string }) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
   const [fotos, setFotos] = useState<Escolhida[]>([]);
-  const [evento, setEvento] = useState("");
+  const [evento, setEvento] = useState(eventoInicial);
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [armed, setArmed] = useState<string | null>(null);

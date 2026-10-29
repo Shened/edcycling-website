@@ -9,6 +9,7 @@ export default function NavTabs({ isAdmin, isMember }: { isAdmin: boolean; isMem
     ...(isMember ? [{ href: "/eventos", label: "Eventos" }] : []),
     ...(isMember ? [{ href: "/treinos", label: "Treinos" }] : []),
     ...(isMember ? [{ href: "/fotos", label: "Feed" }] : []),
+    ...(isMember ? [{ href: "/atletas", label: "Atletas" }] : []),
     ...(isMember ? [{ href: "/estatisticas", label: "Estatísticas" }] : []),
     ...(isMember ? [{ href: "/perfil", label: "Perfil" }] : []),
     ...(isMember ? [{ href: "/definicoes", label: "Definições" }] : []),

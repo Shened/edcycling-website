@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       tipo: "lembrete", chave: `lembrete:evento:${e.id}:${amanha}`,
       titulo: `Amanhã: ${e.titulo}`,
       corpo: `${quando(e)}${e.partida ? ` · ${e.partida}` : ""}${e.notas ? `\n${String(e.notas).slice(0, 160)}` : ""}`,
-      url: `/eventos#e-${e.id}`,
+      url: `/eventos/${e.id}`,
       destinatarios: await inscritos(admin, "evento", e.id),
     });
     enviados.push(`evento ${e.titulo}: ${r.push} push, ${r.email} email`);
