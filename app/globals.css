@@ -566,3 +566,7 @@ th[aria-sort="ascending"],th[aria-sort="descending"]{color:var(--ink)}
 .com-send{border:0;background:none;color:var(--pink);font-weight:700;font-size:14px;padding:6px 4px}
 .com-send:disabled{color:var(--muted);opacity:.6}
 @media (prefers-reduced-motion:reduce){.burst svg,.ico-btn.pop svg{animation:none}}
+
+/* atalho para as definições (sempre visível, também no telemóvel) */
+.ico-defs{padding:6px 8px}
+@media (min-width:641px){.ico-defs{display:none}}

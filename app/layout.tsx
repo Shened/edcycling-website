@@ -81,6 +81,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {perfil ? (
                 <>
                   <Link href="/perfil" className="btn ghost"><b>{perfil.nome || "Perfil"}</b></Link>
+                  {isMember && (
+                    <Link href="/definicoes" className="btn ghost ico-defs" aria-label="Definições" title="Definições">
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
+                    </Link>
+                  )}
                   <form action="/auth/sair" method="post"><button className="btn ghost">Sair</button></form>
                 </>
               ) : (
