@@ -18,7 +18,10 @@ export default async function FeedPage() {
     );
   }
   const [{ data: postsRaw }, { data: eventos }] = await Promise.all([
-    supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,evento_id,created_at,perfis(nome,avatar_path),eventos(titulo)").order("created_at", { ascending: false }).limit(60),
+    supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,evento_id,created_at,perfis(nome,avatar_path),eventos(titulo),post_gostos(user_id,perfis(nome)),post_comentarios(id,autor_id,texto,created_at,perfis(nome,avatar_path))")
+      .order("created_at", { ascending: false })
+      .order("created_at", { referencedTable: "post_comentarios", ascending: true })
+      .limit(60),
     supabase.from("eventos").select("id,titulo,data,mes,ano,estado,tipo"),
   ]);
   const posts = (postsRaw ?? []) as unknown as Post[];
@@ -33,5 +36,6 @@ export default async function FeedPage() {
     p.urls = lista.map((f) => map.get(f)).filter((u): u is string => !!u);
   });
   const evs = sortEventos((eventos ?? []) as Evento[]).filter((e) => e.estado !== "cancelado");
-  return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} />;
+  const eu = { id: perfil!.id, nome: perfil!.nome || "Eu", avatar: (perfil as { avatar_path?: string | null }).avatar_path ?? null };
+  return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} eu={eu} />;
 }

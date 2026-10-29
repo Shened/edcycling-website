@@ -539,3 +539,30 @@ th[aria-sort="ascending"],th[aria-sort="descending"]{color:var(--ink)}
 .sw-toggle input:checked+span::after{transform:translateX(18px)}
 .sw-toggle input:focus-visible+span{outline:2px solid var(--pink);outline-offset:2px}
 @media (max-width:520px){.prefs td.c,.prefs th.c{width:62px}}
+
+/* gostos e comentários */
+.fpost-media{position:relative}
+.burst{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:#fff}
+.burst svg{width:90px;height:90px;filter:drop-shadow(0 4px 14px rgba(0,0,0,.4));animation:burst .7s ease-out forwards}
+@keyframes burst{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.1);opacity:1}70%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}
+.fpost-acoes{display:flex;align-items:center;gap:4px;padding:6px 8px 0}
+.ico-btn{display:inline-flex;align-items:center;gap:5px;border:0;background:none;color:var(--ink);padding:6px;border-radius:8px;font-size:14px;font-weight:600}
+.ico-btn:hover{background:var(--sunk)}
+.ico-btn.on{color:var(--pink)}
+.ico-btn.pop svg{animation:pop .35s ease-out}
+@keyframes pop{50%{transform:scale(1.25)}}
+.quem{font-size:13px;color:var(--muted);margin-left:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.coms{display:flex;flex-direction:column;gap:10px;padding:8px 14px 14px}
+.coms-mais{align-self:flex-start;border:0;background:none;padding:0;color:var(--muted);font-size:13px;font-weight:600}
+.com{display:flex;gap:9px;align-items:flex-start}
+.com.pend{opacity:.6}
+.com-b{min-width:0;flex:1}
+.com-b p{margin:0;font-size:14px;line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}
+.com-m{display:flex;gap:10px;font-size:12px;color:var(--muted);margin-top:2px}
+.com-m button{border:0;background:none;padding:0;color:var(--muted);font-size:12px;font-weight:600}
+.com-m button:hover{color:var(--no)}
+.com-form{display:flex;gap:9px;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.com-form textarea{flex:1;min-height:36px;resize:none;border-radius:18px;padding:8px 12px;font-size:14px;line-height:1.35}
+.com-send{border:0;background:none;color:var(--pink);font-weight:700;font-size:14px;padding:6px 4px}
+.com-send:disabled{color:var(--muted);opacity:.6}
+@media (prefers-reduced-motion:reduce){.burst svg,.ico-btn.pop svg{animation:none}}

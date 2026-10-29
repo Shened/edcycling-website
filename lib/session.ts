@@ -13,7 +13,7 @@ export const getSession = cache(async () => {
   const user = claims?.sub ? { id: claims.sub as string, email: (claims.email as string | undefined) ?? null } : null;
   let perfil: Perfil | null = null;
   if (user) {
-    const { data: p } = await supabase.from("perfis").select("id,nome,email,role,ativo,atleta").eq("id", user.id).single();
+    const { data: p } = await supabase.from("perfis").select("id,nome,email,role,ativo,atleta,avatar_path").eq("id", user.id).single();
     perfil = (p as Perfil) ?? null;
   }
   const isMember = perfil?.role === "membro" || perfil?.role === "admin";

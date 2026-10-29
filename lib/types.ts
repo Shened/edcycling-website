@@ -10,6 +10,7 @@ export interface Perfil {
   role: Role;
   ativo?: boolean;
   atleta?: boolean;
+  avatar_path?: string | null;
   created_at?: string;
 }
 
@@ -51,6 +52,16 @@ export interface Post {
   perfis: { nome: string; avatar_path?: string | null } | null;
   eventos: { titulo: string } | null;
   urls?: string[];
+  post_gostos?: { user_id: string; perfis: { nome: string } | null }[];
+  post_comentarios?: Comentario[];
+}
+
+export interface Comentario {
+  id: string;
+  autor_id: string;
+  texto: string;
+  created_at: string;
+  perfis: { nome: string; avatar_path?: string | null } | null;
 }
 
 export type TipoTreino = "estrada" | "gravel" | "btt" | "rolo" | "corrida" | "natacao";

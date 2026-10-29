@@ -1,5 +1,5 @@
 // Preferências de notificação (partilhado entre servidor e browser).
-export type TipoAviso = "novo" | "lembrete" | "alteracao" | "feed" | "inscricao";
+export type TipoAviso = "novo" | "lembrete" | "alteracao" | "feed" | "inscricao" | "reacoes";
 export type Canal = "push" | "email";
 export type Prefs = Record<`${TipoAviso}_${Canal}`, boolean>;
 
@@ -9,6 +9,7 @@ export const PREF_DEFAULTS: Prefs = {
   alteracao_push: true, alteracao_email: true,
   feed_push: true, feed_email: false,
   inscricao_push: true, inscricao_email: false,
+  reacoes_push: true, reacoes_email: false,
 };
 
 export const TIPOS_AVISO: { k: TipoAviso; t: string; d: string }[] = [
@@ -17,4 +18,5 @@ export const TIPOS_AVISO: { k: TipoAviso; t: string; d: string }[] = [
   { k: "alteracao", t: "Alterações e cancelamentos", d: "Quando muda a data, hora ou local de algo em que estás inscrito, ou é cancelado." },
   { k: "inscricao", t: "Quem vai e quem sai", d: "Quando alguém se junta ou deixa um evento/treino onde também vais (os admins recebem todos)." },
   { k: "feed", t: "Publicações no feed", d: "Quando alguém publica no feed da equipa." },
+  { k: "reacoes", t: "Gostos e comentários", d: "Quando alguém gosta ou comenta uma publicação tua (e respostas onde comentaste)." },
 ];

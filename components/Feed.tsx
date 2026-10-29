@@ -5,24 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { reduzirImagem } from "@/lib/image";
 import { MESES, evAno, evMes } from "@/lib/dates";
 import type { Evento, Post } from "@/lib/types";
-import Carrossel from "./Carrossel";
-import Texto from "./Texto";
-import Avatar from "./Avatar";
+import PostCard from "./PostCard";
 import { avisarFeed } from "@/lib/avisos";
-import Link from "next/link";
 
 const MAX = 10;
 interface Escolhida { id: string; blob: Blob; url: string }
 
-const quando = (iso: string) => {
-  const d = new Date(iso), agora = Date.now(), min = Math.round((agora - d.getTime()) / 60000);
-  if (min < 1) return "agora";
-  if (min < 60) return `há ${min} min`;
-  if (min < 60 * 24) return `há ${Math.round(min / 60)} h`;
-  return d.toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: d.getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
-};
 
-export default function Feed({ posts, eventos, userId, isAdmin }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean }) {
+export default function Feed({ posts, eventos, userId, isAdmin, eu }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null } }) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
   const [fotos, setFotos] = useState<Escolhida[]>([]);
@@ -129,27 +119,9 @@ export default function Feed({ posts, eventos, userId, isAdmin }: { posts: Post[
 
       {posts.length ? (
         <div className="feed-list">
-          {posts.map((p) => {
-            const nome = p.perfis?.nome || "Alguém da equipa";
-            return (
-              <article key={p.id} className="fpost">
-                <header className="fpost-h">
-                  <Link href={`/atletas/${p.autor_id}`} aria-label={`Perfil de ${nome}`}><Avatar nome={nome} path={p.perfis?.avatar_path} /></Link>
-                  <span className="fpost-who">
-                    <Link href={`/atletas/${p.autor_id}`} className="who-link"><b>{nome}</b></Link>
-                    <span suppressHydrationWarning>{quando(p.created_at)}{p.eventos?.titulo ? <> · <span className="tag">{p.eventos.titulo}</span></> : null}</span>
-                  </span>
-                  {(isAdmin || p.autor_id === userId) && (
-                    <button type="button" className="btn ghost danger" style={{ marginLeft: "auto", padding: "4px 8px" }} onClick={() => apagar(p)}>
-                      {armed === p.id ? "Confirmar" : "Apagar"}
-                    </button>
-                  )}
-                </header>
-                {p.urls && p.urls.length > 0 && <Carrossel urls={p.urls} alt={p.legenda ? p.legenda.slice(0, 80) : `Publicação de ${nome}`} />}
-                {p.legenda && <div className={`fpost-t${p.urls?.length ? "" : " solo"}`}><Texto texto={p.legenda} /></div>}
-              </article>
-            );
-          })}
+          {posts.map((p) => (
+            <PostCard key={p.id} p={p} eu={eu} isAdmin={isAdmin} armed={armed === p.id} onApagar={() => apagar(p)} />
+          ))}
         </div>
       ) : (
         <p className="empty">Ainda não há publicações. Partilha a primeira: o resumo do último treino, fotos de um passeio ou um aviso para a equipa.</p>

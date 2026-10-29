@@ -180,3 +180,39 @@ export async function testarAviso(): Promise<{ push: number; email: number; erro
   });
   return r;
 }
+
+/** Gosto ou comentário numa publicação: avisa o autor (e, nos comentários, quem já comentou). */
+export async function avisarReacao(tipo: "gosto" | "comentario", postId: string, comentarioId?: string): Promise<void> {
+  try {
+    const { user, perfil } = await getSession();
+    if (!user || !perfil) return;
+    const admin = createAdminClient();
+    const { data: post } = await admin.from("posts").select("id,autor_id,legenda").eq("id", postId).single();
+    if (!post) return;
+    const nome = perfil.nome || "Alguém";
+    const sobre = (post.legenda ?? "").replace(/\s+/g, " ").trim();
+    const resumo = sobre ? `“${sobre.length > 60 ? sobre.slice(0, 60) + "…" : sobre}”` : "a tua publicação";
+    if (tipo === "gosto") {
+      const { data: g } = await admin.from("post_gostos").select("user_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
+      if (!g || post.autor_id === user.id) return;
+      await enviarAviso({
+        tipo: "reacoes", chave: `gosto:${postId}:${user.id}`,
+        titulo: `${nome} gostou da tua publicação`,
+        corpo: sobre ? resumo : "Abre o feed para veres.",
+        url: "/fotos", destinatarios: [post.autor_id],
+      });
+    } else if (comentarioId) {
+      const { data: c } = await admin.from("post_comentarios").select("id,autor_id,texto").eq("id", comentarioId).single();
+      if (!c || c.autor_id !== user.id) return;
+      const { data: outros } = await admin.from("post_comentarios").select("autor_id").eq("post_id", postId);
+      const dest = [...new Set([post.autor_id, ...(outros ?? []).map((o) => o.autor_id as string)])].filter((i) => i !== user.id);
+      const texto = String(c.texto).replace(/\s+/g, " ").trim();
+      await enviarAviso({
+        tipo: "reacoes", chave: `com:${comentarioId}`,
+        titulo: `${nome} comentou no feed`,
+        corpo: texto.length > 140 ? texto.slice(0, 140) + "…" : texto,
+        url: "/fotos", destinatarios: dest,
+      });
+    }
+  } catch { /* nada */ }
+}

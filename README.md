@@ -168,3 +168,9 @@ No iPhone o push só funciona na app instalada no ecrã principal (iOS 16.4 ou m
 3. Gera as chaves do push com `npx web-push generate-vapid-keys`.
 4. Junta ao `.env` e às Environment Variables da Vercel: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET` e `SITE_URL`. Vê o `.env.example`.
 5. Faz o deploy. A Vercel chama o cron com o `CRON_SECRET` automaticamente.
+
+## Gostos e comentários
+
+No feed, cada publicação tem ❤ (gostar; também dá para tocar duas vezes na foto) e comentários. O autor recebe um aviso. Quem comentou recebe os comentários seguintes, se tiver ligado "Gostos e comentários" nas Definições.
+
+**Setup:** corre `supabase/migrations/012_gostos_comentarios.sql`, depois da 011.
