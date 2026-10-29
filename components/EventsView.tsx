@@ -3,17 +3,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { evAno, isPast, nextEvento, sortEventos, today } from "@/lib/dates";
-import type { EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
+import { MESES, evAno, evMes, fmtDate, isPast, nextEvento, parseDate, sortEventos, today } from "@/lib/dates";
+import { fmtDuracao, fmtKm } from "@/lib/gpx";
+import { TIPOS_ATIVIDADE } from "@/lib/atividades";
+import AtividadeForm from "./AtividadeForm";
+import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
 import EventoCartao from "./EventoCartao";
 import { useEsc } from "./useEsc";
 import { avisarInscricao } from "@/lib/avisos";
 
-interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[] }
+interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[] }
 
-export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros }: Props) {
+export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [] }: Props) {
+  const [atvEdit, setAtvEdit] = useState<Atividade | null>(null);
   const [presEv, setPresEv] = useState<Evento | null>(null);
   const router = useRouter();
   const sorted = useMemo(() => sortEventos(eventos), [eventos]);
@@ -30,8 +34,16 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const prox = nextEvento(eventos);
   const souAtleta = !!perfil && membros.some((m) => m.id === perfil.id);
   const anoAtual = today().getFullYear();
-  const grupos: { ano: number; evs: Evento[] }[] = [];
-  lista.forEach((e) => { const a = evAno(e); const g = grupos[grupos.length - 1]; if (g && g.ano === a) g.evs.push(e); else grupos.push({ ano: a, evs: [e] }); });
+  // As atividades pessoais (só do próprio) entram em Passados e Todos, pela ordem das datas.
+  type Item = { k: "e"; e: Evento; ano: number; chave: string } | { k: "a"; a: Atividade; ano: number; chave: string };
+  const chaveEv = (e: Evento) => e.data ?? `${evAno(e)}-${String(evMes(e)).padStart(2, "0")}-99`;
+  const itens: Item[] = lista.map((e) => ({ k: "e" as const, e, ano: evAno(e), chave: chaveEv(e) }));
+  if (ver !== "proximos" && atividades.length) {
+    atividades.forEach((a) => itens.push({ k: "a", a, ano: +a.data.slice(0, 4), chave: `${a.data}${a.hora ?? ""}` }));
+    itens.sort((x, y) => (ver === "passados" ? y.chave.localeCompare(x.chave) : x.chave.localeCompare(y.chave)));
+  }
+  const grupos: { ano: number; itens: Item[] }[] = [];
+  itens.forEach((it) => { const g = grupos[grupos.length - 1]; if (g && g.ano === it.ano) g.itens.push(it); else grupos.push({ ano: it.ano, itens: [it] }); });
   function mudar(v: string) {
     const q = new URLSearchParams(params.toString());
     if (v === "proximos") q.delete("ver"); else q.set("ver", v);
@@ -73,11 +85,14 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
           {isAdmin && <button className="btn primary evs-novo" onClick={() => setEditing(null)} aria-label="Criar evento"><span aria-hidden="true">+</span><span className="evs-novo-t"> Criar evento</span></button>}
         </div>
       </div>
-      {!lista.length && <p className="empty">{vazio}</p>}
+      {!itens.length && <p className="empty">{vazio}</p>}
+      {ver !== "proximos" && atividades.length > 0 && <p className="hint evs-nota">Inclui as tuas atividades pessoais, com contorno lilás. Só tu as vês aqui.</p>}
       {grupos.map((g, gi) => (
         <div key={g.ano} className="evs-grupo">
           {(gi > 0 || g.ano !== anoAtual) && <h3 className="evs-ano">{g.ano}</h3>}
-          {g.evs.map((e) => {
+          {g.itens.map((it) => {
+            if (it.k === "a") return <AtvCartao key={it.a.id} a={it.a} onEdit={() => setAtvEdit(it.a)} />;
+            const e = it.e;
             const ps = inscricoes.filter((i) => i.evento_id === e.id);
             const mine = e.id in otimista ? otimista[e.id] : perfil ? ps.find((p) => p.user_id === perfil.id)?.estado ?? null : null;
             const acoes = isAdmin ? [
@@ -102,6 +117,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
           })}
         </div>
       ))}
+      {atvEdit && perfil && <AtividadeForm userId={perfil.id} atividade={atvEdit} onClose={() => setAtvEdit(null)} />}
       {editing !== undefined && <EventForm evento={editing} onClose={() => setEditing(undefined)} />}
       {presEv && (() => {
         const ps = inscricoes.filter((i) => i.evento_id === presEv.id);
@@ -132,5 +148,25 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         );
       })()}
     </section>
+  );
+}
+
+// Atividade pessoal na lista de eventos (só o próprio a vê).
+function AtvCartao({ a, onEdit }: { a: Atividade; onEdit: () => void }) {
+  const d = parseDate(a.data);
+  const det = [TIPOS_ATIVIDADE[a.tipo] ?? "Atividade", a.km ? `${fmtKm(Number(a.km))} km` : "", a.dmais ? `${a.dmais.toLocaleString("pt-PT")} m D+` : "", a.duracao_s ? fmtDuracao(a.duracao_s) : ""].filter(Boolean);
+  return (
+    <article className="atvc">
+      <div className="atvc-d" suppressHydrationWarning>
+        <span className="atvc-n">{d?.getDate()}</span>
+        <span className="atvc-m">{d ? MESES[d.getMonth()] : ""}</span>
+      </div>
+      <div className="atvc-b">
+        <p className="atvc-k" suppressHydrationWarning>A tua atividade, {fmtDate(a.data, { weekday: "long" })}{a.hora ? ` às ${a.hora.slice(0, 5)}` : ""}</p>
+        <h3>{a.titulo}</h3>
+        <ul className="atvc-st">{det.map((x) => <li key={x}>{x}</li>)}</ul>
+      </div>
+      <button type="button" className="btn ghost atvc-ed" onClick={onEdit}>Editar</button>
+    </article>
   );
 }

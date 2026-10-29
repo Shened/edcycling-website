@@ -848,3 +848,15 @@ a.pessoa:hover{background:var(--sunk)}
 .sw.pessoal{background:transparent;box-shadow:inset 0 0 0 1.5px var(--violet)}
 .cal-sum .st-pessoal{color:var(--violet)}
 @media (max-width:640px){.cal-chip.pessoal{background:var(--violet);box-shadow:none}}
+
+/* atividades pessoais na lista de eventos */
+.evs-nota{margin:-8px 0 0;color:var(--violet)}
+.atvc{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 16px;border-radius:16px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--violet)}
+.atvc-d{display:flex;flex-direction:column;align-items:center;line-height:1;color:var(--violet)}
+.atvc-n{font-family:var(--f-display);font-style:italic;font-weight:800;font-size:40px}
+.atvc-m{font-size:13px;font-weight:700;text-transform:lowercase}
+.atvc-b{min-width:0;display:flex;flex-direction:column;gap:4px}
+.atvc-k{margin:0;font-size:13px;color:var(--muted)}
+.atvc h3{font-family:var(--f-display);font-style:italic;font-weight:800;font-size:26px;line-height:1;text-transform:uppercase;overflow-wrap:anywhere}
+.atvc-st{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;font-weight:600}
+@media (max-width:640px){.atvc{grid-template-columns:52px minmax(0,1fr);gap:12px}.atvc-n{font-size:32px}.atvc-ed{grid-column:2;justify-self:start;padding-left:0}}
