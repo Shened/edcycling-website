@@ -22,7 +22,7 @@ export default async function DefinicoesPage() {
           userId={perfil.id}
           email={perfil.email ?? ""}
           inicial={prefs}
-          vapid={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
+          vapid={(process.env.VAPID_PUBLIC_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) ?? ""}
           emailAtivo={!!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD}
         />
       )}

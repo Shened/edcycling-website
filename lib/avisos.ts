@@ -171,7 +171,7 @@ export async function avisarInscricao(kind: Kind, id: string, antes: string | nu
 export async function testarAviso(): Promise<{ push: number; email: number; erro?: string }> {
   const { user } = await getSession();
   if (!user) return { push: 0, email: 0, erro: "Sessão expirada." };
-  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return { push: 0, email: 0, erro: "O push ainda não está configurado no servidor (chaves VAPID)." };
+  if (!(process.env.VAPID_PUBLIC_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) || !process.env.VAPID_PRIVATE_KEY) return { push: 0, email: 0, erro: "O push ainda não está configurado no servidor (chaves VAPID)." };
   const r = await enviarAviso({
     tipo: "novo", ignorarPreferencias: true,
     titulo: "Teste de notificação",

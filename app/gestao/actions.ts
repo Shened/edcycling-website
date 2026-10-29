@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export type Resultado = { ok: boolean; msg: string };
 
 async function siteUrl() {
-  const env = process.env.NEXT_PUBLIC_SITE_URL;
+  const env = (process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL);
   if (env) return env.replace(/\/$/, "");
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");

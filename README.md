@@ -166,5 +166,5 @@ No iPhone o push só funciona na app instalada no ecrã principal (iOS 16.4 ou m
 1. Corre `supabase/migrations/011_notificacoes.sql`.
 2. `npm install`, que acrescenta `web-push` e `nodemailer`.
 3. Gera as chaves do push com `npx web-push generate-vapid-keys`.
-4. Junta ao `.env` e às Environment Variables da Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET` e `NEXT_PUBLIC_SITE_URL`. Vê o `.env.example`.
+4. Junta ao `.env` e às Environment Variables da Vercel: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET` e `SITE_URL`. Vê o `.env.example`.
 5. Faz o deploy. A Vercel chama o cron com o `CRON_SECRET` automaticamente.

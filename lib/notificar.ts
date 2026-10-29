@@ -17,12 +17,12 @@ export interface Aviso {
   ignorarPreferencias?: boolean;
 }
 
-export const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://edcycling-website.vercel.app").replace(/\/$/, "");
+export const SITE = ((process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL) ?? "https://edcycling-website.vercel.app").replace(/\/$/, "");
 
 let vapidPronto = false;
 function vapid(): boolean {
   if (vapidPronto) return true;
-  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
+  const pub = (process.env.VAPID_PUBLIC_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY), priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) return false;
   webpush.setVapidDetails(process.env.VAPID_SUBJECT ?? "mailto:teamedcycling@gmail.com", pub, priv);
   vapidPronto = true;
