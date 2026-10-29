@@ -100,18 +100,36 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
 
       <div className="ev-acoes">
         {!closed && souAtleta && (
-          <div className="rsvp" style={{ border: 0, padding: 0 }}>
-            <button className={`btn${mine === "vai" ? " on-go" : ""}`} onClick={() => rsvp(mine === "vai" ? null : "vai")}>Vou</button>
-            <button className={`btn${mine === "talvez" ? " on-maybe" : ""}`} onClick={() => rsvp(mine === "talvez" ? null : "talvez")}>Talvez</button>
-            <button className={`btn${mine === "nao" ? " on-no" : ""}`} onClick={() => rsvp(mine === "nao" ? null : "nao")}>Não vou</button>
+          <div className="ev-grupo">
+            <span className="field-l">A tua resposta</span>
+            <div className="seg" role="group" aria-label="A tua resposta">
+              <button className={`btn${mine === "vai" ? " on-go" : ""}`} aria-pressed={mine === "vai"} onClick={() => rsvp(mine === "vai" ? null : "vai")}>Vou</button>
+              <button className={`btn${mine === "talvez" ? " on-maybe" : ""}`} aria-pressed={mine === "talvez"} onClick={() => rsvp(mine === "talvez" ? null : "talvez")}>Talvez</button>
+              <button className={`btn${mine === "nao" ? " on-no" : ""}`} aria-pressed={mine === "nao"} onClick={() => rsvp(mine === "nao" ? null : "nao")}>Não vou</button>
+            </div>
           </div>
         )}
-        <span style={{ display: "flex", gap: 6, flexWrap: "wrap", marginLeft: "auto" }}>
-          {e.data && e.estado !== "cancelado" && <a className="btn" href={`/eventos/${e.id}/ics`}>Adicionar ao calendário</a>}
-          <button type="button" className="btn ghost" onClick={copiar}>{copiado ? "Link copiado" : "Copiar link"}</button>
-          {isAdmin && (passado || e.estado === "realizado") && e.estado !== "cancelado" && <button className="btn ghost" onClick={() => setPres(true)}>{fechadas ? "Editar presenças" : "Registar presenças"}</button>}
-          {isAdmin && <button className="btn ghost" onClick={() => setEditar(true)}>Editar evento</button>}
-        </span>
+        <div className="ev-links">
+          {e.data && e.estado !== "cancelado" && (
+            <a className="btn" href={`/eventos/${e.id}/ics`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" /></svg>
+              Adicionar ao calendário
+            </a>
+          )}
+          <button type="button" className="btn" onClick={copiar}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>
+            {copiado ? "Link copiado" : "Copiar link"}
+          </button>
+        </div>
+        {isAdmin && (
+          <div className="ev-admin">
+            <span className="field-l">Gestão</span>
+            <div className="ev-links">
+              <button className="btn ghost" onClick={() => setEditar(true)}>Editar evento</button>
+              {(passado || e.estado === "realizado") && e.estado !== "cancelado" && <button className="btn ghost" onClick={() => setPres(true)}>{fechadas ? "Editar presenças" : "Registar presenças"}</button>}
+            </div>
+          </div>
+        )}
       </div>
       {msg && <div className="notice">{msg}</div>}
 
