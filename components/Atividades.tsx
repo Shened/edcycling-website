@@ -81,7 +81,7 @@ export default function Atividades({ atividades, userId, meuId, isAdmin, nome }:
       {!atividades.length ? (
         <div className="atv-vazio">
           {meu
-            ? <><p>Ainda não tens atividades. Carrega o GPX de uma volta (do Strava, Garmin ou Komoot) ou regista-a à mão.</p><button className="btn" onClick={() => setForm(null)}>Adicionar a primeira</button></>
+            ? <><p>Ainda não tens atividades. Carrega o GPX ou o .fit de uma volta, corrida ou natação, ou regista-a à mão.</p><button className="btn" onClick={() => setForm(null)}>Adicionar a primeira</button></>
             : <p>{nome.split(" ")[0]} ainda não registou atividades.</p>}
         </div>
       ) : (
@@ -124,7 +124,7 @@ export default function Atividades({ atividades, userId, meuId, isAdmin, nome }:
           <div className="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="apT" aria-describedby="apD">
             <div className="mbody">
               <h3 id="apT">Apagar esta atividade?</h3>
-              <p id="apD" className="empty" style={{ margin: 0 }}>{apagar.titulo}. O GPX também é apagado e não se pode recuperar.</p>
+              <p id="apD" className="empty" style={{ margin: 0 }}>{apagar.titulo}. O ficheiro carregado também é apagado e não se pode recuperar.</p>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                 <button className="btn ghost" onClick={fecharApagar} disabled={busy} autoFocus>Cancelar</button>
                 <button className="btn perigo" onClick={confirmarApagar} disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />A apagar…</> : "Apagar atividade"}</button>

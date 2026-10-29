@@ -3,7 +3,8 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { parseDate } from "@/lib/dates";
-import { fmtDuracao, fmtKm, parseGpx, type GpxInfo } from "@/lib/gpx";
+import { fmtDuracao, fmtKm, parseGpx } from "@/lib/gpx";
+import type { FitInfo } from "@/lib/fit";
 import type { Atividade } from "@/lib/types";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import RoutePreview from "./RoutePreview";
@@ -27,7 +28,7 @@ export default function AtividadeForm({ userId, atividade, onClose }: { userId: 
     notas: a?.notas ?? "",
     privada: a?.privada ?? false,
   });
-  const [gpx, setGpx] = useState<GpxInfo | null>(null);
+  const [gpx, setGpx] = useState<(Omit<FitInfo, "tipo" | "hora"> & { tipo?: string | null; hora?: string | null }) | null>(null);
   const [gpxFile, setGpxFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -42,12 +43,14 @@ export default function AtividadeForm({ userId, atividade, onClose }: { userId: 
     if (!file) return;
     setErr("");
     if (file.size > 20 * 1024 * 1024) { setErr("O ficheiro é demasiado grande (máx. 20 MB)."); return; }
+    const ehFit = /\.fit$/i.test(file.name);
     try {
-      const info = parseGpx(await file.text());
+      const info = ehFit ? (await import("@/lib/fit")).parseFit(await file.arrayBuffer()) : parseGpx(await file.text());
       setGpx(info); setGpxFile(file);
       setF((p) => ({
         ...p,
         titulo: p.titulo || info.nome || "",
+        tipo: ("tipo" in info && typeof info.tipo === "string") ? info.tipo : p.tipo,
         data: info.inicio ?? p.data,
         hora: info.hora ?? p.hora,
         km: String(info.km),
@@ -56,7 +59,7 @@ export default function AtividadeForm({ userId, atividade, onClose }: { userId: 
         min: info.duracaoS ? String(Math.round((info.duracaoS % 3600) / 60)) : p.min,
       }));
     } catch {
-      setErr("Não consegui ler esse ficheiro. Confirma que é um .gpx exportado do Strava, Garmin ou Komoot.");
+      setErr(ehFit ? "Não consegui ler esse ficheiro .fit. Confirma que é o ficheiro original da atividade (Garmin Connect: ⚙ e Exportar original)." : "Não consegui ler esse ficheiro. Confirma que é um .gpx exportado do Strava, Garmin ou Komoot.");
     }
   }
 
@@ -70,9 +73,10 @@ export default function AtividadeForm({ userId, atividade, onClose }: { userId: 
     const sb = createClient();
     let novo: string | null = null;
     if (gpxFile && gpx) {
-      novo = `${userId}/${crypto.randomUUID()}.gpx`;
-      const up = await sb.storage.from("gpx").upload(novo, gpxFile, { contentType: "application/gpx+xml" });
-      if (up.error) { setBusy(false); setErr("Não foi possível enviar o GPX. Tenta outra vez."); return; }
+      const fit = /\.fit$/i.test(gpxFile.name);
+      novo = `${userId}/${crypto.randomUUID()}.${fit ? "fit" : "gpx"}`;
+      const up = await sb.storage.from("gpx").upload(novo, gpxFile, { contentType: fit ? "application/vnd.ant.fit" : "application/gpx+xml" });
+      if (up.error) { setBusy(false); setErr("Não foi possível enviar o ficheiro. Tenta outra vez."); return; }
     }
     const body = {
       titulo: f.titulo.trim().slice(0, 80) || `${TIPOS_ATIVIDADE[f.tipo] ?? "Atividade"} de ${(parseDate(f.data) ?? new Date()).toLocaleDateString("pt-PT", { weekday: "long" })}`,
@@ -85,7 +89,7 @@ export default function AtividadeForm({ userId, atividade, onClose }: { userId: 
       notas: f.notas.trim() || null,
       privada: f.privada,
       updated_at: new Date().toISOString(),
-      ...(gpx && novo ? { gpx_path: novo, trajeto: gpx.pontos } : {}),
+      ...(gpx && novo ? { gpx_path: novo, trajeto: gpx.pontos.length > 1 ? gpx.pontos : null } : {}),
     };
     const res = a ? await sb.from("atividades").update(body).eq("id", a.id) : await sb.from("atividades").insert(body);
     if (res.error) {
@@ -108,9 +112,9 @@ export default function AtividadeForm({ userId, atividade, onClose }: { userId: 
           <h3 id="atvT">{a ? "Editar atividade" : "Nova atividade"}</h3>
 
           <label className="atv-gpx">
-            <input type="file" accept=".gpx,application/gpx+xml" onChange={pick} />
+            <input type="file" accept=".gpx,.fit,application/gpx+xml" onChange={pick} />
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
-            <span><b>{gpx ? "GPX carregado" : a?.gpx_path ? "Substituir o GPX" : "Carregar ficheiro GPX"}</b><span>{gpx ? `${fmtKm(gpx.km)} km${gpx.duracaoS ? `, ${fmtDuracao(gpx.duracaoS)}` : ""}${gpx.dmais ? `, ${gpx.dmais} m D+` : ""}` : "Do Strava: abre a atividade em strava.com, ⋯ e Exportar GPX. Também podes registar à mão."}</span></span>
+            <span><b>{gpx ? "Ficheiro carregado" : a?.gpx_path ? "Substituir o ficheiro" : "Carregar ficheiro GPX ou FIT"}</b><span>{gpx ? `${fmtKm(gpx.km)} km${gpx.duracaoS ? `, ${fmtDuracao(gpx.duracaoS)}` : ""}${gpx.dmais ? `, ${gpx.dmais} m D+` : ""}` : "GPX do Strava ou Komoot, ou o .fit original do relógio (funciona para natação em piscina). Também podes registar à mão."}</span></span>
           </label>
           {pontos && pontos.length > 1 && <RoutePreview pontos={pontos} />}
 

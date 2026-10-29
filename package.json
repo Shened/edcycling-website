@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@garmin/fitsdk": "^21.218.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "next": "^15.3.2",
