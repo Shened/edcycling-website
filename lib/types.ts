@@ -96,3 +96,20 @@ export interface Participante {
 }
 
 export interface Membro { id: string; nome: string }
+
+export interface Atividade {
+  id: string;
+  user_id: string;
+  titulo: string;
+  tipo: string;
+  data: string;
+  hora: string | null;
+  km: number | null;
+  dmais: number | null;
+  duracao_s: number | null;
+  trajeto: [number, number][] | null;
+  gpx_path: string | null;
+  notas: string | null;
+  privada: boolean;
+  created_at?: string;
+}

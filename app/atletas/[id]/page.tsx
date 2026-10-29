@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Texto from "@/components/Texto";
+import Atividades from "@/components/Atividades";
 import { getSession } from "@/lib/session";
 import { CAMPOS_PERFIL, avatarUrl, idade, wkg, type PerfilAtleta } from "@/lib/atleta";
 import { calcular, type InscricaoMin } from "@/lib/stats";
 import { fmtKm } from "@/lib/gpx";
-import type { Evento, Membro, Treino } from "@/lib/types";
+import type { Atividade, Evento, Membro, Treino } from "@/lib/types";
 
 // Perfil de um atleta, visível para a equipa.
 export default async function AtletaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { supabase, perfil: eu, isMember } = await getSession();
+  const { supabase, perfil: eu, isMember, isAdmin } = await getSession();
   if (!isMember) {
     return <section className="view"><p className="empty">Os perfis dos atletas são só para a equipa. <Link href="/entrar">Entra</Link> para os veres.</p></section>;
   }
@@ -19,11 +20,12 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
   if (!data) notFound();
   const p = data as unknown as PerfilAtleta;
   const ano = new Date().getFullYear();
-  const [{ data: treinos }, { data: eventos }, { data: insc }, { data: membros }] = await Promise.all([
+  const [{ data: treinos }, { data: eventos }, { data: insc }, { data: membros }, { data: atvs }] = await Promise.all([
     supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)").gte("data", `${ano}-01-01`).lte("data", `${ano}-12-31`),
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("evento_id,user_id,estado,presente").eq("user_id", id),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true),
+    supabase.from("atividades").select("id,user_id,titulo,tipo,data,hora,km,dmais,duracao_s,trajeto,gpx_path,notas,privada").eq("user_id", id).order("data", { ascending: false }).order("hora", { ascending: false, nullsFirst: false }).limit(100),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
   const st = calcular((treinos ?? []) as unknown as Treino[], (eventos ?? []) as Evento[], (insc ?? []) as InscricaoMin[], (membros ?? []) as Membro[], ano, hoje);
@@ -63,7 +65,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
       {p.bio && <div className="panel"><Texto texto={p.bio} /></div>}
 
       <div>
-        <div className="sechead" style={{ marginBottom: 10 }}><h2 style={{ fontSize: 24 }}>Época {ano}</h2><Link href="/estatisticas" className="btn ghost">Ver ranking</Link></div>
+        <div className="sechead" style={{ marginBottom: 10 }}><h2 style={{ fontSize: 24 }}>Com a equipa em {ano}</h2><Link href="/estatisticas" className="btn ghost">Ver ranking</Link></div>
         <div className="tiles">
           <div className="tile"><div className="v num">{fmtKm(linha?.km ?? 0)}</div><div className="k">km de bicicleta</div></div>
           <div className="tile"><div className="v num">{linha?.treinos ?? 0}</div><div className="k">treinos</div></div>
@@ -72,6 +74,8 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
         </div>
         {(linha?.eventos ?? 0) > 0 && <p className="hint">Esteve em {linha!.eventos} evento{linha!.eventos === 1 ? "" : "s"} da equipa este ano.</p>}
       </div>
+
+      <Atividades atividades={(atvs ?? []) as Atividade[]} userId={id} meuId={eu?.id ?? ""} isAdmin={isAdmin} nome={p.nome || ""} />
     </section>
   );
 }

@@ -7,6 +7,7 @@ export interface GpxInfo {
   pontos: [number, number][];
   nome: string | null;
   inicio: string | null; // YYYY-MM-DD local
+  hora?: string | null; // HH:MM local
 }
 
 const R = 6371.0088; // raio médio da Terra em km
@@ -65,9 +66,11 @@ export function parseGpx(text: string): GpxInfo {
   const tv = times.filter(Number.isFinite);
   const duracaoS = tv.length > 1 ? Math.round((tv[tv.length - 1] - tv[0]) / 1000) : null;
   let inicio: string | null = null;
+  let hora: string | null = null;
   if (tv.length) {
     const d = new Date(tv[0]);
     inicio = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   }
 
   const step = Math.max(1, Math.ceil(pts.length / 200));
@@ -85,6 +88,7 @@ export function parseGpx(text: string): GpxInfo {
     pontos,
     nome,
     inicio,
+    hora,
   };
 }
 

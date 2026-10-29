@@ -20,6 +20,10 @@ export default async function PerfilPage() {
           <Link href={`/atletas/${perfil.id}`} className="btn ghost">Ver como a equipa vê</Link>
         </span>
       </div>
+      <Link href={`/atletas/${perfil.id}#atividades`} className="panel atv-link">
+        <span><b>As tuas atividades</b><br /><span className="empty">Carrega os GPX das tuas voltas, mesmo as que não são treinos da equipa.</span></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+      </Link>
       <PerfilEditor perfil={p} />
       <div className="panel" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
         <span><span className="field-l">Conta</span><br /><span className="empty">{perfil.email}</span></span>
