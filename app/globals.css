@@ -841,3 +841,10 @@ a.pessoa:hover{background:var(--sunk)}
 .atv-link{display:flex;justify-content:space-between;align-items:center;gap:12px;text-decoration:none;color:inherit}
 .atv-link:hover{border-color:var(--muted)}
 @media (max-width:640px){.atv-st{gap:6px 20px}.atv-st dd{font-size:24px}}
+
+/* atividades pessoais no calendário (só o próprio vê) */
+.cal-chip.pessoal,.wk-card.pessoal{background:transparent;color:var(--violet);box-shadow:inset 0 0 0 1.5px var(--violet)}
+.wk-card.pessoal{border-style:dashed}
+.sw.pessoal{background:transparent;box-shadow:inset 0 0 0 1.5px var(--violet)}
+.cal-sum .st-pessoal{color:var(--violet)}
+@media (max-width:640px){.cal-chip.pessoal{background:var(--violet);box-shadow:none}}

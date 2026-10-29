@@ -13,13 +13,13 @@ import { useEsc } from "./useEsc";
 const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 // Adicionar ou editar uma atividade pessoal: a partir de um GPX ou à mão.
-export default function AtividadeForm({ userId, atividade, onClose }: { userId: string; atividade?: Atividade | null; onClose: () => void }) {
+export default function AtividadeForm({ userId, atividade, dataInicial, onClose }: { userId: string; atividade?: Atividade | null; dataInicial?: string; onClose: () => void }) {
   const router = useRouter();
   const a = atividade ?? null;
   const [f, setF] = useState({
     titulo: a?.titulo ?? "",
     tipo: a?.tipo ?? "estrada",
-    data: a?.data ?? hojeISO(),
+    data: a?.data ?? (dataInicial && dataInicial <= hojeISO() ? dataInicial : hojeISO()),
     hora: a?.hora ?? "",
     km: a?.km != null ? String(a.km) : "",
     dmais: a?.dmais != null ? String(a.dmais) : "",
