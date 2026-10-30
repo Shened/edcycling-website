@@ -60,6 +60,7 @@ export function Meta({ e }: { e: Evento }) {
     e.partida && { k: "p", t: <b>{e.partida}</b>, i: <><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></> },
     e.km != null && { k: "k", t: <b>{Number(e.km).toLocaleString("pt-PT")}&nbsp;km</b>, i: <path d="M3 17l5-6 4 4 4-7 5 9" /> },
     e.dmais != null && { k: "d", t: <b>{Number(e.dmais).toLocaleString("pt-PT")}&nbsp;m D+</b>, i: <path d="M3 20 10 8l4 6 3-4 4 10z" /> },
+    e.equipamento && { k: "q", t: <>Equipamento <b>{e.equipamento.nome}</b></>, i: <path d="M8 3 4 5.5 2.5 10l3 1.2L6 21h12l.5-9.8 3-1.2L20 5.5 16 3c-.6 1.6-2.2 2.6-4 2.6S8.6 4.6 8 3z" /> },
   ].filter(Boolean) as { k: string; t: React.ReactNode; i: React.ReactNode }[];
   if (!it.length) return <p className="evc-meta vazio">Hora e local por definir</p>;
   return (

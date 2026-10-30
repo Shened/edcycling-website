@@ -13,7 +13,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
     return <section className="view"><p className="empty">Os eventos são só para atletas da equipa. {perfil ? "Ficam visíveis quando a tua conta estiver ativa." : <Link href="/entrar">Entra para os veres.</Link>}</p></section>;
   }
   const [{ data: ev }, { data: insc }, { data: membros }, { data: postsRaw }] = await Promise.all([
-    supabase.from("eventos").select("*").eq("id", id).maybeSingle(),
+    supabase.from("eventos").select("*, equipamento:equipamentos(nome,descricao,foto_path)").eq("id", id).maybeSingle().then(async (r) => (r.error ? await supabase.from("eventos").select("*").eq("id", id).maybeSingle() : r)),
     supabase.from("inscricoes").select("id,evento_id,user_id,estado,presente,perfis(nome,avatar_path)").eq("evento_id", id),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true).order("nome"),
     supabase.from("posts")

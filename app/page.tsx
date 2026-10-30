@@ -41,6 +41,16 @@ export default async function Inicio() {
         ))}
       </div>
 
+      <Link href="/tour-de-freixo" className="tdf-promo">
+        <img src="/tdf/logo.webp" alt="" width={452} height={420} />
+        <div>
+          <span className="eyebrow">By EDCycling</span>
+          <b>Tour de Freixo</b>
+          <p>Uma brincadeira a sério entre amigos, em Gondomar: classificação geral, sprint e montanha, etapa a etapa.</p>
+          <span className="cta">Ver classificações →</span>
+        </div>
+      </Link>
+
       {noticias.length > 0 && (
         <div className="novidades">
           <div className="sechead" style={{ marginBottom: 14 }}><h2>Novidades</h2></div>

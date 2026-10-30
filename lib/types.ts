@@ -31,6 +31,8 @@ export interface Evento {
   presencas_fechadas?: boolean;
   convidados?: string[];
   tema?: string | null;
+  equipamento_id?: string | null;
+  equipamento?: { nome: string; descricao: string | null; foto_path: string | null } | null;
 }
 
 export interface Inscricao {

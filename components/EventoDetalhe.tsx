@@ -13,6 +13,7 @@ import PresencasEditor from "./PresencasEditor";
 import Texto from "./Texto";
 import MenuAcoes from "./MenuAcoes";
 import { TemaDeco } from "@/lib/temas";
+import { fotoEquipamento } from "@/lib/equipamentos";
 import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
 import { Resposta, estadoFrase } from "./EventoCartao";
@@ -141,6 +142,14 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
             />
             {e.partida && <Linha icon={<><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>} t={e.partida} s="Ponto de encontro" />}
             {e.km != null && <Linha icon={<path d="M3 17l5-6 4 4 4-7 5 9" />} t={<>{Number(e.km).toLocaleString("pt-PT")}&nbsp;km</>} s="Distância" />}
+            {e.equipamento && (
+              <Linha
+                icon={<path d="M8 3 4 5.5 2.5 10l3 1.2L6 21h12l.5-9.8 3-1.2L20 5.5 16 3c-.6 1.6-2.2 2.6-4 2.6S8.6 4.6 8 3z" />}
+                t={e.equipamento.nome}
+                s={e.equipamento.descricao || "Equipamento para este evento"}
+                extra={fotoEquipamento(e.equipamento.foto_path) ? <img className="evd-kit" src={fotoEquipamento(e.equipamento.foto_path)!} alt={`Equipamento ${e.equipamento.nome}`} width={56} height={56} loading="lazy" /> : undefined}
+              />
+            )}
             {e.dmais != null && <Linha icon={<path d="M3 20 10 8l4 6 3-4 4 10z" />} t={<>{Number(e.dmais).toLocaleString("pt-PT")}&nbsp;m</>} s="Desnível positivo" />}
           </ul>
 

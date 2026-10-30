@@ -7,6 +7,7 @@ import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
 import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos";
 import { TEMAS, temaSugerido } from "@/lib/temas";
+import Link from "next/link";
 
 // Formulário de criar/editar evento (só admins — o RLS garante o resto).
 export default function EventForm({ evento, onClose, dataInicial }: { evento: Evento | null; onClose: () => void; dataInicial?: string }) {
@@ -26,7 +27,14 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
     dmais: evento?.dmais?.toString() ?? "",
     notas: evento?.notas ?? "",
     tema: evento?.tema ?? "",
+    equipamento_id: evento?.equipamento_id ?? "",
   });
+  // Equipamentos da equipa (null = a tabela ainda não existe; nesse caso o campo não aparece).
+  const [kits, setKits] = useState<{ id: string; nome: string }[] | null>(null);
+  useEffect(() => {
+    createClient().from("equipamentos").select("id,nome").eq("ativo", true).order("ordem").order("nome")
+      .then(({ data, error }) => setKits(error ? null : (data ?? [])));
+  }, []);
   const [busy, setBusy] = useState(false);
   const [armed, setArmed] = useState(false);
   const [err, setErr] = useState("");
@@ -57,6 +65,7 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
       titulo: f.titulo.trim(), tipo: f.tipo, estado: f.estado, data: f.data || null,
       mes: +f.mes, ano: +f.ano, hora: f.hora || null, partida: f.partida.trim() || null,
       km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null, tema: f.tema || null,
+      ...(kits ? { equipamento_id: f.equipamento_id || null } : {}),
       updated_at: new Date().toISOString(),
     };
     const sb = createClient();
@@ -101,6 +110,15 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
             <div className="field"><label htmlFor="fPartida">Ponto de encontro</label><input id="fPartida" type="text" maxLength={80} value={f.partida} onChange={set("partida")} /></div>
             <div className="field"><label htmlFor="fKm">Distância (km)</label><input id="fKm" type="number" min={0} value={f.km} onChange={set("km")} /></div>
             <div className="field"><label htmlFor="fDmais">Desnível (m D+)</label><input id="fDmais" type="number" min={0} step={10} value={f.dmais} onChange={set("dmais")} /></div>
+            {kits && (
+              <div className="field full"><label htmlFor="fEquip">Equipamento</label>
+                <select id="fEquip" value={f.equipamento_id} onChange={set("equipamento_id")}>
+                  <option value="">Livre (sem equipamento definido)</option>
+                  {kits.map((k) => <option key={k.id} value={k.id}>{k.nome}</option>)}
+                </select>
+                <span className="hint">{kits.length ? "Os atletas veem no cartão e na página do evento qual equipamento levar." : <>Ainda não há equipamentos. Cria-os em <Link href="/gestao/equipamentos">Gestão, Equipamentos</Link>.</>}</span>
+              </div>
+            )}
             <div className="field full"><label htmlFor="fTema">Tema festivo</label>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <select id="fTema" style={{ flex: "1 1 180px" }} value={f.tema} onChange={set("tema")}>

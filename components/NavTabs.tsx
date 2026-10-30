@@ -5,13 +5,19 @@ import { usePathname } from "next/navigation";
 // Secções principais (no computador). Perfil, Definições e Gestão ficam no menu da conta.
 export default function NavTabs({ isMember }: { isAdmin?: boolean; isMember: boolean }) {
   const path = usePathname();
-  if (!isMember) return <nav className="tabs" aria-label="Secções" />;
+  if (!isMember)
+    return (
+      <nav className="tabs visitante" aria-label="Secções">
+        <Link href="/tour-de-freixo" className="tab tab-tdf" aria-current={path.startsWith("/tour-de-freixo") ? "page" : undefined}>Tour de Freixo</Link>
+      </nav>
+    );
   const tabs = [
     { href: "/eventos", label: "Eventos" },
     { href: "/treinos", label: "Treinos" },
     { href: "/fotos", label: "Feed" },
     { href: "/atletas", label: "Atletas" },
     { href: "/estatisticas", label: "Números" },
+    { href: "/tour-de-freixo", label: "Tour" },
   ];
   return (
     <nav className="tabs" aria-label="Secções">

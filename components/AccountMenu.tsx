@@ -35,6 +35,7 @@ export default function AccountMenu({ nome, avatar, isAdmin, isMember }: { nome:
           {isMember && <Link role="menuitem" href="/perfil">O meu perfil</Link>}
           {isMember && <Link role="menuitem" href="/definicoes">Definições e notificações</Link>}
           {isAdmin && <Link role="menuitem" href="/gestao">Gestão do site</Link>}
+          <Link role="menuitem" href="/tour-de-freixo">Tour de Freixo</Link>
           <Link role="menuitem" href="/ajuda">Ajuda e instalar a app</Link>
           <form action="/auth/sair" method="post"><button role="menuitem" type="submit" className="acct-sair">Sair</button></form>
         </div>

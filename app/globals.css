@@ -915,3 +915,147 @@ a.cal-chip,a.wk-card{text-decoration:none;box-sizing:border-box}
 .ajuda-depois{display:flex;flex-direction:column;gap:8px}
 .ajuda-depois h4{font-family:var(--f-body);font-size:16px;font-weight:700;margin:0}
 .ajuda-depois p{margin:0;line-height:1.6}
+
+.evd-kit{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--line);flex:none}
+
+/* equipamentos */
+.kit-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.kit-c{width:100%;display:flex;align-items:center;gap:14px;padding:10px 14px 10px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;text-align:left;color:inherit}
+.kit-c:hover{border-color:var(--muted)}
+.kit-c img,.kit-ph{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none;background:var(--sunk)}
+.kit-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.kit-t b{font-size:16px}
+.kit-t span{font-size:13px;color:var(--muted)}
+
+/* Tour de Freixo */
+:root{--tdf:#D9003A;--tdf-g:#f9003d;--tdf-soft:#FDE2E9}
+@media (prefers-color-scheme: dark){:root{--tdf:#FF4D74;--tdf-g:#f9003d;--tdf-soft:#3A0F1B}}
+.tdf{display:flex;flex-direction:column;gap:24px}
+.tdf-cab{position:relative;overflow:hidden;border-radius:14px;background:#0B0B10;color:#F4F4F6;padding:18px 20px 0;display:flex;flex-direction:column;gap:14px;isolation:isolate}
+.tdf-cab::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.28;background:linear-gradient(110deg,transparent 30%,var(--tdf-g));-webkit-mask:url(/topo-gondomar.svg) right center/cover no-repeat;mask:url(/topo-gondomar.svg) right center/cover no-repeat}
+.tdf-cab-in{display:flex;align-items:center;gap:18px}
+.tdf-logo-l{flex:none;display:block}
+.tdf-logo{display:block;width:auto;height:64px;filter:drop-shadow(0 0 24px rgba(249,0,61,.18))}
+.tdf-cab-t{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tdf-cab-t .eyebrow{color:#9A9AA6}
+.tdf-cab-t h1{font-size:34px;line-height:1;text-transform:uppercase;font-style:italic;font-weight:800;margin:0}
+.tdf-cab.grande{padding-top:28px}
+.tdf-cab.grande .tdf-cab-in{align-items:center;gap:28px}
+.tdf-cab.grande .tdf-logo{height:210px}
+.tdf-cab.grande h1{font-size:clamp(38px,6vw,58px)}
+.tdf-lead{margin:4px 0 0;color:#C9C9D2;line-height:1.55;max-width:56ch}
+.tdf-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.tdf-chips span{border:1px solid rgba(255,255,255,.16);border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#C9C9D2}
+.tdf-insta{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#FF7A98;text-decoration:none;margin-top:4px;width:fit-content}
+.tdf-insta:hover{text-decoration:underline}
+.tdf-nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:0 14px;border-top:1px solid rgba(255,255,255,.08)}
+.tdf-nav::-webkit-scrollbar{display:none}
+.tdf-link{white-space:nowrap;padding:12px 12px 10px;font-weight:600;font-size:15px;color:#A6A6B2;text-decoration:none;border-bottom:3px solid transparent}
+.tdf-link:hover{color:#fff}
+.tdf-link[aria-current="page"]{color:#fff;border-bottom-color:var(--tdf-g)}
+.tdf-link:focus-visible{outline:2px solid #fff;outline-offset:-4px;border-radius:6px}
+@media (max-width:640px){
+  .tdf-cab{padding:14px 16px 0;border-radius:12px}
+  .tdf-nav{margin:0 -16px;padding:0 8px}
+  .tdf-link{padding:11px 10px 9px;font-size:14px}
+  .tdf-logo{height:52px}
+  .tdf-cab-t h1{font-size:28px}
+  .tdf-cab.grande .tdf-cab-in{flex-direction:column;align-items:flex-start;gap:12px}
+  .tdf-cab.grande .tdf-logo{height:150px;align-self:center}
+}
+.tdf-corpo{display:flex;flex-direction:column;gap:22px}
+.tdf-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:760px){.tdf-2{grid-template-columns:1fr}}
+.tdf-sec{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tdf-sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.tdf-sec-h h2{font-size:22px;text-transform:uppercase;font-style:italic;margin:0}
+.tdf-mais{font-size:14px;font-weight:600;color:var(--tdf);text-decoration:none;white-space:nowrap}
+.tdf-mais::after{content:" →"}
+.tdf-mais:hover{text-decoration:underline}
+.tdf-t td{padding:11px 12px}
+.tdf-t tr:last-child td{border-bottom:0}
+.tdf-t tr.lider td{background:var(--tdf-soft)}
+.tdf-t tr.lider td:first-child{box-shadow:inset 4px 0 0 var(--tdf)}
+.tdf-pos{width:44px;color:var(--muted);font-size:13px}
+.tdf-nome{font-weight:600;white-space:normal}
+.tdf-eq{display:inline-block;margin-left:8px;font-size:12px;font-weight:500;color:var(--muted)}
+.tdf-fora{margin:0;font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r);padding:10px 14px}
+.tdf-fora b{color:var(--ink)}
+.tdf-st{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.tdf-st.dnf{color:var(--no)}
+.tdf-nota{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.tdf-ultima{display:flex;flex-direction:column;gap:4px;padding:14px 18px;border:1px solid var(--line);border-left:4px solid var(--tdf);border-radius:var(--r);background:var(--surface);text-decoration:none;color:var(--ink)}
+.tdf-ultima .eyebrow{color:var(--tdf)}
+.tdf-ultima b{font-family:var(--f-display);font-size:26px;text-transform:uppercase;font-style:italic;line-height:1.05}
+.tdf-ultima span:last-child{font-size:14px;color:var(--muted)}
+.tdf-ultima:hover{border-color:var(--muted);border-left-color:var(--tdf)}
+.tdf-etapas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.tdf-etapa{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);text-decoration:none;color:var(--ink)}
+.tdf-etapa:hover{border-color:var(--tdf)}
+.tdf-etapa-n{display:inline-grid;place-items:center;min-width:44px;height:44px;padding:0 6px;border-radius:10px;background:var(--tdf-soft);color:var(--tdf);font-family:var(--f-display);font-weight:800;font-size:20px;font-style:italic}
+.tdf-etapa-b{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tdf-etapa-b b{font-size:17px}
+.tdf-etapa-b span{font-size:13px;color:var(--muted)}
+.tdf-etapa-v{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-weight:600;font-size:14px}
+.tdf-etapa-v small{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
+@media (max-width:520px){.tdf-etapa{grid-template-columns:auto minmax(0,1fr)}.tdf-etapa-v{grid-column:2;align-items:flex-start;text-align:left;flex-direction:row;gap:6px;align-items:baseline}}
+.tdf-etapa-cab{display:flex;flex-direction:column;gap:4px}
+.tdf-etapa-cab .eyebrow{color:var(--tdf)}
+.tdf-etapa-cab h2{font-size:clamp(30px,5vw,42px);text-transform:uppercase;font-style:italic;margin:0;line-height:1}
+.tdf-pag{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tdf-pag .btn{white-space:normal}
+.tdf-tiles{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:760px){.tdf-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tdf-rec{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.tdf-rec{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tdf-rec-c{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);min-width:0}
+.tdf-rec-c .eyebrow{color:var(--muted);font-size:11px}
+.tdf-rec-c b{font-family:var(--f-display);font-size:30px;line-height:1}
+.tdf-rec-c a{font-size:13px;color:var(--tdf);text-decoration:none}
+.tdf-rec-c a:hover{text-decoration:underline}
+.tdf-sec .chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 10px 4px}
+.tdf-bar{fill:var(--tdf)}
+.tdf-evo{display:flex;flex-direction:column;gap:10px}
+.tdf-evo .chart{min-width:0}
+@media (max-width:640px){.tdf-evo{overflow-x:auto}.tdf-evo .chart{min-width:720px}}
+.tdf-evo-n{font:600 13px var(--f-body)}
+.tdf-evo-leg{display:flex;flex-wrap:wrap;gap:6px}
+.tdf-evo-leg .chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);gap:6px;min-height:32px;cursor:pointer}
+.tdf-evo-leg .chip .sw{width:10px;height:10px;border-radius:99px;display:inline-block}
+.tdf-evo-leg .chip[aria-pressed="true"]{border-color:var(--ink);font-weight:700}
+/* gestão do Tour */
+.tdf-adm-t{margin:0;font-size:18px;text-transform:uppercase}
+.tdf-adm-sec{display:flex;flex-direction:column;gap:14px}
+.tdf-adm-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tdf-adm-lista li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tdf-adm-lista li:last-child{border-bottom:0}
+.tdf-adm-l{display:flex;align-items:center;gap:12px;min-width:0;text-decoration:none;color:var(--ink);flex:1}
+.tdf-adm-l>span:last-child{display:flex;flex-direction:column;min-width:0}
+.tdf-adm-l small{font-size:12px;color:var(--muted)}
+a.tdf-adm-l:hover b{text-decoration:underline}
+.tdf-adm-l .tdf-etapa-n{min-width:38px;height:38px;font-size:17px}
+.tdf-adm-f{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.tdf-f-acoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tdf-res{flex-direction:column;align-items:stretch;display:flex;gap:12px}
+.tdf-res td{white-space:nowrap}
+.tdf-in-t{width:110px}.tdf-in-v{width:80px}
+.tdf-erro{background:var(--no-soft);color:var(--no);padding:8px 12px;border-radius:8px;font-size:14px;font-weight:600}
+.tdf-conf{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.tdf-meta{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
+.tdf-meta-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.tdf-meta-nova{padding-top:6px;border-top:1px dashed var(--line)}
+/* link do Tour no topo para visitantes (também no telemóvel) */
+.tab-tdf{display:inline-flex;align-items:center;gap:6px}
+.tab-tdf::before{content:"";width:8px;height:8px;border-radius:99px;background:#f9003d}
+@media (max-width:640px){.appbar .tabs.visitante{display:flex}.appbar .tabs.visitante .tab{padding:8px 10px;font-size:14px}}
+/* bloco do Tour na página inicial */
+.tdf-promo{display:flex;align-items:center;gap:22px;padding:20px 22px;border-radius:14px;background:#0B0B10;color:#F4F4F6;text-decoration:none;position:relative;overflow:hidden;isolation:isolate}
+.tdf-promo::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.3;background:linear-gradient(110deg,transparent 30%,#f9003d);-webkit-mask:url(/topo-gondomar.svg) right center/cover no-repeat;mask:url(/topo-gondomar.svg) right center/cover no-repeat}
+.tdf-promo img{height:110px;width:auto;flex:none}
+.tdf-promo div{display:flex;flex-direction:column;gap:6px}
+.tdf-promo .eyebrow{color:#FF7A98}
+.tdf-promo b{font-family:var(--f-display);font-size:32px;text-transform:uppercase;font-style:italic;line-height:1}
+.tdf-promo p{margin:0;color:#C9C9D2;line-height:1.5}
+.tdf-promo span.cta{font-weight:700;color:#fff}
+.tdf-promo:hover span.cta{text-decoration:underline}
+@media (max-width:560px){.tdf-promo{flex-direction:column;align-items:flex-start}.tdf-promo img{height:90px}}
