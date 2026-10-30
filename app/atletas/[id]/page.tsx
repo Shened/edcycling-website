@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Texto from "@/components/Texto";
-import Atividades from "@/components/Atividades";
+import Atividades, { type ResumoAno } from "@/components/Atividades";
 import { getSession } from "@/lib/session";
 import { bicicletas, comBicicletas, avatarUrl, idade, wkg, type PerfilAtleta } from "@/lib/atleta";
 import { calcular, type InscricaoMin } from "@/lib/stats";
@@ -21,12 +21,14 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
   if (!data) notFound();
   const p = data as unknown as PerfilAtleta;
   const ano = new Date().getFullYear();
-  const [{ data: treinos }, { data: eventos }, { data: insc }, { data: membros }, { data: atvs }] = await Promise.all([
+  const [{ data: treinos }, { data: eventos }, { data: insc }, { data: membros }, { data: atvs }, { data: atvsAno }] = await Promise.all([
     supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)").gte("data", `${ano}-01-01`).lte("data", `${ano}-12-31`),
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("evento_id,user_id,estado,presente").eq("user_id", id),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true),
     supabase.from("atividades").select("*").eq("user_id", id).order("data", { ascending: false }).order("hora", { ascending: false, nullsFirst: false }).limit(100),
+    // Totais do ano: só as colunas precisas, sem o limite da lista.
+    supabase.from("atividades").select("tipo,km,dmais,duracao_s").eq("user_id", id).gte("data", `${ano}-01-01`).lte("data", `${ano}-12-31`).range(0, 9999),
   ]);
   const tdf = await historicoAtleta(supabase, id).catch(() => []);
   const hoje = new Date().toISOString().slice(0, 10);
@@ -105,7 +107,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      <Atividades atividades={(atvs ?? []) as Atividade[]} userId={id} meuId={eu?.id ?? ""} isAdmin={isAdmin} nome={p.nome || ""} />
+      <Atividades anoTodo={(atvsAno ?? undefined) as ResumoAno | undefined} atividades={(atvs ?? []) as Atividade[]} userId={id} meuId={eu?.id ?? ""} isAdmin={isAdmin} nome={p.nome || ""} />
     </section>
   );
 }

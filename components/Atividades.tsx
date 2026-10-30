@@ -27,10 +27,11 @@ const ICON: Record<string, React.ReactNode> = {
 };
 const iconDe = (t: string) => (CICLISMO.includes(t) ? ICON.bike : t === "corrida" || t === "caminhada" ? ICON.corrida : t === "natacao" ? ICON.natacao : ICON.outro);
 
-interface Props { atividades: Atividade[]; userId: string; meuId: string; isAdmin: boolean; nome: string }
+export type ResumoAno = Pick<Atividade, "tipo" | "km" | "dmais" | "duracao_s">[];
+interface Props { atividades: Atividade[]; userId: string; meuId: string; isAdmin: boolean; nome: string; anoTodo?: ResumoAno }
 
 // Atividades pessoais no perfil, ao estilo Strava.
-export default function Atividades({ atividades, userId, meuId, isAdmin, nome }: Props) {
+export default function Atividades({ atividades, userId, meuId, isAdmin, nome, anoTodo }: Props) {
   const router = useRouter();
   const meu = userId === meuId;
   const [form, setForm] = useState<Atividade | null | undefined>(undefined);
@@ -42,7 +43,8 @@ export default function Atividades({ atividades, userId, meuId, isAdmin, nome }:
   useEsc(!!apagar, fecharApagar);
 
   const ano = new Date().getFullYear();
-  const doAno = atividades.filter((a) => a.data.startsWith(String(ano)));
+  // Os totais usam todas as atividades do ano (vindas à parte); a lista só traz as mais recentes.
+  const doAno: ResumoAno = anoTodo ?? atividades.filter((a) => a.data.startsWith(String(ano)));
   const kmBike = doAno.filter((a) => CICLISMO.includes(a.tipo)).reduce((s, a) => s + Number(a.km ?? 0), 0);
   const kmPe = doAno.filter((a) => a.tipo === "corrida" || a.tipo === "caminhada").reduce((s, a) => s + Number(a.km ?? 0), 0);
   const tempo = doAno.reduce((s, a) => s + (a.duracao_s ?? 0), 0);
@@ -118,6 +120,7 @@ export default function Atividades({ atividades, userId, meuId, isAdmin, nome }:
         </ol>
       )}
       {atividades.length > mostra && <button className="btn" style={{ alignSelf: "center" }} onClick={() => setMostra((m) => m + 10)}>Ver mais atividades</button>}
+      {atividades.length >= 100 && mostra >= atividades.length && <p className="hint" style={{ alignSelf: "center", margin: 0 }}>Estão listadas as 100 atividades mais recentes. Os totais acima contam todas as do ano.</p>}
 
       {form !== undefined && <AtividadeForm userId={meuId} atividade={form} onClose={() => setForm(undefined)} />}
       {apagar && (
