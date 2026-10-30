@@ -167,6 +167,23 @@ export async function avisarInscricao(kind: Kind, id: string, antes: string | nu
   } catch { /* nada */ }
 }
 
+/** Um convidado acabou de aceitar o convite: avisa os admins. */
+export async function avisarNovoMembro(): Promise<void> {
+  try {
+    const { user, perfil } = await getSession();
+    if (!user || !perfil?.ativo) return;
+    const admin = createAdminClient();
+    const nome = perfil.nome || perfil.email || "Um atleta novo";
+    await enviarAviso({
+      tipo: "membros", chave: `membro:${user.id}`,
+      titulo: `${nome} entrou na equipa`,
+      corpo: `${nome} aceitou o convite e já tem conta no site da EDCycling.`,
+      url: `/atletas/${user.id}`,
+      destinatarios: sem(await admins(admin), user.id),
+    });
+  } catch { /* nada */ }
+}
+
 /** Envia um aviso de teste à própria pessoa (push e email, ignorando as preferências). */
 export async function testarAviso(): Promise<{ push: number; email: number; erro?: string }> {
   const { user } = await getSession();

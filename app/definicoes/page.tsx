@@ -7,7 +7,7 @@ import { PREF_DEFAULTS } from "@/lib/notif-prefs";
 export const metadata = { title: "Definições · EDCycling" };
 
 export default async function DefinicoesPage() {
-  const { supabase, perfil, isMember } = await getSession();
+  const { supabase, perfil, isMember, isAdmin } = await getSession();
   if (!perfil) redirect("/entrar");
   const { data } = await supabase.from("preferencias_notif").select("*").eq("user_id", perfil.id).maybeSingle();
   const prefs = { ...PREF_DEFAULTS, ...(data ?? {}) } as typeof PREF_DEFAULTS;
@@ -24,6 +24,7 @@ export default async function DefinicoesPage() {
           inicial={prefs}
           vapid={(process.env.VAPID_PUBLIC_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) ?? ""}
           emailAtivo={!!process.env.GMAIL_USER && !!process.env.GMAIL_APP_PASSWORD}
+          isAdmin={isAdmin}
         />
       )}
     </section>

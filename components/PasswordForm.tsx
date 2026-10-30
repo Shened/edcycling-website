@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { avisarNovoMembro } from "@/lib/avisos";
 
 export default function PasswordForm({ id, nome, novo }: { id: string; nome: string; novo: boolean }) {
   const router = useRouter();
@@ -24,7 +25,8 @@ export default function PasswordForm({ id, nome, novo }: { id: string; nome: str
       setErr(error.message.toLowerCase().includes("same") ? "A password nova tem de ser diferente da anterior." : "Não foi possível guardar a password. Tenta outra vez.");
       return;
     }
-    await sb.from("perfis").update({ ativo: true, ...(novo && n.trim() ? { nome: n.trim() } : {}) }).eq("id", id);
+    const { error: e2 } = await sb.from("perfis").update({ ativo: true, ...(novo && n.trim() ? { nome: n.trim() } : {}) }).eq("id", id);
+    if (novo && !e2) await avisarNovoMembro();
     router.push("/eventos");
     router.refresh();
   }

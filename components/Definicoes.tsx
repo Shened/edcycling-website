@@ -16,7 +16,7 @@ async function registo(): Promise<ServiceWorkerRegistration> {
   return (await navigator.serviceWorker.getRegistration()) ?? navigator.serviceWorker.register("/sw.js");
 }
 
-export default function Definicoes({ userId, email, inicial, vapid, emailAtivo }: { userId: string; email: string; inicial: Prefs; vapid: string; emailAtivo: boolean }) {
+export default function Definicoes({ userId, email, inicial, vapid, emailAtivo, isAdmin = false }: { userId: string; email: string; inicial: Prefs; vapid: string; emailAtivo: boolean; isAdmin?: boolean }) {
   const [prefs, setPrefs] = useState<Prefs>(inicial);
   const [guardado, setGuardado] = useState<"" | "a guardar" | "guardado" | "erro">("");
   const [push, setPush] = useState<EstadoPush>("?");
@@ -113,7 +113,7 @@ export default function Definicoes({ userId, email, inicial, vapid, emailAtivo }
         <table className="prefs">
           <thead><tr><th></th><th className="c">Telemóvel</th><th className="c">Email</th></tr></thead>
           <tbody>
-            {TIPOS_AVISO.map((t) => (
+            {TIPOS_AVISO.filter((t) => isAdmin || !t.soAdmin).map((t) => (
               <tr key={t.k}>
                 <td><b>{t.t}</b><span className="hint" style={{ display: "block" }}>{t.d}</span></td>
                 {(["push", "email"] as Canal[]).map((c) => (

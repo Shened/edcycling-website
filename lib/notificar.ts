@@ -72,7 +72,8 @@ export async function enviarAviso(a: Aviso): Promise<{ push: number; email: numb
       if (a.ignorarPreferencias) return true;
       const p = (prefs ?? []).find((x) => x.user_id === uid) as Record<string, unknown> | undefined;
       const k = `${a.tipo}_${canal}` as keyof typeof PREF_DEFAULTS;
-      return p ? !!p[k] : PREF_DEFAULTS[k];
+      const v = p?.[k];
+      return typeof v === "boolean" ? v : PREF_DEFAULTS[k];
     };
 
     // Push
