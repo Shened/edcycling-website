@@ -11,9 +11,8 @@ import Cabecalho from "@/components/Cabecalho";
 import RegistarSW from "@/components/RegistarSW";
 import Analise from "@/components/Analise";
 import MobileNav from "@/components/MobileNav";
-// Patrocinadores desligados por agora (voltar a ligar quando os logótipos estiverem preparados):
-// import Patrocinadores from "@/components/Patrocinadores";
-// import type { Patrocinador } from "@/lib/patrocinadores";
+import Patrocinadores from "@/components/Patrocinadores";
+import type { Patrocinador } from "@/lib/patrocinadores";
 import { getSession } from "@/lib/session";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, nextEvento } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
@@ -31,9 +30,9 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, perfil, isAdmin, isMember } = await getSession();
   // Eventos só são lidos para membros (o RLS também o garante).
-  const [{ data }] = await Promise.all([
+  const [{ data }, { data: patro }] = await Promise.all([
     isMember ? supabase.from("eventos").select("id,titulo,data,mes,ano,estado") : Promise.resolve({ data: [] }),
-    // supabase.from("patrocinadores").select("id,nome,logo_path,url,principal,ativo,ordem").eq("ativo", true).order("principal", { ascending: false }).order("ordem").order("nome"),
+    supabase.from("patrocinadores").select("id,nome,logo_path,url,principal,ativo,ordem").eq("ativo", true).order("principal", { ascending: false }).order("ordem").order("nome"),
   ]);
   const evs = (data ?? []) as Evento[];
   const nx = nextEvento(evs);
@@ -60,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           proximo={nx ? { titulo: nx.titulo, quando: `${quando} · ${vai} confirmado${vai === 1 ? "" : "s"}` } : null}
         />
         <main className="in" id="conteudo">{children}</main>
-        {/* <Patrocinadores lista={(patro ?? []) as Patrocinador[]} /> */}
+        <Patrocinadores lista={(patro ?? []) as Patrocinador[]} />
         <footer className="foot in">
           <span>EDCycling · desde 2023</span>
           <Link href="/ajuda">Ajuda e instalar a app</Link>

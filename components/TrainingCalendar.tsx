@@ -24,15 +24,23 @@ type Modal =
   | { k: "atividade"; atividade: Atividade | null; data: string }
   | null;
 
-interface Props { treinos: Treino[]; eventos: Evento[]; isAdmin: boolean; userId: string; membros: Membro[]; atividades?: Atividade[] }
+interface Props { treinos: Treino[]; eventos: Evento[]; isAdmin: boolean; userId: string; membros: Membro[]; atividades?: Atividade[]; abrir?: string }
 
-export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, membros, atividades = [] }: Props) {
+export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, membros, atividades = [], abrir }: Props) {
   const [view, setView] = useState<"mes" | "semana">("mes");
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
   const [modal, setModal] = useState<Modal>(null);
   const fecharDia = useCallback(() => setModal(null), []);
   useEsc(modal?.k === "dia", fecharDia);
   const [hoje, setHoje] = useState("");
+  // Abrir um treino diretamente (links dos avisos: /treinos?treino=…).
+  useEffect(() => {
+    if (!abrir) return;
+    const t = treinos.find((x) => x.id === abrir);
+    if (!t) return;
+    setCursor(() => { const d = new Date(t.data + "T12:00:00"); d.setHours(0, 0, 0, 0); return d; });
+    setModal({ k: "treino", treino: t, data: t.data });
+  }, [abrir]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => setHoje(iso(new Date())), []);
 
   // Lembra a vista escolhida neste browser.

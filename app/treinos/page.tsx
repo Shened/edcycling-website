@@ -3,7 +3,8 @@ import TrainingCalendar from "@/components/TrainingCalendar";
 import { getSession } from "@/lib/session";
 import type { Atividade, Evento, Membro, Treino } from "@/lib/types";
 
-export default async function TreinosPage() {
+export default async function TreinosPage({ searchParams }: { searchParams: Promise<{ treino?: string }> }) {
+  const { treino: abrir } = await searchParams;
   const { supabase, perfil, isMember, isAdmin } = await getSession();
   if (!isMember) {
     return (
@@ -33,6 +34,7 @@ export default async function TreinosPage() {
       userId={perfil!.id}
       membros={(membros ?? []) as Membro[]}
       atividades={(atvs ?? []) as Atividade[]}
+      abrir={abrir}
     />
   );
 }

@@ -11,6 +11,7 @@ import EventForm from "./EventForm";
 import PostCard from "./PostCard";
 import PresencasEditor from "./PresencasEditor";
 import Texto from "./Texto";
+import Conversa from "./Conversa";
 import MenuAcoes from "./MenuAcoes";
 import { TemaDeco } from "@/lib/temas";
 import { fotoEquipamento } from "@/lib/equipamentos";
@@ -185,6 +186,10 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
             </>
           )}
         </div>
+      </div>
+
+      <div className="evd-conv">
+        <Conversa tipo="evento" id={e.id} userId={eu.id} isAdmin={isAdmin} titulo="Comentários" />
       </div>
 
       <div className="ev-posts">

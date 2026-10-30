@@ -1154,3 +1154,12 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .bikes span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
 .bikes b{color:var(--ink);font-weight:600}
 .atl-b+.atl-b{margin-top:2px}
+/* conversa nos eventos e treinos */
+.conv{display:flex;flex-direction:column;gap:10px}
+.conv-h{display:flex;flex-direction:column;gap:2px}
+.conv-h h3{margin:0;font-size:20px;text-transform:uppercase}
+.conv-l{padding:0}
+.conv-f{border-top:0;padding-top:0}
+.conv-org{display:inline-block;margin:0 4px 0 6px;padding:1px 7px;border-radius:99px;background:var(--pink-soft);color:var(--pink);font-size:11px;font-weight:700;vertical-align:1px}
+.evd-conv{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.mbody .conv{border-top:1px solid var(--line);padding-top:12px}

@@ -20,5 +20,5 @@ export const TIPOS_AVISO: { k: TipoAviso; t: string; d: string; soAdmin?: boolea
   { k: "inscricao", t: "Quem vai e quem sai", d: "Quando alguém se junta ou deixa um evento/treino onde também vais (os admins recebem todos)." },
   { k: "feed", t: "Publicações no feed", d: "Quando alguém publica no feed da equipa." },
   { k: "membros", t: "Novos atletas", d: "Quando alguém aceita o convite e entra na equipa.", soAdmin: true },
-  { k: "reacoes", t: "Gostos e comentários", d: "Quando alguém gosta ou comenta uma publicação tua (e respostas onde comentaste)." },
+  { k: "reacoes", t: "Gostos e comentários", d: "Gostos e comentários nas tuas publicações, comentários nos treinos que criaste (ou nos eventos, se fores admin) e respostas onde comentaste." },
 ];

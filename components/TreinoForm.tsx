@@ -6,6 +6,7 @@ import { marcar } from "@/lib/metricas";
 import { fmtDuracao, fmtKm, parseGpx, type GpxInfo } from "@/lib/gpx";
 import { fmtDate } from "@/lib/dates";
 import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
+import Conversa from "./Conversa";
 import RoutePreview from "./RoutePreview";
 import PresencasEditor from "./PresencasEditor";
 import { apagarTreinoComAviso, avisarAlteracao, avisarInscricao, avisarNovo } from "@/lib/avisos";
@@ -197,6 +198,7 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
           {treino && <Participantes treino={treino} userId={userId} isAdmin={isAdmin} membros={membros} hoje={hoje} />}
 
           {treino && <p className="empty" style={{ margin: 0 }}>Criado por {treino.perfis?.nome || "um membro"}{!canEdit ? ". Só quem criou ou um admin pode alterar." : ""}</p>}
+          {treino && <Conversa tipo="treino" id={treino.id} userId={userId} isAdmin={isAdmin} criadorId={treino.criador_id} titulo="Comentários" />}
           {err && <div className="notice">{err}</div>}
           <div className="mactions">
             {treino && canEdit ? <button type="button" className="btn ghost danger" onClick={remove} disabled={busy}>{armed ? "Confirmar: apagar" : "Apagar treino"}</button> : <span />}

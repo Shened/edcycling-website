@@ -233,3 +233,40 @@ export async function avisarReacao(tipo: "gosto" | "comentario", postId: string,
     }
   } catch { /* nada */ }
 }
+
+/** Comentário na conversa de um evento ou treino: avisa quem criou o treino (ou os admins, nos eventos) e quem já comentou. */
+export async function avisarConversa(kind: Kind, id: string, msgId: string): Promise<void> {
+  try {
+    const { user, perfil } = await getSession();
+    if (!user || !perfil) return;
+    const admin = createAdminClient();
+    const { data: m } = await admin.from("conversas").select("id,autor_id,texto").eq("id", msgId).single();
+    if (!m || m.autor_id !== user.id) return;
+    const { data: outros } = await admin.from("conversas").select("autor_id").eq(kind === "evento" ? "evento_id" : "treino_id", id);
+    let base: string[] = [];
+    let titulo = "";
+    let url = "";
+    if (kind === "treino") {
+      const { data: t } = await admin.from("treinos").select("titulo,criador_id").eq("id", id).single();
+      if (!t) return;
+      base = [t.criador_id as string];
+      titulo = t.titulo as string;
+      url = `/treinos?treino=${id}`;
+    } else {
+      const { data: e } = await admin.from("eventos").select("titulo").eq("id", id).single();
+      if (!e) return;
+      base = await admins(admin);
+      titulo = e.titulo as string;
+      url = `/eventos/${id}`;
+    }
+    const dest = sem([...new Set([...base, ...(outros ?? []).map((o) => o.autor_id as string)])], user.id);
+    if (!dest.length) return;
+    const texto = String(m.texto).replace(/\s+/g, " ").trim();
+    await enviarAviso({
+      tipo: "reacoes", chave: `conv:${msgId}`,
+      titulo: `${perfil.nome || "Alguém"} comentou em “${titulo}”`,
+      corpo: texto.length > 140 ? texto.slice(0, 140) + "…" : texto,
+      url, destinatarios: dest,
+    });
+  } catch { /* nada */ }
+}
