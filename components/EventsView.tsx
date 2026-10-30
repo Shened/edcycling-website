@@ -43,6 +43,33 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
     atividades.forEach((a) => itens.push({ k: "a", a, ano: +a.data.slice(0, 4), chave: `${a.data}${a.hora ?? ""}` }));
     itens.sort((x, y) => (ver === "passados" ? y.chave.localeCompare(x.chave) : x.chave.localeCompare(y.chave)));
   }
+  // Passados e Todos: o passado mostra-se por semanas (4 de cada vez), para a lista não crescer sem fim.
+  const [semanas, setSemanas] = useState(4);
+  useEffect(() => setSemanas(4), [ver]);
+  const hojeIso = (() => { const d = today(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
+  const passado = (it: Item) => (it.k === "a" ? true : isPast(it.e));
+  const iniSemana = (chave: string) => {
+    const [y, m, dd] = [+chave.slice(0, 4), +chave.slice(5, 7), Math.min(28, +chave.slice(8, 10) || 1)];
+    const d = new Date(y, m - 1, chave.slice(8, 10) === "99" ? 1 : +chave.slice(8, 10) || dd);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  let escondidos = 0;
+  if (ver !== "proximos") {
+    const semanasPassadas = [...new Set(itens.filter(passado).map((it) => iniSemana(it.chave)))].sort().reverse();
+    const limite = semanasPassadas[semanas - 1];
+    if (limite) {
+      const antes = itens.length;
+      const visiveis = itens.filter((it) => !passado(it) || iniSemana(it.chave) >= limite);
+      escondidos = antes - visiveis.length;
+      itens.splice(0, itens.length, ...visiveis);
+    }
+  }
+  const semanaTxt = (ini: string) => {
+    const a = new Date(ini + "T12:00:00"), b = new Date(a); b.setDate(a.getDate() + 6);
+    const f = (d: Date) => `${d.getDate()} ${MESES[d.getMonth()]}`;
+    return ini <= hojeIso && hojeIso <= `${b.getFullYear()}-${String(b.getMonth() + 1).padStart(2, "0")}-${String(b.getDate()).padStart(2, "0")}` ? "Esta semana" : `Semana de ${f(a)} a ${f(b)}`;
+  };
   const grupos: { ano: number; itens: Item[] }[] = [];
   itens.forEach((it) => { const g = grupos[grupos.length - 1]; if (g && g.ano === it.ano) g.itens.push(it); else grupos.push({ ano: it.ano, itens: [it] }); });
   function mudar(v: string) {
@@ -92,7 +119,11 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
       {grupos.map((g, gi) => (
         <div key={g.ano} className="evs-grupo">
           {(gi > 0 || g.ano !== anoAtual) && <h3 className="evs-ano">{g.ano}</h3>}
-          {g.itens.map((it) => {
+          {g.itens.map((it, ii) => {
+            const sem = ver !== "proximos" && passado(it) ? iniSemana(it.chave) : null;
+            const ant = ii > 0 ? g.itens[ii - 1] : null;
+            const cab = sem && (!ant || !passado(ant) || iniSemana(ant.chave) !== sem) ? <p className="evs-semana" key={`s-${sem}-${ii}`} suppressHydrationWarning>{semanaTxt(sem)}</p> : null;
+            const el = (() => {
             if (it.k === "a") return <AtvCartao key={it.a.id} a={it.a} onEdit={() => setAtvEdit(it.a)} />;
             const e = it.e;
             const ps = inscricoes.filter((i) => i.evento_id === e.id);
@@ -116,9 +147,16 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
                 proximo={ver === "proximos" && prox?.id === e.id}
               />
             );
+            })();
+            return cab ? [cab, el] : el;
           })}
         </div>
       ))}
+      {escondidos > 0 && (
+        <button type="button" className="btn evs-mais" onClick={() => setSemanas((n) => n + 4)}>
+          Mostrar mais 4 semanas <span className="muted">({escondidos} mais antig{escondidos === 1 ? "o" : "os"})</span>
+        </button>
+      )}
       {atvEdit && perfil && <AtividadeForm userId={perfil.id} atividade={atvEdit} onClose={() => setAtvEdit(null)} />}
       {editing !== undefined && <EventForm evento={editing} onClose={() => setEditing(undefined)} />}
       {presEv && (() => {

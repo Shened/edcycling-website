@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NavTabs from "./NavTabs";
 import AccountMenu from "./AccountMenu";
+import { BotaoAtualizar } from "./Atualizar";
 
 interface Props {
   isMember: boolean;
@@ -22,6 +23,7 @@ export default function Cabecalho({ isMember, isAdmin, perfil, proximo }: Props)
           <Link href={isMember ? "/eventos" : "/"} className="appbar-brand" translate="no" aria-label="EDCycling, início">ED<span>CYCLING</span></Link>
           <NavTabs isAdmin={isAdmin} isMember={isMember} />
           <div className="appbar-r">
+            <BotaoAtualizar />
             {isAdmin && <Link href="/gestao" className="btn appbar-gestao" aria-current={path.startsWith("/gestao") ? "page" : undefined}>Gestão</Link>}
             {perfil ? (
               <AccountMenu nome={perfil.nome} avatar={perfil.avatar_path} isAdmin={isAdmin} isMember={isMember} />

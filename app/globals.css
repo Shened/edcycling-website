@@ -1163,3 +1163,17 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .conv-org{display:inline-block;margin:0 4px 0 6px;padding:1px 7px;border-radius:99px;background:var(--pink-soft);color:var(--pink);font-size:11px;font-weight:700;vertical-align:1px}
 .evd-conv{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
 .mbody .conv{border-top:1px solid var(--line);padding-top:12px}
+/* eventos passados agrupados por semana */
+.evs-semana{margin:6px 0 -4px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.evs-mais{align-self:center}
+/* atualizar na app instalada: puxar para baixo e botão na barra de topo */
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:30;width:38px;height:38px;border-radius:99px;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 18px rgba(2,14,20,.25);display:grid;place-items:center;color:var(--pink);opacity:0;pointer-events:none;transition:opacity .15s}
+.ptr.on{opacity:1}
+.ptr-ic{display:grid;place-items:center}
+.gira{animation:gira .8s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.gira{animation-duration:2.4s}}
+.appbar-atualizar{display:none;border:0;background:none;color:var(--hero-ink);width:40px;height:40px;border-radius:10px;place-items:center;padding:0}
+.appbar-atualizar:hover{background:rgba(255,255,255,.08)}
+.appbar-atualizar:disabled{opacity:.7}
+@media (display-mode: standalone){.appbar-atualizar{display:grid}}

@@ -11,6 +11,7 @@ import Cabecalho from "@/components/Cabecalho";
 import RegistarSW from "@/components/RegistarSW";
 import Analise from "@/components/Analise";
 import MobileNav from "@/components/MobileNav";
+import Atualizar from "@/components/Atualizar";
 import Patrocinadores from "@/components/Patrocinadores";
 import type { Patrocinador } from "@/lib/patrocinadores";
 import { getSession } from "@/lib/session";
@@ -66,6 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </footer>
         <MobileNav isAdmin={isAdmin} isMember={isMember} />
         <RegistarSW />
+        <Atualizar />
         <Analise />
       </body>
     </html>
