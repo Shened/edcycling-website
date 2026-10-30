@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Texto from "@/components/Texto";
 import Atividades from "@/components/Atividades";
 import { getSession } from "@/lib/session";
-import { CAMPOS_PERFIL, avatarUrl, idade, wkg, type PerfilAtleta } from "@/lib/atleta";
+import { bicicletas, comBicicletas, avatarUrl, idade, wkg, type PerfilAtleta } from "@/lib/atleta";
 import { calcular, type InscricaoMin } from "@/lib/stats";
 import { fmtKm } from "@/lib/gpx";
 import { historicoAtleta } from "@/lib/tdf";
@@ -17,7 +17,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
   if (!isMember) {
     return <section className="view"><p className="empty">Os perfis dos atletas são só para a equipa. <Link href="/entrar">Entra</Link> para os veres.</p></section>;
   }
-  const { data } = await supabase.from("perfis").select(CAMPOS_PERFIL).eq("id", id).maybeSingle();
+  const { data } = await comBicicletas((c) => supabase.from("perfis").select(c).eq("id", id).maybeSingle());
   if (!data) notFound();
   const p = data as unknown as PerfilAtleta;
   const ano = new Date().getFullYear();
@@ -50,7 +50,11 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
         <div className="atleta-id">
           <p className="eyebrow" style={{ color: "var(--pink)" }}>Atleta EDCycling{p.localidade ? ` · ${p.localidade}` : ""}</p>
           <h2 className="big" style={{ fontSize: "clamp(34px,7vw,56px)" }}>{p.nome}</h2>
-          {p.bicicleta && <p className="empty" style={{ margin: 0 }}>Bicicleta: <b style={{ color: "var(--ink)" }}>{p.bicicleta}</b></p>}
+          {bicicletas(p).length > 0 && (
+            <ul className="bikes">
+              {bicicletas(p).map((b) => <li key={b.tipo}><span>{b.tipo}</span><b>{b.nome}</b></li>)}
+            </ul>
+          )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
             {p.strava_url && <a className="btn" href={p.strava_url} target="_blank" rel="noreferrer">Strava</a>}
             {eu?.id === id && <Link className="btn primary" href="/perfil">Editar perfil</Link>}

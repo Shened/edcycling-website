@@ -21,7 +21,7 @@ export default function PerfilEditor({ perfil }: { perfil: PerfilAtleta }) {
     nome: perfil.nome ?? "",
     data_nascimento: s(perfil.data_nascimento),
     peso: s(perfil.peso), altura: s(perfil.altura), ftp: s(perfil.ftp), fc_max: s(perfil.fc_max),
-    localidade: s(perfil.localidade), bicicleta: s(perfil.bicicleta), bio: s(perfil.bio), strava_url: s(perfil.strava_url),
+    localidade: s(perfil.localidade), bicicleta: s(perfil.bicicleta), bicicleta_btt: s(perfil.bicicleta_btt), bicicleta_cx: s(perfil.bicicleta_cx), bio: s(perfil.bio), strava_url: s(perfil.strava_url),
     tamanho_camisola: s(perfil.tamanho_camisola), tamanho_calcao: s(perfil.tamanho_calcao),
     mostrar_peso: !!perfil.mostrar_peso,
   });
@@ -78,7 +78,8 @@ export default function PerfilEditor({ perfil }: { perfil: PerfilAtleta }) {
       nome: f.nome.trim(),
       data_nascimento: f.data_nascimento || null,
       peso: num(f.peso), altura: num(f.altura), ftp: num(f.ftp), fc_max: num(f.fc_max),
-      localidade: txt(f.localidade), bicicleta: txt(f.bicicleta), bio: txt(f.bio), strava_url: strava,
+      localidade: txt(f.localidade), bicicleta: txt(f.bicicleta),
+      ...("bicicleta_btt" in perfil ? { bicicleta_btt: txt(f.bicicleta_btt), bicicleta_cx: txt(f.bicicleta_cx) } : {}), bio: txt(f.bio), strava_url: strava,
       tamanho_camisola: f.tamanho_camisola || null, tamanho_calcao: f.tamanho_calcao || null,
       mostrar_peso: f.mostrar_peso,
     }).eq("id", perfil.id);
@@ -138,7 +139,9 @@ export default function PerfilEditor({ perfil }: { perfil: PerfilAtleta }) {
         <legend>Sobre ti</legend>
         <div className="fgrid">
           <div className="field"><label htmlFor="pLoc">Localidade</label><input id="pLoc" type="text" maxLength={60} value={f.localidade} onChange={set("localidade")} /></div>
-          <div className="field"><label htmlFor="pBike">Bicicleta</label><input id="pBike" type="text" maxLength={80} placeholder="ex.: Canyon Ultimate CF SL" value={f.bicicleta} onChange={set("bicicleta")} /></div>
+          <div className="field"><label htmlFor="pBike">Bicicleta de estrada</label><input id="pBike" type="text" maxLength={80} placeholder="ex.: Canyon Ultimate CF SL" value={f.bicicleta} onChange={set("bicicleta")} /></div>
+          <div className="field"><label htmlFor="pBtt">Bicicleta de BTT <span className="hint">(se tiveres)</span></label><input id="pBtt" type="text" maxLength={80} placeholder="ex.: Specialized Epic" value={f.bicicleta_btt} onChange={set("bicicleta_btt")} /></div>
+          <div className="field"><label htmlFor="pCx">Ciclocrosse / Gravel <span className="hint">(se tiveres)</span></label><input id="pCx" type="text" maxLength={80} placeholder="ex.: Orbea Terra" value={f.bicicleta_cx} onChange={set("bicicleta_cx")} /></div>
           <div className="field full"><label htmlFor="pBio">Apresentação</label><textarea id="pBio" maxLength={400} rows={3} placeholder="Há quanto tempo pedalas, que provas gostas…" value={f.bio} onChange={set("bio")} /></div>
           <div className="field full"><label htmlFor="pStrava">Perfil do Strava</label><input id="pStrava" type="url" inputMode="url" maxLength={200} placeholder="strava.com/athletes/…" value={f.strava_url} onChange={set("strava_url")} /></div>
         </div>

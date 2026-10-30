@@ -7,7 +7,7 @@ import { idade, wkg, type PerfilAtleta } from "@/lib/atleta";
 export default function AtletasLista({ atletas, euId }: { atletas: PerfilAtleta[]; euId: string }) {
   const [q, setQ] = useState("");
   const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const lista = atletas.filter((a) => !q || norm(`${a.nome} ${a.localidade ?? ""} ${a.bicicleta ?? ""}`).includes(norm(q)));
+  const lista = atletas.filter((a) => !q || norm(`${a.nome} ${a.localidade ?? ""} ${a.bicicleta ?? ""} ${a.bicicleta_btt ?? ""} ${a.bicicleta_cx ?? ""}`).includes(norm(q)));
   return (
     <section className="view">
       <div className="sechead">
@@ -33,7 +33,7 @@ export default function AtletasLista({ atletas, euId }: { atletas: PerfilAtleta[
                   {rel ? <span><b className="num">{rel.toFixed(1)}</b> W/kg</span> : null}
                 </span>
               )}
-              {a.bicicleta && <span className="atl-b">{a.bicicleta}</span>}
+              {[a.bicicleta, a.bicicleta_btt, a.bicicleta_cx].filter(Boolean).map((b) => <span key={b} className="atl-b">{b}</span>)}
             </Link>
           );
         })}

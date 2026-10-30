@@ -12,6 +12,8 @@ export interface PerfilAtleta {
   fc_max: number | null;
   localidade: string | null;
   bicicleta: string | null;
+  bicicleta_btt?: string | null;
+  bicicleta_cx?: string | null;
   bio: string | null;
   strava_url: string | null;
   tamanho_camisola: string | null;
@@ -21,6 +23,21 @@ export interface PerfilAtleta {
 
 export const CAMPOS_PERFIL =
   "id,nome,email,role,avatar_path,data_nascimento,peso,altura,ftp,fc_max,localidade,bicicleta,bio,strava_url,tamanho_camisola,tamanho_calcao,mostrar_peso";
+
+export const CAMPOS_BICICLETAS = "bicicleta_btt,bicicleta_cx";
+
+/** Lê perfis com as bicicletas extra; se a migration 023 ainda não correu, lê sem elas. */
+export async function comBicicletas<T>(ler: (campos: string) => PromiseLike<{ data: T | null; error: unknown }>) {
+  const r = await ler(`${CAMPOS_PERFIL},${CAMPOS_BICICLETAS}`);
+  return r.error ? ler(CAMPOS_PERFIL) : r;
+}
+
+/** As bicicletas do atleta, com o tipo (só as preenchidas). */
+export function bicicletas(p: Pick<PerfilAtleta, "bicicleta" | "bicicleta_btt" | "bicicleta_cx">) {
+  return ([["Estrada", p.bicicleta], ["BTT", p.bicicleta_btt], ["Ciclocrosse / Gravel", p.bicicleta_cx]] as const)
+    .filter(([, v]) => v && v.trim())
+    .map(([t, v]) => ({ tipo: t, nome: v as string }));
+}
 
 export const TAMANHOS = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 

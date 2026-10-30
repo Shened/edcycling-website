@@ -3,12 +3,12 @@ import Link from "next/link";
 import PerfilEditor from "@/components/PerfilEditor";
 import InstalarApp from "@/components/InstalarApp";
 import { getSession } from "@/lib/session";
-import { CAMPOS_PERFIL, type PerfilAtleta } from "@/lib/atleta";
+import { comBicicletas, type PerfilAtleta } from "@/lib/atleta";
 
 export default async function PerfilPage() {
   const { supabase, perfil } = await getSession();
   if (!perfil) redirect("/entrar");
-  const { data } = await supabase.from("perfis").select(CAMPOS_PERFIL).eq("id", perfil.id).single();
+  const { data } = await comBicicletas((c) => supabase.from("perfis").select(c).eq("id", perfil.id).single());
   const p = (data ?? { ...perfil }) as unknown as PerfilAtleta;
   const roles = { pendente: "À espera de aprovação", membro: "Membro", admin: "Admin" };
   return (
