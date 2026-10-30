@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { marcar } from "@/lib/metricas";
 import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
 import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos";
@@ -66,7 +67,7 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
     if (res.error) { setErr("Não foi possível guardar. Confirma que és admin e tenta outra vez."); return; }
     // Avisos (correm no servidor; não atrasam quem guardou)
     if (evento) void avisarAlteracao("evento", evento.id, { data: evento.data, hora: evento.hora, partida: evento.partida, estado: evento.estado });
-    else if (res.data) void avisarNovo("evento", (res.data as { id: string }).id);
+    else if (res.data) { void avisarNovo("evento", (res.data as { id: string }).id); marcar("Evento criado", { tipo: f.tipo, tema: f.tema || "nenhum" }); }
     onClose(); router.refresh();
   }
   async function remove() {

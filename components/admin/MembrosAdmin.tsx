@@ -2,6 +2,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { marcar } from "@/lib/metricas";
 import type { Perfil, Role } from "@/lib/types";
 import { convidarMembro, reenviarConvite, removerMembro } from "@/app/gestao/actions";
 import Avatar from "@/components/Avatar";
@@ -56,7 +57,7 @@ export default function MembrosAdmin({ perfis, meId }: { perfis: Perfil[]; meId:
     startInvite(async () => {
       const r = await convidarMembro(fd);
       setConvite(r);
-      if (r.ok) { form.reset(); router.refresh(); }
+      if (r.ok) { form.reset(); router.refresh(); marcar("Convite enviado"); }
     });
   }
   async function remover() {

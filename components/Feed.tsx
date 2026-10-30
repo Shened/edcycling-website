@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { marcar } from "@/lib/metricas";
 import { reduzirImagem } from "@/lib/image";
 import { MESES, evAno, evMes } from "@/lib/dates";
 import type { Evento, Post } from "@/lib/types";
@@ -64,7 +65,7 @@ export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicia
     setStatus("A publicar…");
     const { data: novo, error } = await sb.from("posts").insert({ autor_id: userId, legenda: texto.trim() || null, fotos: paths, evento_id: evento || null }).select("id").single();
     setBusy(false);
-    if (!error && novo) void avisarFeed((novo as { id: string }).id);
+    if (!error && novo) { void avisarFeed((novo as { id: string }).id); marcar("Publicação no feed", { fotos: paths.length, comEvento: !!evento, comTexto: !!texto.trim() }); }
     if (error) { if (paths.length) await sb.storage.from("fotos").remove(paths); setStatus("Não foi possível publicar. Tenta outra vez."); return; }
     fotos.forEach((f) => URL.revokeObjectURL(f.url));
     setTexto(""); setFotos([]); setEvento(""); setStatus("Publicado.");

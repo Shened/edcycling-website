@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { marcar } from "@/lib/metricas";
 import { fmtDuracao, fmtKm, parseGpx, type GpxInfo } from "@/lib/gpx";
 import { fmtDate } from "@/lib/dates";
 import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
@@ -108,6 +109,7 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
       ? await sb.from("treinos").update(body).eq("id", treino.id)
       : await sb.from("treinos").insert(body).select("id").single();
     const error = res.error;
+    if (!error && !treino) marcar("Treino criado", { tipo: f.tipo, comGpx: !!gpxFile });
     if (error) {
       if (newPath) await sb.storage.from("gpx").remove([newPath]);
       setBusy(false);

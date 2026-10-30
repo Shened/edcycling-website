@@ -9,6 +9,7 @@ const publicSans = Public_Sans({ subsets: ["latin"], weight: ["400", "500", "600
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], weight: ["500"], variable: "--font-jetbrains", display: "swap" });
 import Cabecalho from "@/components/Cabecalho";
 import RegistarSW from "@/components/RegistarSW";
+import Analise from "@/components/Analise";
 import MobileNav from "@/components/MobileNav";
 import { getSession } from "@/lib/session";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, nextEvento } from "@/lib/dates";
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </footer>
         <MobileNav isAdmin={isAdmin} isMember={isMember} />
         <RegistarSW />
+        <Analise />
       </body>
     </html>
   );

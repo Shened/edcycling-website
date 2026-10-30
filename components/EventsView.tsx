@@ -12,6 +12,7 @@ import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
 import EventoCartao from "./EventoCartao";
 import { useEsc } from "./useEsc";
+import { marcar } from "@/lib/metricas";
 import { avisarInscricao } from "@/lib/avisos";
 
 interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[] }
@@ -45,6 +46,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const grupos: { ano: number; itens: Item[] }[] = [];
   itens.forEach((it) => { const g = grupos[grupos.length - 1]; if (g && g.ano === it.ano) g.itens.push(it); else grupos.push({ ano: it.ano, itens: [it] }); });
   function mudar(v: string) {
+    marcar("Separador de eventos", { ver: v });
     const q = new URLSearchParams(params.toString());
     if (v === "proximos") q.delete("ver"); else q.set("ver", v);
     router.replace(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
@@ -67,7 +69,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
       : await sb.from("inscricoes").delete().eq("evento_id", evId).eq("user_id", perfil.id);
     setPending(null);
     if (error) { setMsg("Não foi possível guardar a inscrição. Tenta outra vez."); setOtimista((o) => { const n = { ...o }; delete n[evId]; return n; }); }
-    else void avisarInscricao("evento", evId, antes);
+    else { void avisarInscricao("evento", evId, antes); marcar("Resposta a evento", { resposta: estado ?? "retirou", onde: "lista" }); }
     router.refresh();
   }
   const vazio = ver === "passados" ? "Ainda não há eventos passados." : ver === "todos" ? "Ainda não há eventos." : "Sem eventos marcados.";

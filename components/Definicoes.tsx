@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { marcar } from "@/lib/metricas";
 import { TIPOS_AVISO, type Canal, type Prefs, type TipoAviso } from "@/lib/notif-prefs";
 import { testarAviso } from "@/lib/avisos";
 
@@ -51,6 +52,7 @@ export default function Definicoes({ userId, email, inicial, vapid, emailAtivo, 
       );
       if (error) throw error;
       setPush("ligado");
+      marcar("Notificações ativadas");
       setMsg("Notificações ativadas neste dispositivo.");
     } catch {
       setMsg("Não foi possível ativar. Se estás no iPhone, abre o site pela app instalada no ecrã principal.");

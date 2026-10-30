@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { marcar } from "@/lib/metricas";
 import { avisarReacao } from "@/lib/avisos";
 import type { Comentario, Post } from "@/lib/types";
 import Avatar from "./Avatar";
@@ -55,7 +56,7 @@ export default function PostCard({ p, eu, isAdmin, armed, onApagar }: Props) {
       ? await sb.from("post_gostos").insert({ post_id: p.id, user_id: eu.id })
       : await sb.from("post_gostos").delete().eq("post_id", p.id).eq("user_id", eu.id);
     if (error && !/duplicate/i.test(error.message)) { setGosto(!novo); setNGostos((n) => n + (novo ? -1 : 1)); return; }
-    if (novo) void avisarReacao("gosto", p.id);
+    if (novo) { void avisarReacao("gosto", p.id); marcar("Gosto", { duploToque: !!forcar }); }
   }
 
   // Comentários
@@ -80,6 +81,7 @@ export default function PostCard({ p, eu, isAdmin, armed, onApagar }: Props) {
     if (error || !data) { setComs((c) => c.filter((x) => x.id !== tmp.id)); setTexto(t); return; }
     setComs((c) => c.map((x) => (x.id === tmp.id ? { ...x, id: (data as { id: string }).id } : x)));
     void avisarReacao("comentario", p.id, (data as { id: string }).id);
+    marcar("Comentário");
     router.refresh();
   }
   async function apagarCom(id: string) {

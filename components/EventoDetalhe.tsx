@@ -14,6 +14,7 @@ import Texto from "./Texto";
 import MenuAcoes from "./MenuAcoes";
 import { TemaDeco } from "@/lib/temas";
 import { useEsc } from "./useEsc";
+import { marcar } from "@/lib/metricas";
 import { Resposta, estadoFrase } from "./EventoCartao";
 
 type Insc = Inscricao & { perfis: { nome: string; avatar_path?: string | null } | null };
@@ -56,6 +57,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
     setBusy(false);
     if (error) { setMine(antes); setMsg("Não foi possível guardar a tua resposta."); return; }
     void avisarInscricao("evento", e.id, antes);
+    marcar("Resposta a evento", { resposta: estado ?? "retirou", onde: "pagina" });
     router.refresh();
   }
   async function copiar() {
@@ -72,6 +74,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
 
   async function partilhar() {
     const url = window.location.href;
+    marcar("Partilhar evento", { modo: "share" in navigator ? "nativo" : "copiar" });
     if (navigator.share) { try { await navigator.share({ title: e.titulo, url }); return; } catch { /* cancelado */ } }
     await copiar();
   }

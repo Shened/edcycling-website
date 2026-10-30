@@ -9,6 +9,7 @@ import type { Atividade } from "@/lib/types";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import RoutePreview from "./RoutePreview";
 import { useEsc } from "./useEsc";
+import { marcar } from "@/lib/metricas";
 
 const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
@@ -99,6 +100,7 @@ export default function AtividadeForm({ userId, atividade, dataInicial, onClose 
       return;
     }
     if (novo && a?.gpx_path) await sb.storage.from("gpx").remove([a.gpx_path]);
+    if (!a) marcar("Atividade registada", { fonte: gpxFile ? (/\.fit$/i.test(gpxFile.name) ? "fit" : "gpx") : "manual", tipo: f.tipo, privada: f.privada });
     onClose();
     router.refresh();
   }
