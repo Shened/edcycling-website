@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useEsc } from "./useEsc";
 import { ESTADOS, MESES, MESES_L, TIPOS } from "@/lib/dates";
 import { fmtDuracao, fmtKm } from "@/lib/gpx";
@@ -96,10 +97,10 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
       </button>
     );
     if (e) return (
-      <button type="button" className={`cal-chip evento st-${e.estado}${e.tema ? ` tema-${e.tema}` : ""}`} title={`${e.titulo} · ${ESTADOS[e.estado]}`}
-        onClick={(ev) => { ev.stopPropagation(); setModal({ k: "evento", evento: e, data: e.data! }); }}>
+      <Link href={`/eventos/${e.id}`} className={`cal-chip evento st-${e.estado}${e.tema ? ` tema-${e.tema}` : ""}`} title={`${e.titulo} · ${ESTADOS[e.estado]}`}
+        onClick={(ev) => ev.stopPropagation()}>
         <span className="t">{e.titulo}</span>
-      </button>
+      </Link>
     );
     return null;
   }
@@ -121,10 +122,10 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
       </button>
     );
     if (e) return (
-      <button type="button" className={`wk-card evento st-${e.estado}`} onClick={() => setModal({ k: "evento", evento: e, data: e.data! })}>
+      <Link href={`/eventos/${e.id}`} className={`wk-card evento st-${e.estado}`}>
         <span className="tt">{e.titulo}</span>
         <span className="mt">{[TIPOS[e.tipo], ESTADOS[e.estado], e.km ? `${e.km} km` : ""].filter(Boolean).join(" · ")}</span>
-      </button>
+      </Link>
     );
     return null;
   }

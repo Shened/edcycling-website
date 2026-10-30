@@ -896,3 +896,5 @@ a.pessoa:hover{background:var(--sunk)}
 .ev-cabeca.tema::after{-webkit-mask-image:linear-gradient(to left,#000 30%,transparent 75%);mask-image:linear-gradient(to left,#000 30%,transparent 75%)}
 .ev-cabeca.tema-sao-joao::after{-webkit-mask-image:none;mask-image:none}
 @media (max-width:640px){.tema .evc-data::after{-webkit-mask-image:linear-gradient(to left,#000 30%,transparent 75%);mask-image:linear-gradient(to left,#000 30%,transparent 75%)}}
+
+a.cal-chip,a.wk-card{text-decoration:none;box-sizing:border-box}
