@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Cartao, Falta } from "@/components/tdf/Tabelas";
+import { Cartao, Falta, Nome } from "@/components/tdf/Tabelas";
 import { getSession } from "@/lib/session";
 import { comAno, fmtDataEtapa, fmtDif, fmtTempo, lerTour, MEDALHAS, pontosPosicao, velocidadeEtapa } from "@/lib/tdf";
 
 export default async function TourEtapa({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase } = await getSession();
+  const { supabase, isMember } = await getSession();
   const d = await lerTour(supabase, { etapaId: id });
   if (d.emFalta) return <Falta />;
   const i = d.stages.findIndex((s) => s.id === id);
   if (i < 0) notFound();
   const st = d.stages[i];
   const ant = d.stages[i - 1], seg = d.stages[i + 1];
-  const nome = new Map(d.riders.map((r) => [r.id, r.name]));
+  const nome = new Map(d.todosAtletas.map((r) => [r.id, r.name]));
+  const atl = new Map(d.todosAtletas.map((r) => [r.id, r]));
+  const N = ({ id }: { id: string }) => { const r = atl.get(id); return r ? <Nome r={r} ligar={isMember} /> : <>—</>; };
   const res = d.stageResults.filter((r) => r.stage_id === st.id);
   const term = res.filter((r) => r.status === "FINISHED").sort((a, b) => (a.time_seconds ?? 0) - (b.time_seconds ?? 0));
   const outros = [...res.filter((r) => r.status === "DNF"), ...res.filter((r) => r.status === "DNS")];
@@ -44,7 +46,7 @@ export default async function TourEtapa({ params }: { params: Promise<{ id: stri
                 {term.map((r, k) => (
                   <tr key={r.id} className={k === 0 ? "lider" : undefined}>
                     <td className="tdf-pos num">{MEDALHAS[k + 1] ?? k + 1}</td>
-                    <td className="tdf-nome">{nome.get(r.rider_id) ?? "—"}</td>
+                    <td className="tdf-nome"><N id={r.rider_id} /></td>
                     <td className="r muted num">{r.avg_speed_kmh != null ? `${fmt(r.avg_speed_kmh)} km/h` : ""}</td>
                     <td className="r num">{k === 0 ? fmtTempo(r.time_seconds ?? 0) : fmtDif((r.time_seconds ?? 0) - lider)}</td>
                   </tr>
@@ -76,7 +78,7 @@ export default async function TourEtapa({ params }: { params: Promise<{ id: stri
                         {gr.map((x) => (
                           <tr key={x.id}>
                             <td className="tdf-pos num">{x.position}</td>
-                            <td className="tdf-nome">{nome.get(x.rider_id) ?? "—"}</td>
+                            <td className="tdf-nome"><N id={x.rider_id} /></td>
                             <td className="r num">{pontosPosicao(x.position)} pts</td>
                           </tr>
                         ))}

@@ -4,7 +4,7 @@
 export type EstadoEtapa = "FINISHED" | "DNS" | "DNF";
 export type TipoMeta = "SPRINT" | "MOUNTAIN";
 
-export interface Ciclista { id: string; name: string; team: string | null }
+export interface Ciclista { id: string; name: string; team: string | null; perfil_id?: string | null }
 export interface Etapa {
   id: string; number: number; name: string; date: string | null;
   distance_km: number | null; elevation_gain_m: number | null; max_gradient_pct: number | null;
@@ -42,7 +42,7 @@ type Escolha = { ano?: string | number | null; etapaId?: string; edicaoId?: stri
 
 export async function lerTour(sb: Cliente, escolha: Escolha = {}): Promise<TourDados> {
   const [r, s, sr, g, gr, ed, pa] = await Promise.all([
-    sb.from("tdf_riders").select("id,name,team").order("name"),
+    sb.from("tdf_riders").select("*").order("name"),
     sb.from("tdf_stages").select("*").order("number"),
     sb.from("tdf_stage_results").select("id,stage_id,rider_id,status,time_seconds,avg_speed_kmh"),
     sb.from("tdf_goals").select("id,stage_id,type,name,order_index").order("order_index"),
@@ -51,7 +51,7 @@ export async function lerTour(sb: Cliente, escolha: Escolha = {}): Promise<TourD
     sb.from("tdf_participantes").select("edicao_id,rider_id"),
   ]);
   const emFalta = Boolean(r.error || s.error);
-  const todosAtletas = (r.data ?? []) as Ciclista[];
+  const todosAtletas = ((r.data ?? []) as Ciclista[]).map((x) => ({ id: x.id, name: x.name, team: x.team, perfil_id: x.perfil_id ?? null }));
   // O Postgres devolve "numeric" como texto: converte-se aqui para não haver surpresas nas contas.
   let stages = ((s.data ?? []) as (Etapa & { edicao_id?: string })[]).map((e) => ({
     id: e.id, number: e.number, name: e.name, date: e.date, edicao_id: e.edicao_id,
@@ -63,7 +63,7 @@ export async function lerTour(sb: Cliente, escolha: Escolha = {}): Promise<TourD
   let riders = todosAtletas;
 
   // Sem a migration 019 há uma só edição implícita com tudo.
-  if (ed.error || !ed.data) {
+  if (ed.error || !ed.data || !ed.data.length) {
     return { riders, stages, stageResults, goals, goalResults, edicoes: [], edicao: null, anoPadrao: null, todosAtletas, emFalta };
   }
 
@@ -218,3 +218,38 @@ export const fmtDataEtapa = (iso: string | null) =>
   iso ? new Date(iso + "T12:00:00").toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" }) : null;
 
 export const MEDALHAS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+export interface HistoricoEdicao {
+  ano: number | null; etapas: number; vitorias: number;
+  geral: { pos: number; de: number } | null; foraDaGeral: boolean;
+  sprint: { pos: number; pontos: number } | null; montanha: { pos: number; pontos: number } | null;
+}
+
+/** Resultados de um atleta da equipa em cada edição do Tour (pela ligação perfil_id). */
+export async function historicoAtleta(sb: Cliente, perfilId: string): Promise<HistoricoEdicao[]> {
+  const base = await lerTour(sb, {});
+  if (base.emFalta) return [];
+  const rider = base.todosAtletas.find((r) => r.perfil_id === perfilId);
+  if (!rider) return [];
+  const edicoes = base.edicoes.length ? base.edicoes : [null];
+  const out: HistoricoEdicao[] = [];
+  for (const ed of [...edicoes].reverse()) {
+    const d = ed ? await lerTour(sb, { edicaoId: ed.id }) : base;
+    const res = d.stageResults.filter((r) => r.rider_id === rider.id);
+    if (!res.length && !d.riders.some((r) => r.id === rider.id)) continue;
+    const geral = classificacaoGeral(d);
+    const g = geral.find((l) => l.rider.id === rider.id);
+    const sp = classificacaoPontos(d, "SPRINT").find((l) => l.rider.id === rider.id);
+    const mo = classificacaoPontos(d, "MOUNTAIN").find((l) => l.rider.id === rider.id);
+    out.push({
+      ano: ed?.ano ?? null,
+      etapas: res.filter((r) => r.status === "FINISHED").length,
+      vitorias: d.stages.filter((s) => vencedorEtapa(d, s.id)?.id === rider.id).length,
+      geral: g ? { pos: g.pos, de: geral.length } : null,
+      foraDaGeral: res.some((r) => r.status !== "FINISHED"),
+      sprint: sp ? { pos: sp.pos, pontos: sp.pontos } : null,
+      montanha: mo ? { pos: mo.pos, pontos: mo.pontos } : null,
+    });
+  }
+  return out;
+}

@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { comAno, classificacaoGeral, classificacaoPontos, fmtDataEtapa, lerTour, vencedorEtapa } from "@/lib/tdf";
 
 export default async function TourResumo({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
-  const { supabase } = await getSession();
+  const { supabase, isMember } = await getSession();
   const { ano } = await searchParams;
   const d = await lerTour(supabase, { ano });
   if (d.emFalta) return <Falta />;
@@ -25,14 +25,14 @@ export default async function TourResumo({ searchParams }: { searchParams: Promi
         </Link>
       )}
       <Cartao titulo="Classificação geral" href={comAno("/tour-de-freixo/geral", d)}>
-        <TabelaGeral linhas={geral} completa={false} />
+        <TabelaGeral ligar={isMember} linhas={geral} completa={false} />
       </Cartao>
       <div className="tdf-2">
         <Cartao titulo={<><span aria-hidden="true">🚩 </span>Sprint</>} href={comAno("/tour-de-freixo/pontos", d)}>
-          <TabelaPontos linhas={sprint} />
+          <TabelaPontos ligar={isMember} linhas={sprint} />
         </Cartao>
         <Cartao titulo={<><span aria-hidden="true">⛰️ </span>Montanha</>} href={comAno("/tour-de-freixo/pontos", d)}>
-          <TabelaPontos linhas={montanha} />
+          <TabelaPontos ligar={isMember} linhas={montanha} />
         </Cartao>
       </div>
     </div>

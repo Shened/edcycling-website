@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { CAMPOS_PERFIL, avatarUrl, idade, wkg, type PerfilAtleta } from "@/lib/atleta";
 import { calcular, type InscricaoMin } from "@/lib/stats";
 import { fmtKm } from "@/lib/gpx";
+import { historicoAtleta } from "@/lib/tdf";
 import type { Atividade, Evento, Membro, Treino } from "@/lib/types";
 
 // Perfil de um atleta, visível para a equipa.
@@ -27,6 +28,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true),
     supabase.from("atividades").select("*").eq("user_id", id).order("data", { ascending: false }).order("hora", { ascending: false, nullsFirst: false }).limit(100),
   ]);
+  const tdf = await historicoAtleta(supabase, id).catch(() => []);
   const hoje = new Date().toISOString().slice(0, 10);
   const st = calcular((treinos ?? []) as unknown as Treino[], (eventos ?? []) as Evento[], (insc ?? []) as InscricaoMin[], (membros ?? []) as Membro[], ano, hoje);
   const linha = st.atletas.find((a) => a.id === id);
@@ -74,6 +76,30 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
         </div>
         {(linha?.eventos ?? 0) > 0 && <p className="hint">Esteve em {linha!.eventos} evento{linha!.eventos === 1 ? "" : "s"} da equipa este ano.</p>}
       </div>
+
+      {tdf.length > 0 && (
+        <div className="tdf-hist">
+          <div className="sechead"><h2 style={{ fontSize: 24 }}>Tour de Freixo</h2><Link href="/tour-de-freixo" className="btn ghost">Ver o Tour</Link></div>
+          <ul className="tdf-hist-l">
+            {tdf.map((h) => (
+              <li key={h.ano ?? 0}>
+                <Link className="tdf-hist-c" href={h.ano ? `/tour-de-freixo/geral?ano=${h.ano}` : "/tour-de-freixo/geral"}>
+                  {h.ano && <span className="eyebrow">Edição {h.ano}</span>}
+                  <b>{h.geral ? `${h.geral.pos}.º na geral` : h.foraDaGeral ? "Fora da geral" : "Sem classificação"}</b>
+                  <span>
+                    {[
+                      `${h.etapas} etapa${h.etapas === 1 ? "" : "s"} terminada${h.etapas === 1 ? "" : "s"}`,
+                      h.vitorias ? `${h.vitorias} vitória${h.vitorias === 1 ? "" : "s"} de etapa` : null,
+                      h.sprint ? `Sprint: ${h.sprint.pos}.º (${h.sprint.pontos} pts)` : null,
+                      h.montanha ? `Montanha: ${h.montanha.pos}.º (${h.montanha.pontos} pts)` : null,
+                    ].filter(Boolean).join(" · ")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Atividades atividades={(atvs ?? []) as Atividade[]} userId={id} meuId={eu?.id ?? ""} isAdmin={isAdmin} nome={p.nome || ""} />
     </section>

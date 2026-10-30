@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { atividadesStrava, importarStrava, type ItemStrava, type ListaStrava } from "@/app/strava-actions";
+import { atividadesStrava, importarStrava, juntarStrava, type ItemStrava, type ListaStrava } from "@/app/strava-actions";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import { fmtDuracao, fmtKm } from "@/lib/gpx";
 import { marcar } from "@/lib/metricas";
@@ -42,7 +42,7 @@ export default function ImportarStrava({ onVoltar, onFeito }: { onVoltar: () => 
     setMais(r.mais);
     setPagina(p);
     // Por omissão ficam escolhidas as que ainda não estão no site.
-    if (p === 1) setSel(new Set(novos.filter((x) => !x.importada).slice(0, 10).map((x) => x.id)));
+    if (p === 1) setSel(new Set(novos.filter((x) => !x.importada && !x.parecida).slice(0, 10).map((x) => x.id)));
   }
   useEffect(() => { carregar(1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -70,7 +70,20 @@ export default function ImportarStrava({ onVoltar, onFeito }: { onVoltar: () => 
     router.refresh();
   }
 
-  const novas = itens.filter((x) => !x.importada);
+  async function juntar(x: Item) {
+    if (!x.parecida) return;
+    setBusy(true); setMsg("");
+    const r = await juntarStrava(x.id, x.parecida.id, x.pagina);
+    setBusy(false);
+    if (!r.ok) { setMsg(r.msg ?? "Não foi possível juntar."); return; }
+    setItens((v) => v.map((y) => (y.id === x.id ? { ...y, importada: true, parecida: null } : y)));
+    setSel((s) => { const n = new Set(s); n.delete(x.id); return n; });
+    setMsg(`Ficou ligada a “${x.parecida.titulo}”, sem duplicar.`);
+    router.refresh();
+  }
+
+  const novas = itens.filter((x) => !x.importada && !x.parecida);
+  const repetidas = itens.filter((x) => sel.has(x.id) && x.parecida).length;
   return (
     <div className="stv">
       <div className="stv-cab">
@@ -95,7 +108,7 @@ export default function ImportarStrava({ onVoltar, onFeito }: { onVoltar: () => 
           {itens.length === 0 ? <p className="empty">Não há atividades no teu Strava.</p> : (
             <>
               <div className="stv-barra">
-                <span className="hint">{novas.length ? `${sel.size} escolhida${sel.size === 1 ? "" : "s"}` : "Já tens tudo importado."}</span>
+                <span className="hint">{sel.size ? `${sel.size} escolhida${sel.size === 1 ? "" : "s"}` : novas.length ? "Nenhuma escolhida" : "Não há atividades novas."}</span>
                 {novas.length > 0 && (
                   <button type="button" className="btn ghost" onClick={() => setSel(sel.size ? new Set() : new Set(novas.map((x) => x.id)))}>
                     {sel.size ? "Limpar escolha" : "Escolher todas as novas"}
@@ -104,7 +117,7 @@ export default function ImportarStrava({ onVoltar, onFeito }: { onVoltar: () => 
               </div>
               <ul className="stv-lista">
                 {itens.map((x) => (
-                  <li key={x.id}>
+                  <li key={x.id} className={x.parecida ? "dup" : undefined}>
                     <label className={`stv-item${x.importada ? " feito" : ""}`}>
                       <input type="checkbox" checked={x.importada || sel.has(x.id)} disabled={x.importada || busy} onChange={() => alternar(x.id)} />
                       <span className="stv-t">
@@ -117,13 +130,20 @@ export default function ImportarStrava({ onVoltar, onFeito }: { onVoltar: () => 
                       </span>
                       {x.importada && <span className="stv-ok">No site</span>}
                     </label>
+                    {x.parecida && (
+                      <div className="stv-dup">
+                        <span>Parece já estar no site como <b>“{x.parecida.titulo}”</b>.</span>
+                        <button type="button" className="btn" disabled={busy} onClick={() => juntar(x)}>É a mesma, juntar</button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
               {mais && <button type="button" className="btn" disabled={busy} onClick={() => carregar(pagina + 1)}>Ver mais antigas</button>}
             </>
           )}
-          {msg && <div className={msg.includes("importad") ? "ok-msg" : "notice"} role="status">{msg}</div>}
+          {repetidas > 0 && <div className="notice" role="status">{repetidas === 1 ? "1 das escolhidas parece" : `${repetidas} das escolhidas parecem`} já estar no site. Se importares, fica repetida; usa “É a mesma, juntar” para evitar.</div>}
+          {msg && <div className={/importad|sem duplicar/.test(msg) ? "ok-msg" : "notice"} role="status">{msg}</div>}
           <div className="stv-acoes">
             <span className="stv-pw">Dados do Strava</span>
             <button type="button" className="btn ghost" onClick={onFeito} disabled={busy}>Fechar</button>

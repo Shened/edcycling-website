@@ -211,3 +211,16 @@ export async function removerResultadoMeta(etapa: string, id: string): Promise<R
   refrescar(etapa);
   return { ok: true, msg: "Removido." };
 }
+
+/* ---------- ligação aos atletas da equipa ---------- */
+
+export async function associarPerfil(riderId: string, perfilId: string | null): Promise<Res> {
+  const sb = await admin();
+  const { error } = await sb.from("tdf_riders").update({ perfil_id: perfilId || null }).eq("id", riderId);
+  if (error) {
+    if (/perfil_id/.test(error.message) && /column/.test(error.message)) return erro("Falta correr a migration 022 no Supabase.");
+    return erro(/duplicate|unique/i.test(error.message) ? "Esse atleta da equipa já está ligado a outro nome do Tour." : `Não foi possível ligar (${error.message}).`);
+  }
+  refrescar();
+  return { ok: true, msg: perfilId ? "Ligado." : "Ligação removida." };
+}

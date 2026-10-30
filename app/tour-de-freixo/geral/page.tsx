@@ -6,7 +6,7 @@ import { classificacaoGeral, estaForaDaGeral, evolucaoGeral, lerTour } from "@/l
 export const metadata = { title: "Classificação geral · Tour de Freixo" };
 
 export default async function TourGeral({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
-  const { supabase } = await getSession();
+  const { supabase, isMember } = await getSession();
   const { ano } = await searchParams;
   const d = await lerTour(supabase, { ano });
   if (d.emFalta) return <Falta />;
@@ -16,7 +16,7 @@ export default async function TourGeral({ searchParams }: { searchParams: Promis
   return (
     <div className="tdf-corpo">
       <Cartao titulo="Classificação geral">
-        <TabelaGeral linhas={geral} />
+        <TabelaGeral ligar={isMember} linhas={geral} />
         {fora.length > 0 && (
           <p className="tdf-fora"><b>Fora da geral</b> (DNS ou DNF numa etapa): {fora.map((r) => r.name).join(", ")}</p>
         )}

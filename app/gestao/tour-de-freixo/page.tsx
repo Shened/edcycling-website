@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Apagar, Formulario } from "@/components/tdf/admin/Formulario";
+import AssociarPerfil from "@/components/tdf/admin/AssociarPerfil";
 import { getSession } from "@/lib/session";
 import { fmtDataEtapa, lerTour } from "@/lib/tdf";
 import { adicionarCiclista, adicionarEtapa, criarEdicao, removerCiclista, removerEdicao, removerEtapa } from "./actions";
@@ -7,7 +8,12 @@ import { adicionarCiclista, adicionarEtapa, criarEdicao, removerCiclista, remove
 export default async function GestaoTour({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
   const { ano } = await searchParams;
   const { supabase } = await getSession();
-  const d = await lerTour(supabase, { ano });
+  const [d, { data: perfisData }] = await Promise.all([
+    lerTour(supabase, { ano }),
+    supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).order("nome"),
+  ]);
+  const ligados = new Set(d.todosAtletas.map((r) => r.perfil_id).filter(Boolean));
+  const perfis = ((perfisData ?? []) as { id: string; nome: string }[]).filter((p) => p.nome).map((p) => ({ ...p, ocupado: ligados.has(p.id) }));
   if (d.emFalta) return <div className="panel"><p className="empty" style={{ margin: 0 }}>Falta correr as migrations <b>017</b> e <b>018</b> no Supabase para gerir o Tour de Freixo.</p></div>;
   const ed = d.edicao;
   const comEdicoes = d.edicoes.length > 0;
@@ -85,11 +91,13 @@ export default async function GestaoTour({ searchParams }: { searchParams: Promi
 
         <section className="panel">
           <h4 className="tdf-adm-t">Atletas{ed ? ` em ${ed.ano}` : ""} <span className="muted">({d.riders.length})</span></h4>
+          <p className="hint" style={{ margin: 0 }}>Se o atleta tem conta na equipa, escolhe-a ao lado do nome: o nome no Tour passa a abrir o perfil dele e o perfil mostra os resultados no Tour.</p>
           {d.riders.length === 0 ? <p className="empty" style={{ margin: 0 }}>Ainda sem atletas.</p> : (
             <ul className="tdf-adm-lista">
               {d.riders.map((r) => (
                 <li key={r.id}>
                   <span className="tdf-adm-l"><span><b>{r.name}</b>{r.team && <small>{r.team}</small>}</span></span>
+                  {perfis.length > 0 && <AssociarPerfil riderId={r.id} nome={r.name} atual={r.perfil_id ?? null} perfis={perfis} />}
                   <Apagar
                     action={removerCiclista.bind(null, r.id, ed?.id)}
                     rotulo={`Remover ${r.name}`}

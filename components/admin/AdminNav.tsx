@@ -8,6 +8,7 @@ const ITENS = [
   { href: "/gestao/publicacoes", label: "Publicações" },
   { href: "/gestao/eventos", label: "Eventos" },
   { href: "/gestao/equipamentos", label: "Equipamentos" },
+  { href: "/gestao/patrocinadores", label: "Patrocinadores" },
   { href: "/gestao/tour-de-freixo", label: "Tour de Freixo" },
 ];
 
