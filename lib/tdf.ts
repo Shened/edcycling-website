@@ -8,6 +8,7 @@ export interface Ciclista { id: string; name: string; team: string | null }
 export interface Etapa {
   id: string; number: number; name: string; date: string | null;
   distance_km: number | null; elevation_gain_m: number | null; max_gradient_pct: number | null;
+  edicao_id?: string;
 }
 export interface ResultadoEtapa {
   id: string; stage_id: string; rider_id: string; status: EstadoEtapa;
@@ -16,8 +17,18 @@ export interface ResultadoEtapa {
 export interface Meta { id: string; stage_id: string; type: TipoMeta; name: string; order_index: number }
 export interface ResultadoMeta { id: string; goal_id: string; rider_id: string; position: number }
 
+export interface Edicao { id: string; ano: number; etapas: number; atletas: number }
+
 export interface TourDados {
+  /** Só os dados da edição escolhida. */
   riders: Ciclista[]; stages: Etapa[]; stageResults: ResultadoEtapa[]; goals: Meta[]; goalResults: ResultadoMeta[];
+  /** Todas as edições (vazio enquanto a migration 019 não for corrida). */
+  edicoes: Edicao[];
+  edicao: Edicao | null;
+  /** Ano mostrado por omissão: a edição mais recente que já tem etapas. */
+  anoPadrao: number | null;
+  /** Todos os atletas de todas as edições (para os voltar a inscrever noutro ano). */
+  todosAtletas: Ciclista[];
   /** true quando as tabelas ainda não existem (falta correr a migration 017). */
   emFalta: boolean;
 }
@@ -27,28 +38,68 @@ type Cliente = { from: (t: string) => any }; // eslint-disable-line @typescript-
 
 const num = (v: unknown) => (v == null || v === "" ? null : Number(v));
 
-export async function lerTour(sb: Cliente): Promise<TourDados> {
-  const [r, s, sr, g, gr] = await Promise.all([
+type Escolha = { ano?: string | number | null; etapaId?: string; edicaoId?: string };
+
+export async function lerTour(sb: Cliente, escolha: Escolha = {}): Promise<TourDados> {
+  const [r, s, sr, g, gr, ed, pa] = await Promise.all([
     sb.from("tdf_riders").select("id,name,team").order("name"),
-    sb.from("tdf_stages").select("id,number,name,date,distance_km,elevation_gain_m,max_gradient_pct").order("number"),
+    sb.from("tdf_stages").select("*").order("number"),
     sb.from("tdf_stage_results").select("id,stage_id,rider_id,status,time_seconds,avg_speed_kmh"),
     sb.from("tdf_goals").select("id,stage_id,type,name,order_index").order("order_index"),
     sb.from("tdf_goal_results").select("id,goal_id,rider_id,position"),
+    sb.from("tdf_edicoes").select("id,ano").order("ano"),
+    sb.from("tdf_participantes").select("edicao_id,rider_id"),
   ]);
   const emFalta = Boolean(r.error || s.error);
+  const todosAtletas = (r.data ?? []) as Ciclista[];
   // O Postgres devolve "numeric" como texto: converte-se aqui para não haver surpresas nas contas.
-  const stages = ((s.data ?? []) as Etapa[]).map((e) => ({
-    ...e, distance_km: num(e.distance_km), elevation_gain_m: num(e.elevation_gain_m), max_gradient_pct: num(e.max_gradient_pct),
+  let stages = ((s.data ?? []) as (Etapa & { edicao_id?: string })[]).map((e) => ({
+    id: e.id, number: e.number, name: e.name, date: e.date, edicao_id: e.edicao_id,
+    distance_km: num(e.distance_km), elevation_gain_m: num(e.elevation_gain_m), max_gradient_pct: num(e.max_gradient_pct),
   }));
-  const stageResults = ((sr.data ?? []) as ResultadoEtapa[]).map((x) => ({ ...x, avg_speed_kmh: num(x.avg_speed_kmh) }));
-  return {
-    riders: (r.data ?? []) as Ciclista[],
-    stages,
-    stageResults,
-    goals: (g.data ?? []) as Meta[],
-    goalResults: (gr.data ?? []) as ResultadoMeta[],
-    emFalta,
-  };
+  let stageResults = ((sr.data ?? []) as ResultadoEtapa[]).map((x) => ({ ...x, avg_speed_kmh: num(x.avg_speed_kmh) }));
+  let goals = (g.data ?? []) as Meta[];
+  let goalResults = (gr.data ?? []) as ResultadoMeta[];
+  let riders = todosAtletas;
+
+  // Sem a migration 019 há uma só edição implícita com tudo.
+  if (ed.error || !ed.data) {
+    return { riders, stages, stageResults, goals, goalResults, edicoes: [], edicao: null, anoPadrao: null, todosAtletas, emFalta };
+  }
+
+  const part = (pa.data ?? []) as { edicao_id: string; rider_id: string }[];
+  const edicoes: Edicao[] = (ed.data as { id: string; ano: number }[]).map((e) => ({
+    ...e,
+    etapas: stages.filter((x) => x.edicao_id === e.id).length,
+    atletas: part.filter((p) => p.edicao_id === e.id).length,
+  }));
+  const comEtapas = edicoes.filter((e) => e.etapas > 0);
+  const padrao = (comEtapas.length ? comEtapas : edicoes).at(-1) ?? null;
+
+  let edicao: Edicao | null = null;
+  if (escolha.edicaoId) edicao = edicoes.find((e) => e.id === escolha.edicaoId) ?? null;
+  else if (escolha.etapaId) {
+    const st = stages.find((x) => x.id === escolha.etapaId);
+    edicao = st ? edicoes.find((e) => e.id === st.edicao_id) ?? null : null;
+  } else if (escolha.ano != null && escolha.ano !== "") edicao = edicoes.find((e) => e.ano === Number(escolha.ano)) ?? null;
+  if (!edicao && !escolha.etapaId) edicao = padrao;
+
+  const eid = edicao?.id;
+  stages = stages.filter((x) => x.edicao_id === eid);
+  const ids = new Set(stages.map((x) => x.id));
+  stageResults = stageResults.filter((x) => ids.has(x.stage_id));
+  goals = goals.filter((x) => ids.has(x.stage_id));
+  const gids = new Set(goals.map((x) => x.id));
+  goalResults = goalResults.filter((x) => gids.has(x.goal_id));
+  const inscritos = new Set(part.filter((p) => p.edicao_id === eid).map((p) => p.rider_id));
+  riders = todosAtletas.filter((x) => inscritos.has(x.id));
+
+  return { riders, stages, stageResults, goals, goalResults, edicoes, edicao, anoPadrao: padrao?.ano ?? null, todosAtletas, emFalta };
+}
+
+/** Acrescenta ?ano= ao link quando a edição não é a mostrada por omissão. */
+export function comAno(href: string, d: Pick<TourDados, "edicao" | "anoPadrao">) {
+  return d.edicao && d.edicao.ano !== d.anoPadrao ? `${href}?ano=${d.edicao.ano}` : href;
 }
 
 /* ---------- tempos ---------- */

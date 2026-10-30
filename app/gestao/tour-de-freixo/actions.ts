@@ -28,22 +28,74 @@ const erro = (m: string): Res => ({ ok: false, msg: m });
 
 /* ---------- atletas ---------- */
 
+// Cria um atleta novo ou inscreve um que já correu noutra edição.
 export async function adicionarCiclista(f: FormData): Promise<Res> {
   const sb = await admin();
-  const name = txt(f, "name");
-  if (!name) return erro("Falta o nome.");
-  const { error } = await sb.from("tdf_riders").insert({ name, team: txt(f, "team") || null });
-  if (error) return erro(`Não foi possível adicionar (${error.message}).`);
+  const edicao = txt(f, "edicao_id");
+  let id = txt(f, "rider_id");
+  let name = "";
+  if (!id) {
+    name = txt(f, "name");
+    if (!name) return erro("Escolhe um atleta ou escreve o nome de um novo.");
+    const { data, error } = await sb.from("tdf_riders").insert({ name, team: txt(f, "team") || null }).select("id").single();
+    if (error || !data) return erro(`Não foi possível adicionar (${error?.message ?? "erro"}).`);
+    id = data.id;
+  }
+  if (edicao) {
+    const { error } = await sb.from("tdf_participantes").upsert({ edicao_id: edicao, rider_id: id }, { onConflict: "edicao_id,rider_id" });
+    if (error) return erro(`Não foi possível inscrever (${error.message}).`);
+  }
   refrescar();
-  return { ok: true, msg: `${name} adicionado.` };
+  return { ok: true, msg: name ? `${name} adicionado.` : "Atleta inscrito." };
 }
 
-export async function removerCiclista(id: string): Promise<Res> {
+// Tira o atleta desta edição (e os resultados dele nela). Sem edições, apaga o atleta.
+export async function removerCiclista(id: string, edicao?: string): Promise<Res> {
   const sb = await admin();
-  const { error } = await sb.from("tdf_riders").delete().eq("id", id);
+  if (!edicao) {
+    const { error } = await sb.from("tdf_riders").delete().eq("id", id);
+    if (error) return erro(`Não foi possível remover (${error.message}).`);
+    refrescar();
+    return { ok: true, msg: "Atleta removido." };
+  }
+  const { data: st } = await sb.from("tdf_stages").select("id").eq("edicao_id", edicao);
+  const etapas = ((st ?? []) as { id: string }[]).map((x) => x.id);
+  if (etapas.length) {
+    const { data: gs } = await sb.from("tdf_goals").select("id").in("stage_id", etapas);
+    const metas = ((gs ?? []) as { id: string }[]).map((x) => x.id);
+    await sb.from("tdf_stage_results").delete().eq("rider_id", id).in("stage_id", etapas);
+    if (metas.length) await sb.from("tdf_goal_results").delete().eq("rider_id", id).in("goal_id", metas);
+  }
+  const { error } = await sb.from("tdf_participantes").delete().eq("edicao_id", edicao).eq("rider_id", id);
   if (error) return erro(`Não foi possível remover (${error.message}).`);
   refrescar();
-  return { ok: true, msg: "Atleta removido." };
+  return { ok: true, msg: "Atleta retirado desta edição." };
+}
+
+/* ---------- edições ---------- */
+
+export async function criarEdicao(f: FormData): Promise<Res> {
+  const sb = await admin();
+  const ano = numero(f, "ano");
+  if (!ano || ano < 2000 || ano > 2100) return erro("Indica o ano da edição.");
+  const { data, error } = await sb.from("tdf_edicoes").insert({ ano }).select("id").single();
+  if (error || !data) return erro(/duplicate|unique/i.test(error?.message ?? "") ? `Já existe a edição de ${ano}.` : `Não foi possível criar (${error?.message ?? "erro"}).`);
+  const copiar = txt(f, "copiar");
+  if (copiar) {
+    const { data: ps } = await sb.from("tdf_participantes").select("rider_id").eq("edicao_id", copiar);
+    const linhas = ((ps ?? []) as { rider_id: string }[]).map((p) => ({ edicao_id: data.id, rider_id: p.rider_id }));
+    if (linhas.length) await sb.from("tdf_participantes").insert(linhas);
+  }
+  refrescar();
+  return { ok: true, msg: `Edição de ${ano} criada.` };
+}
+
+export async function removerEdicao(id: string): Promise<Res> {
+  const sb = await admin();
+  const { error } = await sb.from("tdf_edicoes").delete().eq("id", id);
+  if (error) return erro(`Não foi possível remover (${error.message}).`);
+  refrescar();
+  return { ok: true, msg: "Edição removida." };
 }
 
 /* ---------- etapas ---------- */
@@ -52,7 +104,8 @@ export async function adicionarEtapa(f: FormData): Promise<Res> {
   const sb = await admin();
   const number = numero(f, "number"), name = txt(f, "name");
   if (!number || !name) return erro("Falta o número ou o nome da etapa.");
-  const { error } = await sb.from("tdf_stages").insert({ number, name, date: txt(f, "date") || null });
+  const edicao = txt(f, "edicao_id");
+  const { error } = await sb.from("tdf_stages").insert({ number, name, date: txt(f, "date") || null, ...(edicao ? { edicao_id: edicao } : {}) });
   if (error) return erro(/duplicate|unique/i.test(error.message) ? `Já existe a etapa ${number}.` : `Não foi possível criar (${error.message}).`);
   refrescar();
   return { ok: true, msg: `Etapa ${number} criada.` };

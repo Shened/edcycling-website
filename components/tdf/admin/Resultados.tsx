@@ -9,7 +9,7 @@ export interface LinhaRes { id: string; nome: string; status: EstadoEtapa; tempo
 // Tabela de resultados da etapa: estado, tempo e velocidade média de cada atleta.
 export default function Resultados({ etapa, linhas }: { etapa: string; linhas: LinhaRes[] }) {
   const [rows, setRows] = useState(linhas);
-  if (!rows.length) return <p className="empty" style={{ margin: 0 }}>Sem atletas ainda. Adiciona-os primeiro na página do Tour.</p>;
+  if (!rows.length) return <p className="empty" style={{ margin: 0 }}>Sem atletas inscritos nesta edição. Inscreve-os na página do Tour (Gestão).</p>;
   const mudar = (id: string, p: Partial<LinhaRes>) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)));
   return (
     <Formulario action={guardarResultados} botao="Guardar resultados" className="tdf-res">

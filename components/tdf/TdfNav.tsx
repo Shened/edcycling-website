@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const ITENS = [
   { href: "/tour-de-freixo", label: "Resumo" },
@@ -12,12 +12,13 @@ const ITENS = [
 
 export default function TdfNav() {
   const path = usePathname();
+  const ano = useSearchParams().get("ano");
   return (
     <nav className="tdf-nav" aria-label="Tour de Freixo">
       {ITENS.map((i) => {
         const on = i.href === "/tour-de-freixo" ? path === i.href : path === i.href || path.startsWith(i.href + "/");
         return (
-          <Link key={i.href} href={i.href} className="tdf-link" aria-current={on ? "page" : undefined}>
+          <Link key={i.href} href={ano ? `${i.href}?ano=${ano}` : i.href} className="tdf-link" aria-current={on ? "page" : undefined}>
             {i.label}
           </Link>
         );

@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { Apagar, Formulario } from "@/components/tdf/admin/Formulario";
 import Resultados from "@/components/tdf/admin/Resultados";
 import { getSession } from "@/lib/session";
-import { fmtTempo, lerTour, POSICOES, pontosPosicao } from "@/lib/tdf";
+import { comAno, fmtTempo, lerTour, POSICOES, pontosPosicao } from "@/lib/tdf";
 import { adicionarMeta, adicionarResultadoMeta, guardarEtapa, removerMeta, removerResultadoMeta } from "../../actions";
 
 export default async function GestaoEtapa({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase } = await getSession();
-  const d = await lerTour(supabase);
+  const d = await lerTour(supabase, { etapaId: id });
   const st = d.stages.find((s) => s.id === id);
   if (!st) notFound();
   const res = new Map(d.stageResults.filter((r) => r.stage_id === st.id).map((r) => [r.rider_id, r]));
@@ -22,8 +22,8 @@ export default async function GestaoEtapa({ params }: { params: Promise<{ id: st
       <div className="sechead">
         <h3 className="adm-h">E{st.number} · {st.name}</h3>
         <div className="adm-acoes">
-          <Link href="/gestao/tour-de-freixo" className="btn">← Tour</Link>
-          <Link href={`/tour-de-freixo/etapas/${st.id}`} className="btn">Ver pública</Link>
+          <Link href={d.edicao ? `/gestao/tour-de-freixo?ano=${d.edicao.ano}` : "/gestao/tour-de-freixo"} className="btn">← Tour{d.edicao ? ` ${d.edicao.ano}` : ""}</Link>
+          <Link href={comAno(`/tour-de-freixo/etapas/${st.id}`, d)} className="btn">Ver pública</Link>
         </div>
       </div>
 

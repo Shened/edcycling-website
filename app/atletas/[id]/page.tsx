@@ -25,7 +25,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("evento_id,user_id,estado,presente").eq("user_id", id),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true),
-    supabase.from("atividades").select("id,user_id,titulo,tipo,data,hora,km,dmais,duracao_s,trajeto,gpx_path,notas,privada").eq("user_id", id).order("data", { ascending: false }).order("hora", { ascending: false, nullsFirst: false }).limit(100),
+    supabase.from("atividades").select("*").eq("user_id", id).order("data", { ascending: false }).order("hora", { ascending: false, nullsFirst: false }).limit(100),
   ]);
   const hoje = new Date().toISOString().slice(0, 10);
   const st = calcular((treinos ?? []) as unknown as Treino[], (eventos ?? []) as Evento[], (insc ?? []) as InscricaoMin[], (membros ?? []) as Membro[], ano, hoje);

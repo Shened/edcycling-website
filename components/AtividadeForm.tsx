@@ -8,6 +8,7 @@ import type { FitInfo } from "@/lib/fit";
 import type { Atividade } from "@/lib/types";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import RoutePreview from "./RoutePreview";
+import ImportarStrava from "./ImportarStrava";
 import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
 
@@ -32,6 +33,7 @@ export default function AtividadeForm({ userId, atividade, dataInicial, onClose 
   const [gpx, setGpx] = useState<(Omit<FitInfo, "tipo" | "hora"> & { tipo?: string | null; hora?: string | null }) | null>(null);
   const [gpxFile, setGpxFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [modo, setModo] = useState<"form" | "strava">("form");
   const [err, setErr] = useState("");
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF((p) => ({ ...p, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value }));
@@ -110,9 +112,18 @@ export default function AtividadeForm({ userId, atividade, dataInicial, onClose 
     <div className="overlay" onClick={(ev) => ev.target === ev.currentTarget && fechar()}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="atvT">
         <div className="stripe" />
+        {modo === "strava" ? (
+          <div className="mbody"><ImportarStrava onVoltar={() => setModo("form")} onFeito={() => { onClose(); router.refresh(); }} /></div>
+        ) : (
         <form className="mbody" onSubmit={save}>
           <h3 id="atvT">{a ? "Editar atividade" : "Nova atividade"}</h3>
 
+          {!a && (
+            <button type="button" className="stv-entrada" onClick={() => setModo("strava")}>
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M15.4 17.9 13.3 13.7h-3.1l5.2 10.3 5.2-10.3h-3.1zM10.3 2 3.3 15.7h4.1l2.9-5.6 2.9 5.6h4.1z" /></svg>
+              <span><b>Importar do Strava</b><span>Escolhe as tuas últimas atividades, sem ficheiros.</span></span>
+            </button>
+          )}
           <label className="atv-gpx">
             <input type="file" accept=".gpx,.fit,application/gpx+xml" onChange={pick} />
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
@@ -147,6 +158,7 @@ export default function AtividadeForm({ userId, atividade, dataInicial, onClose 
             <button type="submit" className="btn primary" disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />A guardar…</> : a ? "Guardar alterações" : "Guardar atividade"}</button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

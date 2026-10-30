@@ -5,9 +5,10 @@ import { classificacaoGeral, estaForaDaGeral, evolucaoGeral, lerTour } from "@/l
 
 export const metadata = { title: "Classificação geral · Tour de Freixo" };
 
-export default async function TourGeral() {
+export default async function TourGeral({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
   const { supabase } = await getSession();
-  const d = await lerTour(supabase);
+  const { ano } = await searchParams;
+  const d = await lerTour(supabase, { ano });
   if (d.emFalta) return <Falta />;
   const geral = classificacaoGeral(d);
   const fora = d.riders.filter((r) => estaForaDaGeral(d, r.id));

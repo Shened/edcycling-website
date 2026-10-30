@@ -6,6 +6,7 @@ type App = "strava" | "garmin" | "outras";
 
 const PASSOS: Record<App, { t: React.ReactNode; d: React.ReactNode }[]> = {
   strava: [
+    { t: "O mais fácil: liga o Strava", d: <>Em <Link href="/definicoes">Definições</Link>, toca em <b>Ligar ao Strava</b> (só uma vez). Depois, em <b>+ Atividade</b>, escolhe <b>Importar do Strava</b> e marca as atividades que queres. Funciona no telemóvel e não precisas de ficheiros. Se preferires exportar o ficheiro, segue os passos abaixo.</> },
     { t: "Abre o Strava no browser", d: <>A app do Strava não exporta ficheiros. Abre <b>strava.com</b> no computador, ou no browser do telemóvel com a opção <b>Ver versão para computador</b>.</> },
     { t: "Abre a tua atividade", d: <>Em <b>O meu perfil</b> ou no feed, carrega no título da atividade. Só consegues exportar atividades tuas.</> },
     { t: "Carrega nos três pontos ⋯", d: <>Estão na coluna da esquerda, junto aos ícones da atividade.</> },

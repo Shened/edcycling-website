@@ -2,7 +2,7 @@ import Link from "next/link";
 import Barras from "@/components/tdf/Barras";
 import { Cartao, Falta } from "@/components/tdf/Tabelas";
 import { getSession } from "@/lib/session";
-import { lerTour, velocidadeEtapa, type Etapa } from "@/lib/tdf";
+import { comAno, lerTour, velocidadeEtapa, type Etapa } from "@/lib/tdf";
 
 export const metadata = { title: "Números · Tour de Freixo" };
 
@@ -14,9 +14,10 @@ function maior(etapas: Etapa[], val: (s: Etapa) => number | null) {
   return best ? { etapa: best, valor: bv } : null;
 }
 
-export default async function TourNumeros() {
+export default async function TourNumeros({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
   const { supabase } = await getSession();
-  const d = await lerTour(supabase);
+  const { ano } = await searchParams;
+  const d = await lerTour(supabase, { ano });
   if (d.emFalta) return <Falta />;
   const etapas = d.stages;
   const vel = new Map(etapas.map((s) => [s.id, velocidadeEtapa(d, s.id).media]));
@@ -50,7 +51,7 @@ export default async function TourNumeros() {
             <div key={t} className="tdf-rec-c">
               <span className="eyebrow">{t}</span>
               <b className="num">{r ? `${fmt(r.valor)}${u}` : "—"}</b>
-              {r ? <Link href={`/tour-de-freixo/etapas/${r.etapa.id}`}>E{r.etapa.number} · {r.etapa.name}</Link> : <span className="muted">Sem dados ainda</span>}
+              {r ? <Link href={comAno(`/tour-de-freixo/etapas/${r.etapa.id}`, d)}>E{r.etapa.number} · {r.etapa.name}</Link> : <span className="muted">Sem dados ainda</span>}
             </div>
           ))}
         </div>

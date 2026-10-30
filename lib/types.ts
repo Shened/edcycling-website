@@ -114,5 +114,6 @@ export interface Atividade {
   gpx_path: string | null;
   notas: string | null;
   privada: boolean;
+  strava_id?: number | null;
   created_at?: string;
 }

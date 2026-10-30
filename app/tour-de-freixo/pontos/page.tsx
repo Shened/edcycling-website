@@ -4,9 +4,10 @@ import { classificacaoPontos, lerTour, POSICOES, pontosPosicao } from "@/lib/tdf
 
 export const metadata = { title: "Pontos · Tour de Freixo" };
 
-export default async function TourPontos() {
+export default async function TourPontos({ searchParams }: { searchParams: Promise<{ ano?: string }> }) {
   const { supabase } = await getSession();
-  const d = await lerTour(supabase);
+  const { ano } = await searchParams;
+  const d = await lerTour(supabase, { ano });
   if (d.emFalta) return <Falta />;
   return (
     <div className="tdf-corpo">

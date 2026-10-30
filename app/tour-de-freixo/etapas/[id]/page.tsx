@@ -2,12 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Cartao, Falta } from "@/components/tdf/Tabelas";
 import { getSession } from "@/lib/session";
-import { fmtDataEtapa, fmtDif, fmtTempo, lerTour, MEDALHAS, pontosPosicao, velocidadeEtapa } from "@/lib/tdf";
+import { comAno, fmtDataEtapa, fmtDif, fmtTempo, lerTour, MEDALHAS, pontosPosicao, velocidadeEtapa } from "@/lib/tdf";
 
 export default async function TourEtapa({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase } = await getSession();
-  const d = await lerTour(supabase);
+  const d = await lerTour(supabase, { etapaId: id });
   if (d.emFalta) return <Falta />;
   const i = d.stages.findIndex((s) => s.id === id);
   if (i < 0) notFound();
@@ -25,7 +25,7 @@ export default async function TourEtapa({ params }: { params: Promise<{ id: stri
   return (
     <div className="tdf-corpo">
       <div className="tdf-etapa-cab">
-        <p className="eyebrow">Etapa {st.number}{st.date ? ` · ${fmtDataEtapa(st.date)}` : ""}</p>
+        <p className="eyebrow">{d.edicao ? `${d.edicao.ano} · ` : ""}Etapa {st.number}{st.date ? ` · ${fmtDataEtapa(st.date)}` : ""}</p>
         <h2>{st.name}</h2>
       </div>
 
@@ -91,8 +91,8 @@ export default async function TourEtapa({ params }: { params: Promise<{ id: stri
       )}
 
       <nav className="tdf-pag" aria-label="Outras etapas">
-        {ant ? <Link href={`/tour-de-freixo/etapas/${ant.id}`} className="btn">← E{ant.number} · {ant.name}</Link> : <span />}
-        {seg && <Link href={`/tour-de-freixo/etapas/${seg.id}`} className="btn">E{seg.number} · {seg.name} →</Link>}
+        {ant ? <Link href={comAno(`/tour-de-freixo/etapas/${ant.id}`, d)} className="btn">← E{ant.number} · {ant.name}</Link> : <span />}
+        {seg && <Link href={comAno(`/tour-de-freixo/etapas/${seg.id}`, d)} className="btn">E{seg.number} · {seg.name} →</Link>}
       </nav>
     </div>
   );
