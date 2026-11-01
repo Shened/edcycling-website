@@ -2,10 +2,48 @@ import Link from "next/link";
 import { EQUIPA } from "@/lib/equipa";
 import { dataPub, imagemUrl, resumo, type Noticia } from "@/lib/noticias";
 import { getSession } from "@/lib/session";
+import InicioMembro, { type PostMin, type TreinoMin } from "@/components/InicioMembro";
+import type { Evento } from "@/lib/types";
 
-// Página pública de apresentação da equipa. Não mostra eventos, datas nem locais.
+const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
+// Página inicial: para quem tem conta, um resumo do que aí vem; para visitantes, a apresentação pública.
 export default async function Inicio() {
-  const { supabase } = await getSession();
+  const { supabase, perfil, isMember, isAdmin } = await getSession();
+  if (isMember && perfil) {
+    const hoje = hojeIso();
+    const [{ data: evs }, { data: trs }, { data: nots }, { data: postsRaw }, votos] = await Promise.all([
+      supabase.from("eventos").select("*"),
+      supabase.from("treinos").select("id,titulo,data,hora,tipo,partida").gte("data", hoje).order("data").limit(10),
+      supabase.from("noticias").select("*").eq("publicado", true).order("publicado_em", { ascending: false }).limit(3),
+      supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,created_at,perfis!posts_autor_id_fkey(nome),eventos(titulo)").order("created_at", { ascending: false }).limit(4),
+      supabase.from("evento_votos").select("evento_id").eq("user_id", perfil.id),
+    ]);
+    const eventos = (evs ?? []) as Evento[];
+    const jaVotei = new Set(((votos.data ?? []) as { evento_id: string }[]).map((v) => v.evento_id));
+    const propostas = votos.error ? 0 : eventos.filter((e) => e.estado === "proposta" && !jaVotei.has(e.id)).length;
+    const porFechar = eventos.filter((e) => e.data && e.data < hoje && (e.estado === "confirmado" || e.estado === "proposta")).length;
+    const raw = (postsRaw ?? []) as unknown as (PostMin & { fotos: string[] | null; foto_path: string | null })[];
+    const primeiras = raw.map((p) => (p.fotos?.length ? p.fotos[0] : p.foto_path)).filter((x): x is string => !!x);
+    const urls = new Map<string, string>();
+    if (primeiras.length) {
+      const { data: signed } = await supabase.storage.from("fotos").createSignedUrls(primeiras, 60 * 60);
+      (signed ?? []).forEach((x) => { if (x.path && x.signedUrl) urls.set(x.path, x.signedUrl); });
+    }
+    const posts: PostMin[] = raw.map((p) => { const f = p.fotos?.length ? p.fotos[0] : p.foto_path; return { ...p, foto: f ? urls.get(f) ?? null : null }; });
+    return (
+      <InicioMembro
+        nome={perfil.nome || ""}
+        eventos={eventos}
+        treinos={(trs ?? []) as TreinoMin[]}
+        noticias={(nots ?? []) as Noticia[]}
+        posts={posts}
+        propostas={propostas}
+        porFechar={porFechar}
+        isAdmin={isAdmin}
+      />
+    );
+  }
   const [{ data }, { data: nots }] = await Promise.all([
     supabase.rpc("resumo_publico"),
     supabase.from("noticias").select("*").eq("publicado", true).order("publicado_em", { ascending: false }).limit(5),

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import EventoDetalhe from "@/components/EventoDetalhe";
 import { getSession } from "@/lib/session";
-import type { Evento, Inscricao, Membro, Post } from "@/lib/types";
+import type { Evento, Inscricao, Membro, Post, VotoProposta } from "@/lib/types";
 
 // Página dedicada a um evento (só para a equipa).
 export default async function EventoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +12,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
   if (!isMember) {
     return <section className="view"><p className="empty">Os eventos são só para atletas da equipa. {perfil ? "Ficam visíveis quando a tua conta estiver ativa." : <Link href="/entrar">Entra para os veres.</Link>}</p></section>;
   }
-  const [{ data: ev }, { data: insc }, { data: membros }, { data: postsRaw }] = await Promise.all([
+  const [{ data: ev }, { data: insc }, { data: membros }, { data: postsRaw }, { data: votos }] = await Promise.all([
     supabase.from("eventos").select("*, equipamento:equipamentos(nome,descricao,foto_path)").eq("id", id).maybeSingle().then(async (r) => (r.error ? await supabase.from("eventos").select("*").eq("id", id).maybeSingle() : r)),
     supabase.from("inscricoes").select("id,evento_id,user_id,estado,presente,perfis(nome,avatar_path)").eq("evento_id", id),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true).order("nome"),
@@ -22,6 +22,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       .order("created_at", { ascending: false })
       .order("created_at", { referencedTable: "post_comentarios", ascending: true })
       .limit(30),
+    supabase.from("evento_votos").select("evento_id,user_id,voto,comentario,perfis(nome,avatar_path)").eq("evento_id", id).then((r) => (r.error ? { data: [] } : r)),
   ]);
   if (!ev) notFound();
   const posts = (postsRaw ?? []) as unknown as Post[];
@@ -44,6 +45,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       posts={posts}
       eu={eu}
       isAdmin={isAdmin}
+      votos={(votos ?? []) as unknown as VotoProposta[]}
     />
   );
 }

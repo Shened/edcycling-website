@@ -56,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Cabecalho
           isMember={isMember}
           isAdmin={isAdmin}
-          perfil={perfil ? { nome: perfil.nome, avatar_path: perfil.avatar_path ?? null } : null}
+          perfil={perfil ? { id: perfil.id, nome: perfil.nome, avatar_path: perfil.avatar_path ?? null } : null}
           proximo={nx ? { titulo: nx.titulo, quando: `${quando} · ${vai} confirmado${vai === 1 ? "" : "s"}` } : null}
         />
         <main className="in" id="conteudo">{children}</main>

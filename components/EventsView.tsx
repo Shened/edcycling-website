@@ -7,31 +7,38 @@ import { MESES, evAno, evMes, fmtDate, isPast, nextEvento, parseDate, sortEvento
 import { fmtDuracao, fmtKm } from "@/lib/gpx";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import AtividadeForm from "./AtividadeForm";
-import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
+import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil, VotoProposta } from "@/lib/types";
+import VotacaoProposta from "./VotacaoProposta";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
 import EventoCartao from "./EventoCartao";
+import TerminarEvento from "./TerminarEvento";
 import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
 import { avisarInscricao } from "@/lib/avisos";
 
-interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[] }
+interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[]; votos?: VotoProposta[] }
 
-export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [] }: Props) {
+export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [], votos = [] }: Props) {
   const [atvEdit, setAtvEdit] = useState<Atividade | null>(null);
   const [presEv, setPresEv] = useState<Evento | null>(null);
+  const [terEv, setTerEv] = useState<Evento | null>(null);
   const router = useRouter();
   const sorted = useMemo(() => sortEventos(eventos), [eventos]);
   const params = useSearchParams();
   const pathname = usePathname();
-  const ver = (params.get("ver") as "proximos" | "passados" | "todos" | null) ?? "proximos";
+  const ver = (params.get("ver") as "proximos" | "passados" | "todos" | "propostas" | null) ?? "proximos";
   const [editing, setEditing] = useState<Evento | null | undefined>(undefined);
   const [pending, setPending] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
-  const up = sorted.filter((e) => !isPast(e));
-  const past = sorted.filter(isPast).reverse();
-  const lista = ver === "passados" ? past : ver === "todos" ? sorted : up;
+  // As propostas ficam no separador próprio até um admin as confirmar.
+  const propostas = sorted.filter((e) => e.estado === "proposta");
+  const up = sorted.filter((e) => !isPast(e) && e.estado !== "proposta");
+  const past = sorted.filter((e) => isPast(e) && e.estado !== "proposta").reverse();
+  const lista = ver === "passados" ? past : ver === "todos" ? sorted : ver === "propostas" ? propostas : up;
+  const porVotar = propostas.filter((e) => !votos.some((v) => v.evento_id === e.id && v.user_id === perfil?.id)).length;
+  const porSemanas = ver === "passados" || ver === "todos";
   const prox = nextEvento(eventos);
   const souAtleta = !!perfil && membros.some((m) => m.id === perfil.id);
   const anoAtual = today().getFullYear();
@@ -39,7 +46,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   type Item = { k: "e"; e: Evento; ano: number; chave: string } | { k: "a"; a: Atividade; ano: number; chave: string };
   const chaveEv = (e: Evento) => e.data ?? `${evAno(e)}-${String(evMes(e)).padStart(2, "0")}-99`;
   const itens: Item[] = lista.map((e) => ({ k: "e" as const, e, ano: evAno(e), chave: chaveEv(e) }));
-  if (ver !== "proximos" && atividades.length) {
+  if (porSemanas && atividades.length) {
     atividades.forEach((a) => itens.push({ k: "a", a, ano: +a.data.slice(0, 4), chave: `${a.data}${a.hora ?? ""}` }));
     itens.sort((x, y) => (ver === "passados" ? y.chave.localeCompare(x.chave) : x.chave.localeCompare(y.chave)));
   }
@@ -55,7 +62,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
   let escondidos = 0;
-  if (ver !== "proximos") {
+  if (porSemanas) {
     const semanasPassadas = [...new Set(itens.filter(passado).map((it) => iniSemana(it.chave)))].sort().reverse();
     const limite = semanasPassadas[semanas - 1];
     if (limite) {
@@ -99,7 +106,8 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
     else { void avisarInscricao("evento", evId, antes); marcar("Resposta a evento", { resposta: estado ?? "retirou", onde: "lista" }); }
     router.refresh();
   }
-  const vazio = ver === "passados" ? "Ainda não há eventos passados." : ver === "todos" ? "Ainda não há eventos." : "Sem eventos marcados.";
+  const vazio = ver === "passados" ? "Ainda não há eventos passados." : ver === "todos" ? "Ainda não há eventos." : ver === "propostas" ? "Não há propostas à espera. Tens uma ideia de passeio? Propõe-a." : "Sem eventos marcados.";
+  const podeCriar = isAdmin || souAtleta;
   return (
     <section className="view evs">
       {msg && <div className="notice" role="status">{msg}</div>}
@@ -107,20 +115,28 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         <h2>Eventos</h2>
         <div className="evs-ctrl">
           <div className="tabseg" role="tablist" aria-label="Que eventos mostrar">
-            {([["proximos", "Próximos"], ["passados", "Passados"], ["todos", "Todos"]] as const).map(([k, l]) => (
-              <button key={k} type="button" role="tab" aria-selected={ver === k} onClick={() => mudar(k)}>{l}</button>
+            {([["proximos", "Próximos"], ["propostas", "Propostas"], ["passados", "Passados"], ["todos", "Todos"]] as const).map(([k, l]) => (
+              <button key={k} type="button" role="tab" aria-selected={ver === k} onClick={() => mudar(k)}>
+                {l}{k === "propostas" && porVotar > 0 && <span className="evs-tab-n" aria-label={`${porVotar} por votar`}>{porVotar}</span>}
+              </button>
             ))}
           </div>
-          {isAdmin && <button className="btn primary evs-novo" onClick={() => setEditing(null)} aria-label="Criar evento"><span aria-hidden="true">+</span><span className="evs-novo-t"> Criar evento</span></button>}
+          {podeCriar && <button className="btn primary evs-novo" onClick={() => setEditing(null)} aria-label={isAdmin ? "Criar evento" : "Propor evento"}><span aria-hidden="true">+</span><span className="evs-novo-t">{isAdmin ? " Criar evento" : " Propor evento"}</span></button>}
         </div>
       </div>
       {!itens.length && <p className="empty">{vazio}</p>}
-      {ver !== "proximos" && atividades.length > 0 && <p className="hint evs-nota">Inclui as tuas atividades pessoais, com contorno lilás. Só tu as vês aqui.</p>}
+      {ver === "proximos" && porVotar > 0 && (
+        <button type="button" className="evs-prop-av" onClick={() => mudar("propostas")}>
+          <span><b>{porVotar} {porVotar === 1 ? "proposta" : "propostas"}</b> de evento à espera do teu voto</span><span aria-hidden="true">→</span>
+        </button>
+      )}
+      {ver === "propostas" && <p className="hint evs-nota">Eventos propostos pelos atletas. Vota se vale a pena; um admin confirma ou rejeita.</p>}
+      {porSemanas && atividades.length > 0 && <p className="hint evs-nota">Inclui as tuas atividades pessoais, com contorno lilás. Só tu as vês aqui.</p>}
       {grupos.map((g, gi) => (
         <div key={g.ano} className="evs-grupo">
           {(gi > 0 || g.ano !== anoAtual) && <h3 className="evs-ano">{g.ano}</h3>}
           {g.itens.map((it, ii) => {
-            const sem = ver !== "proximos" && passado(it) ? iniSemana(it.chave) : null;
+            const sem = porSemanas && passado(it) ? iniSemana(it.chave) : null;
             const ant = ii > 0 ? g.itens[ii - 1] : null;
             const cab = sem && (!ant || !passado(ant) || iniSemana(ant.chave) !== sem) ? <p className="evs-semana" key={`s-${sem}-${ii}`} suppressHydrationWarning>{semanaTxt(sem)}</p> : null;
             const el = (() => {
@@ -128,10 +144,13 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
             const e = it.e;
             const ps = inscricoes.filter((i) => i.evento_id === e.id);
             const mine = e.id in otimista ? otimista[e.id] : perfil ? ps.find((p) => p.user_id === perfil.id)?.estado ?? null : null;
-            const acoes = isAdmin ? [
-              { label: "Editar evento", onClick: () => setEditing(e) },
-              ...((isPast(e) || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: e.presencas_fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPresEv(e) }] : []),
-            ] : [];
+            const proposta = e.estado === "proposta";
+            const minha = proposta && !!perfil && e.criador_id === perfil.id;
+            const acoes = !isAdmin ? (minha ? [{ label: "Editar proposta", onClick: () => setEditing(e) }] : []) : [
+              { label: proposta ? "Editar proposta" : "Editar evento", onClick: () => setEditing(e) },
+              ...(!proposta && isPast(e) && e.estado !== "realizado" && e.estado !== "cancelado" ? [{ label: "Dar como terminado", onClick: () => setTerEv(e) }] : []),
+              ...(!proposta && (isPast(e) || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: e.presencas_fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPresEv(e) }] : []),
+            ];
             return (
               <EventoCartao
                 key={e.id}
@@ -145,6 +164,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
                 onPick={(v) => rsvp(e.id, v)}
                 acoes={acoes}
                 proximo={ver === "proximos" && prox?.id === e.id}
+                votacao={proposta ? <VotacaoProposta compacto evento={e} votos={votos.filter((v) => v.evento_id === e.id)} euId={perfil?.id} podeVotar={isMember && souAtleta} isAdmin={isAdmin} /> : undefined}
               />
             );
             })();
@@ -158,7 +178,16 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         </button>
       )}
       {atvEdit && perfil && <AtividadeForm userId={perfil.id} atividade={atvEdit} onClose={() => setAtvEdit(null)} />}
-      {editing !== undefined && <EventForm evento={editing} onClose={() => setEditing(undefined)} />}
+      {terEv && perfil && (
+        <TerminarEvento
+          evento={terEv}
+          userId={perfil.id}
+          quemFoi={inscricoes.filter((i) => i.evento_id === terEv.id && (terEv.presencas_fechadas ? i.presente : i.estado === "vai")).map((i) => i.user_id)}
+          onClose={() => setTerEv(null)}
+          onFeito={() => { if (!terEv.presencas_fechadas) setPresEv(terEv); }}
+        />
+      )}
+      {editing !== undefined && <EventForm evento={editing} isAdmin={isAdmin} onClose={() => setEditing(undefined)} />}
       {presEv && (() => {
         const ps = inscricoes.filter((i) => i.evento_id === presEv.id);
         const iniciais = (presEv.presencas_fechadas ? ps.filter((p) => p.presente) : ps.filter((p) => p.estado === "vai")).map((p) => p.user_id);

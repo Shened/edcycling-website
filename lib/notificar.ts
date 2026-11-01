@@ -63,6 +63,10 @@ export async function enviarAviso(a: Aviso): Promise<{ push: number; email: numb
       const { error } = await admin.from("notif_enviadas").insert({ chave: a.chave.slice(0, 300) });
       if (error) return r; // já enviado antes
     }
+    // Fica sempre guardado no site (sino 🔔), seja qual for a preferência de push/email.
+    // Se a tabela ainda não existir (migration 026 por correr), segue sem ela.
+    await admin.from("avisos").insert(ids.map((user_id) => ({ user_id, tipo: a.tipo, titulo: a.titulo.slice(0, 200), corpo: a.corpo.slice(0, 600), url: a.url })));
+    if (Math.random() < 0.05) await admin.from("avisos").delete().lt("created_at", new Date(Date.now() - 90 * 864e5).toISOString());
     const [{ data: prefs }, { data: perfis }, { data: subs }] = await Promise.all([
       admin.from("preferencias_notif").select("*").in("user_id", ids),
       admin.from("perfis").select("id,email,ativo").in("id", ids),

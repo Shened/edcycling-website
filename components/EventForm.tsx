@@ -9,15 +9,15 @@ import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos"
 import { TEMAS, temaSugerido } from "@/lib/temas";
 import Link from "next/link";
 
-// Formulário de criar/editar evento (só admins — o RLS garante o resto).
-export default function EventForm({ evento, onClose, dataInicial }: { evento: Evento | null; onClose: () => void; dataInicial?: string }) {
+// Formulário de criar/editar evento. Os admins criam já confirmados; os atletas propõem (fica "Proposta" até um admin decidir).
+export default function EventForm({ evento, onClose, dataInicial, isAdmin = true }: { evento: Evento | null; onClose: () => void; dataInicial?: string; isAdmin?: boolean }) {
   const d0 = parseDate(dataInicial);
   const router = useRouter();
   const now = new Date();
   const [f, setF] = useState({
     titulo: evento?.titulo ?? "",
     tipo: evento?.tipo ?? "passeio",
-    estado: evento?.estado ?? "proposta",
+    estado: evento?.estado ?? (isAdmin ? "confirmado" : "proposta"),
     data: evento?.data ?? dataInicial ?? "",
     mes: evento ? evMes(evento) : (d0 ?? now).getMonth() + 1,
     ano: evento ? evAno(evento) : (d0 ?? now).getFullYear(),
@@ -62,7 +62,7 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
     if (!f.titulo.trim()) return;
     setBusy(true); setErr("");
     const body = {
-      titulo: f.titulo.trim(), tipo: f.tipo, estado: f.estado, data: f.data || null,
+      titulo: f.titulo.trim(), tipo: f.tipo, estado: isAdmin ? f.estado : "proposta", data: f.data || null,
       mes: +f.mes, ano: +f.ano, hora: f.hora || null, partida: f.partida.trim() || null,
       km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null, tema: f.tema || null,
       ...(kits ? { equipamento_id: f.equipamento_id || null } : {}),
@@ -73,7 +73,7 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
       ? await sb.from("eventos").update(body).eq("id", evento.id)
       : await sb.from("eventos").insert(body).select("id").single();
     setBusy(false);
-    if (res.error) { setErr("Não foi possível guardar. Confirma que és admin e tenta outra vez."); return; }
+    if (res.error) { setErr(!isAdmin && /row-level|policy|criador_id/i.test(res.error.message) ? "Ainda não é possível propor eventos (falta a migration 026)." : "Não foi possível guardar. Tenta outra vez."); return; }
     // Avisos (correm no servidor; não atrasam quem guardou)
     if (evento) void avisarAlteracao("evento", evento.id, { data: evento.data, hora: evento.hora, partida: evento.partida, estado: evento.estado });
     else if (res.data) { void avisarNovo("evento", (res.data as { id: string }).id); marcar("Evento criado", { tipo: f.tipo, tema: f.tema || "nenhum" }); }
@@ -94,11 +94,12 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
       <form className="modal" onSubmit={save} autoComplete="off">
         <div className="stripe" />
         <div className="mbody">
-          <h3>{evento ? evento.titulo : "Novo evento"}</h3>
+          <h3>{evento ? evento.titulo : isAdmin ? "Novo evento" : "Propor evento"}</h3>
+          {!isAdmin && <p className="hint" style={{ margin: "-6px 0 0" }}>Fica como <b>proposta</b>: a equipa vota se vale a pena e um admin confirma.</p>}
           <div className="fgrid">
             <div className="field full"><label htmlFor="fTitulo">Nome do evento</label><input ref={first} id="fTitulo" type="text" required maxLength={60} placeholder="ex.: Serra da Estrela" value={f.titulo} onChange={set("titulo")} /></div>
             <div className="field"><label htmlFor="fTipo">Tipo</label><select id="fTipo" value={f.tipo} onChange={set("tipo")}>{Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-            <div className="field"><label htmlFor="fEstado">Estado</label><select id="fEstado" value={f.estado} onChange={set("estado")}>{Object.entries(ESTADOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+            {isAdmin && <div className="field"><label htmlFor="fEstado">Estado</label><select id="fEstado" value={f.estado} onChange={set("estado")}>{Object.entries(ESTADOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>}
             <div className="field"><label htmlFor="fData">Data</label><input id="fData" type="date" value={f.data} onChange={set("data")} /><span className="hint">Sem data? Escolhe só o mês.</span></div>
             <div className="field"><label htmlFor="fMes">Mês / ano</label>
               <div style={{ display: "flex", gap: 6 }}>
@@ -133,10 +134,10 @@ export default function EventForm({ evento, onClose, dataInicial }: { evento: Ev
           </div>
           {err && <div className="notice">{err}</div>}
           <div className="mactions">
-            {evento ? <button type="button" className="btn ghost danger" onClick={remove} disabled={busy}>{armed ? "Confirmar: apagar de vez" : "Apagar evento"}</button> : <span />}
+            {evento ? <button type="button" className="btn ghost danger" onClick={remove} disabled={busy}>{armed ? "Confirmar: apagar de vez" : evento.estado === "proposta" ? "Apagar proposta" : "Apagar evento"}</button> : <span />}
             <div style={{ display: "flex", gap: 8 }}>
               <button type="button" className="btn" onClick={onClose}>Cancelar</button>
-              <button type="submit" className="btn primary" disabled={busy}>{busy ? "A guardar…" : "Guardar"}</button>
+              <button type="submit" className="btn primary" disabled={busy}>{busy ? "A guardar…" : !isAdmin && !evento ? "Propor" : "Guardar"}</button>
             </div>
           </div>
         </div>

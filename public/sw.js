@@ -42,13 +42,17 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { title: "EDCycling", body: e.data ? e.data.text() : "" }; }
-  e.waitUntil(self.registration.showNotification(d.title || "EDCycling", {
-    body: d.body || "",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    tag: d.tag || undefined,
-    data: { url: d.url || "/eventos" },
-  }));
+  e.waitUntil(Promise.all([
+    self.registration.showNotification(d.title || "EDCycling", {
+      body: d.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: d.tag || undefined,
+      data: { url: d.url || "/eventos" },
+    }),
+    // Se o site estiver aberto, o sino atualiza logo.
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ws) => ws.forEach((w) => w.postMessage({ tipo: "push" }))),
+  ]));
 });
 
 self.addEventListener("notificationclick", (e) => {

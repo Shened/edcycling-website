@@ -4,11 +4,12 @@ import { usePathname } from "next/navigation";
 import NavTabs from "./NavTabs";
 import AccountMenu from "./AccountMenu";
 import { BotaoAtualizar } from "./Atualizar";
+import Sino from "./Sino";
 
 interface Props {
   isMember: boolean;
   isAdmin: boolean;
-  perfil: { nome: string; avatar_path: string | null } | null;
+  perfil: { id?: string; nome: string; avatar_path: string | null } | null;
   proximo: { titulo: string; quando: string } | null;
 }
 
@@ -20,10 +21,11 @@ export default function Cabecalho({ isMember, isAdmin, perfil, proximo }: Props)
     <>
       <header className="appbar">
         <div className="in appbar-in">
-          <Link href={isMember ? "/eventos" : "/"} className="appbar-brand" translate="no" aria-label="EDCycling, início">ED<span>CYCLING</span></Link>
+          <Link href="/" className="appbar-brand" translate="no" aria-label="EDCycling, início">ED<span>CYCLING</span></Link>
           <NavTabs isAdmin={isAdmin} isMember={isMember} />
           <div className="appbar-r">
             <BotaoAtualizar />
+            {isMember && perfil?.id && <Sino userId={perfil.id} />}
             {isAdmin && <Link href="/gestao" className="btn appbar-gestao" aria-current={path.startsWith("/gestao") ? "page" : undefined}>Gestão</Link>}
             {perfil ? (
               <AccountMenu nome={perfil.nome} avatar={perfil.avatar_path} isAdmin={isAdmin} isMember={isMember} />

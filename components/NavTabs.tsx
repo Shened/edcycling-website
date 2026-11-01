@@ -12,6 +12,7 @@ export default function NavTabs({ isMember }: { isAdmin?: boolean; isMember: boo
       </nav>
     );
   const tabs = [
+    { href: "/", label: "Início" },
     { href: "/eventos", label: "Eventos" },
     { href: "/treinos", label: "Treinos" },
     { href: "/fotos", label: "Feed" },
@@ -22,7 +23,7 @@ export default function NavTabs({ isMember }: { isAdmin?: boolean; isMember: boo
   return (
     <nav className="tabs" aria-label="Secções">
       {tabs.map((t) => (
-        <Link key={t.href} href={t.href} className="tab" aria-current={path === t.href || path.startsWith(t.href + "/") ? "page" : undefined}>
+        <Link key={t.href} href={t.href} className="tab" aria-current={(t.href === "/" ? path === "/" : path === t.href || path.startsWith(t.href + "/")) ? "page" : undefined}>
           {t.label}
         </Link>
       ))}

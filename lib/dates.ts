@@ -34,5 +34,5 @@ export function isPast(e: Evento): boolean {
   return evAno(e) < t.getFullYear() || (evAno(e) === t.getFullYear() && evMes(e) < t.getMonth() + 1);
 }
 export function nextEvento(l: Evento[]): Evento | undefined {
-  return sortEventos(l).find((e) => e.estado !== "cancelado" && !isPast(e));
+  return sortEventos(l).find((e) => e.estado !== "cancelado" && e.estado !== "proposta" && !isPast(e));
 }

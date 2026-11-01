@@ -13,9 +13,22 @@ export async function avisarNovo(kind: Kind, id: string): Promise<void> {
     if (!user) return;
     const admin = createAdminClient();
     if (kind === "evento") {
-      if (!isAdmin) return;
       const { data: e } = await admin.from("eventos").select("*").eq("id", id).single();
       if (!e || e.estado === "cancelado") return;
+      // Proposta de um atleta (ou de um admin): pede a todos que votem.
+      if (e.estado === "proposta") {
+        if (!isAdmin && e.criador_id !== user.id) return;
+        const { data: quem } = await admin.from("perfis").select("nome").eq("id", user.id).single();
+        await enviarAviso({
+          tipo: "novo", chave: `proposta:evento:${id}`,
+          titulo: `Proposta: ${e.titulo}`,
+          corpo: `${(quem?.nome as string | undefined)?.split(" ")[0] ?? "Um atleta"} propôs para ${quando(e)}. Vale a pena fazer? Vota.`,
+          url: `/eventos/${id}`,
+          destinatarios: sem(await membrosAtivos(admin, true), user.id),
+        });
+        return;
+      }
+      if (!isAdmin) return;
       await enviarAviso({
         tipo: "novo", chave: `novo:evento:${id}`,
         titulo: `Novo evento: ${e.titulo}`,
@@ -49,6 +62,29 @@ export async function avisarAlteracao(kind: Kind, id: string, antes: Antes): Pro
     const { data: r } = await admin.from(tabela).select("*").eq("id", id).single();
     if (!r) return;
     if (kind === "evento" ? !isAdmin : r.criador_id !== user.id && !isAdmin) return;
+    // Proposta decidida por um admin: confirmada (aviso a todos) ou rejeitada (aviso a quem propôs e votou).
+    if (kind === "evento" && antes.estado === "proposta" && r.estado !== "proposta") {
+      if (r.estado === "confirmado") {
+        await enviarAviso({
+          tipo: "novo", chave: `novo:evento:${id}`,
+          titulo: `Confirmado: ${r.titulo}`,
+          corpo: `A proposta avançou: ${quando(r)}${r.partida ? ` · ${r.partida}` : ""}. Diz se vais.`,
+          url: `/eventos/${id}`,
+          destinatarios: sem(await membrosAtivos(admin), user.id),
+        });
+      } else if (r.estado === "cancelado") {
+        const { data: vs } = await admin.from("evento_votos").select("user_id").eq("evento_id", id);
+        await enviarAviso({
+          tipo: "alteracao", chave: `cancel:evento:${id}`,
+          titulo: `Proposta não avançou: ${r.titulo}`,
+          corpo: "Os admins decidiram não fazer este evento, para já.",
+          url: `/eventos/${id}`,
+          destinatarios: sem([...(vs ?? []).map((v) => v.user_id as string), r.criador_id as string], user.id),
+        });
+      }
+      return;
+    }
+    if (r.estado === "proposta") return; // mudanças numa proposta não geram avisos
     const norm = (v: unknown) => (v == null || v === "" ? null : String(v).slice(0, 10));
     const mudouData = norm(antes.data) !== norm(r.data);
     const mudouHora = (antes.hora ?? "").slice(0, 5) !== (r.hora ?? "").slice(0, 5);
@@ -97,9 +133,15 @@ export async function apagarTreinoComAviso(id: string): Promise<string | null> {
 /** Apaga um evento e avisa quem estava inscrito. */
 export async function apagarEventoComAviso(id: string): Promise<string | null> {
   const { supabase, user, isAdmin } = await getSession();
-  if (!user || !isAdmin) return "Só admins podem apagar eventos.";
+  if (!user) return "Sessão expirada.";
   const { data: e } = await supabase.from("eventos").select("*").eq("id", id).single();
   if (!e) return "Evento não encontrado.";
+  const minhaProposta = e.estado === "proposta" && e.criador_id === user.id;
+  if (!isAdmin && !minhaProposta) return "Só admins podem apagar eventos.";
+  if (e.estado === "proposta") {
+    const { error } = await supabase.from("eventos").delete().eq("id", id);
+    return error ? "Não foi possível apagar a proposta." : null;
+  }
   const admin = createAdminClient();
   const dest = sem(await inscritos(admin, "evento", id), user.id);
   const { error } = await supabase.from("eventos").delete().eq("id", id);
@@ -267,6 +309,29 @@ export async function avisarConversa(kind: Kind, id: string, msgId: string): Pro
       titulo: `${perfil.nome || "Alguém"} comentou em “${titulo}”`,
       corpo: texto.length > 140 ? texto.slice(0, 140) + "…" : texto,
       url, destinatarios: dest,
+    });
+  } catch { /* nada */ }
+}
+
+/** Aviso a quem propôs quando alguém vota na proposta (uma vez por pessoa e evento). */
+export async function avisarVoto(eventoId: string): Promise<void> {
+  try {
+    const { user } = await getSession();
+    if (!user) return;
+    const admin = createAdminClient();
+    const [{ data: e }, { data: v }] = await Promise.all([
+      admin.from("eventos").select("id,titulo,estado,criador_id").eq("id", eventoId).single(),
+      admin.from("evento_votos").select("voto,perfis(nome)").eq("evento_id", eventoId).eq("user_id", user.id).single(),
+    ]);
+    if (!e || e.estado !== "proposta" || !e.criador_id || e.criador_id === user.id || !v) return;
+    const nome = ((v.perfis as unknown as { nome?: string } | null)?.nome ?? "Alguém").split(" ")[0];
+    const txt: Record<string, string> = { sim: "acha que vale a pena 👍", talvez: "talvez 🤔", nao: "acha que não 👎" };
+    await enviarAviso({
+      tipo: "reacoes", chave: `voto:${eventoId}:${user.id}`,
+      titulo: `Voto na tua proposta: ${e.titulo}`,
+      corpo: `${nome} ${txt[v.voto as string] ?? "votou"}.`,
+      url: `/eventos/${eventoId}`,
+      destinatarios: [e.criador_id as string],
     });
   } catch { /* nada */ }
 }

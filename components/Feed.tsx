@@ -7,13 +7,15 @@ import { reduzirImagem } from "@/lib/image";
 import { MESES, evAno, evMes } from "@/lib/dates";
 import type { Evento, Post } from "@/lib/types";
 import PostCard from "./PostCard";
+import Link from "next/link";
+import { dataPub, imagemUrl, resumo, type Noticia } from "@/lib/noticias";
 import { avisarFeed } from "@/lib/avisos";
 
 const MAX = 10;
 interface Escolhida { id: string; blob: Blob; url: string }
 
 
-export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicial = "" }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null }; eventoInicial?: string }) {
+export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicial = "", noticias = [] }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null }; eventoInicial?: string; noticias?: Noticia[] }) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
   const [fotos, setFotos] = useState<Escolhida[]>([]);
@@ -82,6 +84,15 @@ export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicia
     router.refresh();
   }
 
+  // As novidades da gestão entram no feed pela data; a mais recente fica fixada no topo durante 7 dias.
+  const quando = (n: Noticia) => n.publicado_em ?? n.created_at;
+  const fixada = noticias.find((n) => Date.now() - new Date(quando(n)).getTime() < 7 * 86400_000) ?? null;
+  const maisAntigo = posts.length >= 60 ? posts[posts.length - 1].created_at : "";
+  const lista: ({ k: "p"; p: Post; t: string } | { k: "n"; n: Noticia; t: string })[] = [
+    ...posts.map((p) => ({ k: "p" as const, p, t: p.created_at })),
+    ...noticias.filter((n) => n.id !== fixada?.id && quando(n) >= maisAntigo).map((n) => ({ k: "n" as const, n, t: quando(n) })),
+  ].sort((a, b) => b.t.localeCompare(a.t));
+
   return (
     <section className="view feed-v">
       <div className="sechead"><h2>Feed da equipa</h2></div>
@@ -120,13 +131,36 @@ export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicia
 
       {posts.length ? (
         <div className="feed-list">
-          {posts.map((p) => (
-            <PostCard key={p.id} p={p} eu={eu} isAdmin={isAdmin} armed={armed === p.id} onApagar={() => apagar(p)} />
-          ))}
+          {fixada && <NoticiaCard n={fixada} fixada />}
+          {lista.map((it) => it.k === "n"
+            ? <NoticiaCard key={`n-${it.n.id}`} n={it.n} />
+            : <PostCard key={it.p.id} p={it.p} eu={eu} isAdmin={isAdmin} armed={armed === it.p.id} onApagar={() => apagar(it.p)} />)}
         </div>
       ) : (
         <p className="empty">Ainda não há publicações. Partilha a primeira: o resumo do último treino, fotos de um passeio ou um aviso para a equipa.</p>
       )}
     </section>
+  );
+}
+
+// Publicação da gestão (Gestão → Publicações) mostrada no feed.
+function NoticiaCard({ n, fixada }: { n: Noticia; fixada?: boolean }) {
+  const img = imagemUrl(n.imagem_path);
+  return (
+    <article className={`fpost nfeed${fixada ? " fixada" : ""}`}>
+      <header className="fpost-h">
+        <span className="nfeed-logo" aria-hidden="true">ED</span>
+        <span className="fpost-who">
+          <b>EDCycling</b>
+          <span>{fixada ? "Novidade da equipa · fixada" : "Novidade da equipa"} · {dataPub(n)}</span>
+        </span>
+      </header>
+      {img && <Link href={`/noticias/${n.id}`} className="fpost-media"><img src={img} alt="" loading="lazy" style={{ width: "100%", display: "block" }} /></Link>}
+      <div className="fpost-t solo nfeed-b">
+        <h3><Link href={`/noticias/${n.id}`}>{n.titulo}</Link></h3>
+        {n.texto && <p>{resumo(n.texto, 280)}</p>}
+        <Link href={`/noticias/${n.id}`} className="nfeed-mais">Ler tudo →</Link>
+      </div>
+    </article>
   );
 }

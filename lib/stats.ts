@@ -54,7 +54,7 @@ export function calcular(
 ): Estatisticas {
   const tr = treinos.filter((t) => anoDe(t.data) === ano && t.data <= hoje);
   const ev = eventos.filter((e) => {
-    if (e.estado === "cancelado") return false;
+    if (e.estado === "cancelado" || e.estado === "proposta") return false;
     const a = e.data ? anoDe(e.data) : e.ano;
     if (a !== ano) return false;
     return e.estado === "realizado" || (!!e.data && e.data <= hoje);

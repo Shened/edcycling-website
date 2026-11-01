@@ -5,13 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib/dates";
 import { avisarInscricao } from "@/lib/avisos";
-import type { EstadoInscricao, Evento, Inscricao, Membro, Post } from "@/lib/types";
+import type { EstadoInscricao, Evento, Inscricao, Membro, Post, VotoProposta } from "@/lib/types";
+import VotacaoProposta from "./VotacaoProposta";
 import Avatar from "./Avatar";
 import EventForm from "./EventForm";
 import PostCard from "./PostCard";
 import PresencasEditor from "./PresencasEditor";
 import Texto from "./Texto";
 import Conversa from "./Conversa";
+import TerminarEvento from "./TerminarEvento";
+import RoutePreview from "./RoutePreview";
+import { fmtDuracao } from "@/lib/gpx";
 import MenuAcoes from "./MenuAcoes";
 import { TemaDeco } from "@/lib/temas";
 import { fotoEquipamento } from "@/lib/equipamentos";
@@ -20,12 +24,13 @@ import { marcar } from "@/lib/metricas";
 import { Resposta, estadoFrase } from "./EventoCartao";
 
 type Insc = Inscricao & { perfis: { nome: string; avatar_path?: string | null } | null };
-interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean }
+interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean; votos?: VotoProposta[] }
 
-export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, eu, isAdmin }: Props) {
+export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, eu, isAdmin, votos = [] }: Props) {
   const router = useRouter();
   const [editar, setEditar] = useState(false);
   const [pres, setPres] = useState(false);
+  const [terminar, setTerminar] = useState(false);
   const [msg, setMsg] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [armedPost, setArmedPost] = useState<string | null>(null);
@@ -80,11 +85,16 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
     if (navigator.share) { try { await navigator.share({ title: e.titulo, url }); return; } catch { /* cancelado */ } }
     await copiar();
   }
-  const acoes = isAdmin ? [
-    { label: "Editar evento", onClick: () => setEditar(true) },
-    ...((passado || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPres(true) }] : []),
-  ] : [];
-  const mostraResp = !closed && souAtleta;
+  const proposta = e.estado === "proposta";
+  const minha = proposta && e.criador_id === eu.id;
+  const porFechar = !proposta && passado && e.estado !== "realizado" && e.estado !== "cancelado";
+  const acoes = !isAdmin ? (minha ? [{ label: "Editar proposta", onClick: () => setEditar(true) }] : []) : [
+    { label: proposta ? "Editar proposta" : "Editar evento", onClick: () => setEditar(true) },
+    ...(porFechar || e.estado === "realizado" ? [{ label: e.estado === "realizado" ? "Mudar percurso (km)" : "Dar como terminado", onClick: () => setTerminar(true) }] : []),
+    ...(!proposta && (passado || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPres(true) }] : []),
+  ];
+  const mostraResp = !closed && souAtleta && !proposta;
+  const criador = proposta && e.criador_id ? membros.find((m) => m.id === e.criador_id)?.nome : null;
 
   const Pessoa = ({ i }: { i: Insc }) => (
     <li>
@@ -152,7 +162,15 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
               />
             )}
             {e.dmais != null && <Linha icon={<path d="M3 20 10 8l4 6 3-4 4 10z" />} t={<>{Number(e.dmais).toLocaleString("pt-PT")}&nbsp;m</>} s="Desnível positivo" />}
+            {e.duracao_s ? <Linha icon={<><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2M9 2h6" /></>} t={fmtDuracao(e.duracao_s)} s="Tempo em movimento" /> : null}
           </ul>
+          {e.trajeto && e.trajeto.length > 1 && <RoutePreview pontos={e.trajeto} />}
+          {isAdmin && porFechar && (
+            <div className="ev-fechar">
+              <span><b>Este evento já passou.</b> Dá-o como terminado para os km contarem nos totais da equipa.</span>
+              <button type="button" className="btn primary" onClick={() => setTerminar(true)}>Dar como terminado</button>
+            </div>
+          )}
 
           {e.notas && <div className="evd-bloco"><h2>Informações</h2><Texto texto={e.notas} /></div>}
 
@@ -164,10 +182,16 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
               <Resposta mine={mine} onPick={rsvp} busy={busy} titulo={e.titulo} />
             </div>
           )}
-          {!closed && !souAtleta && <p className="empty">Conta de gestão: não responde como atleta.</p>}
+          {!closed && !souAtleta && !proposta && <p className="empty">Conta de gestão: não responde como atleta.</p>}
         </div>
 
-        <div className="evd-bloco evd-gente">
+        {proposta && (
+          <div className="evd-bloco evd-gente">
+            <h2>Proposta{criador ? ` de ${criador.split(" ")[0]}` : ""}</h2>
+            <VotacaoProposta evento={e} votos={votos} euId={eu.id} podeVotar={souAtleta} isAdmin={isAdmin} />
+          </div>
+        )}
+        {!proposta && <div className="evd-bloco evd-gente">
           {fechadas ? (
             <>
               <h2>Foram {presentes.length + convidados.length}</h2>
@@ -185,7 +209,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
               {g.nao.length > 0 && <><h3>Não vão {g.nao.length}</h3><ul className="pessoas">{g.nao.map((i) => <Pessoa key={i.id} i={i} />)}</ul></>}
             </>
           )}
-        </div>
+        </div>}
       </div>
 
       <div className="evd-conv">
@@ -204,7 +228,16 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
         ) : <p className="empty">Ainda não há publicações sobre este evento.</p>}
       </div>
 
-      {editar && <EventForm evento={e} onClose={() => { setEditar(false); router.refresh(); }} />}
+      {terminar && (
+        <TerminarEvento
+          evento={e}
+          userId={eu.id}
+          quemFoi={(fechadas ? inscricoes.filter((i) => i.presente) : inscricoes.filter((i) => i.estado === "vai")).map((i) => i.user_id)}
+          onClose={() => setTerminar(false)}
+          onFeito={() => { if (!fechadas) setPres(true); }}
+        />
+      )}
+      {editar && <EventForm evento={e} isAdmin={isAdmin} onClose={() => { setEditar(false); router.refresh(); }} />}
       {pres && (
         <div className="overlay" onClick={(ev) => ev.target === ev.currentTarget && setPres(false)}>
           <div className="modal" role="dialog" aria-modal="true" aria-label={`Presenças em ${e.titulo}`}>

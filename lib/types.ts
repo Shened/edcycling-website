@@ -33,6 +33,10 @@ export interface Evento {
   tema?: string | null;
   equipamento_id?: string | null;
   equipamento?: { nome: string; descricao: string | null; foto_path: string | null } | null;
+  duracao_s?: number | null;
+  trajeto?: [number, number][] | null;
+  gpx_path?: string | null;
+  criador_id?: string | null;
 }
 
 export interface Inscricao {
@@ -117,3 +121,6 @@ export interface Atividade {
   strava_id?: number | null;
   created_at?: string;
 }
+
+export type Voto = "sim" | "talvez" | "nao";
+export interface VotoProposta { evento_id: string; user_id: string; voto: Voto; comentario: string | null; perfis?: { nome: string | null; avatar_path?: string | null } | null }

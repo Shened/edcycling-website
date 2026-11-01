@@ -1177,3 +1177,102 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .appbar-atualizar:hover{background:rgba(255,255,255,.08)}
 .appbar-atualizar:disabled{opacity:.7}
 @media (display-mode: standalone){.appbar-atualizar{display:grid}}
+/* dar evento como terminado */
+.ev-fechar{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--maybe);background:var(--maybe-soft);border-radius:var(--r);font-size:14px}
+.ev-fechar b{color:var(--ink)}
+.ter-modos{width:100%}
+.ter-modos button{flex:1}
+.ter-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;max-height:min(44vh,360px);overflow-y:auto}
+.ter-lista li+li{border-top:1px solid var(--line)}
+.ter-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;cursor:pointer}
+.ter-item.on{background:var(--pink-soft)}
+.ter-item input{width:18px;height:18px;accent-color:var(--pink)}
+.ter-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ter-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ter-t span{font-size:12.5px;color:var(--muted)}
+.ter-n{display:flex;flex-direction:column;align-items:flex-end;font-weight:600;font-size:14px}
+.ter-n small{font-size:12px;color:var(--muted);font-weight:500}
+.ter-modos button{white-space:normal;line-height:1.2;padding:4px 8px;font-size:13px}
+/* página inicial de quem tem conta */
+.ini{gap:24px}
+.ini-alertas{display:flex;flex-direction:column;gap:8px}
+.ini-alerta{display:block;padding:12px 14px;border:1px solid var(--maybe);background:var(--maybe-soft);border-radius:var(--r);color:var(--ink);text-decoration:none;font-size:14px}
+.ini-alerta b{font-family:var(--f-display);font-size:18px}
+.ini-alerta:hover{border-color:var(--ink)}
+.ini-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.ini-grid{grid-template-columns:1fr}}
+.ini-sec{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ini-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ini-h h3{margin:0;font-size:22px;text-transform:uppercase;font-style:italic}
+.ini-mais{font-size:14px;font-weight:600;color:var(--pink);text-decoration:none;white-space:nowrap}
+.ini-mais::after{content:" →"}
+.ini-ag,.ini-feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ini-ag-i,.ini-feed-i{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);text-decoration:none;color:var(--ink)}
+.ini-ag-i:hover,.ini-feed-i:hover{border-color:var(--muted)}
+.ini-ag-i.ev{border-left:4px solid var(--pink)}
+.ini-ag-i.tr{border-left:4px solid var(--blue)}
+.ini-dia{display:flex;flex-direction:column;align-items:center;min-width:40px;line-height:1}
+.ini-dia b{font-family:var(--f-display);font-size:26px;font-style:italic}
+.ini-dia span{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.ini-ag-t,.ini-feed-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ini-ag-t b,.ini-feed-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ini-ag-t span,.ini-feed-t span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.ini-feed-t b span{font-weight:500;color:var(--muted);font-size:13px}
+.ini-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ini-feed-i{grid-template-columns:56px minmax(0,1fr)}
+.ini-feed-i img,.ini-feed-ph{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--sunk);display:block}
+.ini-feed-ph{background:linear-gradient(135deg,var(--blue),var(--violet) 55%,var(--pink));opacity:.35}
+/* novidades da gestão no feed */
+.nfeed{border-color:var(--pink)}
+.nfeed.fixada{box-shadow:0 0 0 2px var(--pink-soft)}
+.nfeed-logo{display:grid;place-items:center;width:36px;height:36px;border-radius:99px;background:var(--hero);color:#fff;font:italic 800 14px var(--f-display);flex:none}
+.nfeed-b h3{margin:0 0 6px;font-size:22px;text-transform:uppercase;font-style:italic;line-height:1.1}
+.nfeed-b h3 a{color:inherit;text-decoration:none}
+.nfeed-b p{margin:0 0 8px;line-height:1.5}
+.nfeed-mais{font-weight:700;font-size:14px;color:var(--pink);text-decoration:none}
+/* propostas: votação "Vale a pena fazer?" */
+.vot{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px dashed var(--line);border-radius:12px;background:var(--surface)}
+.vot.compacto{padding:10px 12px;gap:8px;width:100%}
+.vot-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.vot-op{display:flex;gap:6px;flex-wrap:wrap}
+.vot-b{flex:1 1 0;min-width:84px;justify-content:center;gap:6px}
+.vot-b.on.v-sim{background:#E3F5EA;border-color:#2E9E5B;color:#1B6B3C}
+.vot-b.on.v-talvez{background:#FFF4DC;border-color:#D49A1A;color:#8A5E00}
+.vot-b.on.v-nao{background:#FDE7EC;border-color:#D2405F;color:#9B1F3A}
+.vot-n{font-weight:800;opacity:.75;margin-left:2px}
+.vot-res{margin:0;font-weight:700}
+.vot-barra{display:flex;height:6px;border-radius:99px;overflow:hidden;background:var(--line)}
+.vot-barra .v-sim{background:#2E9E5B}.vot-barra .v-talvez{background:#D49A1A}.vot-barra .v-nao{background:#D2405F}
+.vot-com{display:flex;gap:6px}
+.vot-com input{flex:1;min-width:0}
+.vot-quem{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.vot-quem li{display:flex;gap:10px;align-items:flex-start}
+.vot-c{display:block;color:var(--muted);font-size:14px}
+.vot-adm{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.evs-tab-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:99px;background:var(--pink);color:#fff;font-size:11px;font-weight:800}
+.evs-prop-av{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border:1px dashed var(--pink);border-radius:12px;margin-bottom:14px;text-decoration:none;color:inherit;background:none;font:inherit;cursor:pointer;width:100%;text-align:left}
+@media (prefers-color-scheme: dark){.vot-b.on.v-sim{background:#123D27;color:#8FE0B0}.vot-b.on.v-talvez{background:#3D2E0C;color:#F5CF7A}.vot-b.on.v-nao{background:#3D1420;color:#F59AAE}}
+/* sino de avisos */
+.sino{position:relative}
+.sino-btn{position:relative}
+.sino-n{position:absolute;top:2px;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--pink-g);color:#fff;font:800 10.5px/17px var(--f-body);text-align:center;box-shadow:0 0 0 2px var(--hero-deep)}
+.sino-painel{position:absolute;right:-60px;top:calc(100% + 8px);width:min(380px,calc(100vw - 24px));max-height:min(70vh,560px);display:flex;flex-direction:column;z-index:40;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 44px rgba(0,0,0,.3);overflow:hidden}
+.sino-cab{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.sino-todos{border:0;background:none;color:var(--pink);font:600 13.5px var(--f-body);padding:4px 0;cursor:pointer}
+.sino-lista{list-style:none;margin:0;padding:4px;overflow-y:auto;flex:1}
+.sino-i{display:flex;gap:10px;width:100%;text-align:left;border:0;background:none;color:inherit;padding:10px;border-radius:10px;font:inherit;cursor:pointer;position:relative}
+.sino-i:hover{background:var(--sunk)}
+.sino-i.novo{background:var(--pink-soft)}
+.sino-i.novo::before{content:"";position:absolute;left:3px;top:16px;width:6px;height:6px;border-radius:99px;background:var(--pink)}
+.sino-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.35}
+.sino-t span{color:var(--muted)}
+.sino-q{flex:none;font-size:12px;color:var(--muted);white-space:nowrap}
+.sino-vazio{margin:0;padding:18px 14px;color:var(--muted);font-size:14px}
+.sino-def{display:block;padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);text-decoration:none}
+@media (max-width:640px){.sino-painel{position:fixed;left:12px;right:12px;width:auto;top:calc(env(safe-area-inset-top,0px) + 60px)}}
+.appbar-atualizar.sino-btn{display:grid}
+@media (max-width:640px){
+  .evs-ctrl .tabseg{flex:1;min-width:0}
+  .evs-ctrl .tabseg button{padding-left:6px;padding-right:6px;font-size:13.5px;flex:1}
+  .evs-novo{flex:none}
+}
