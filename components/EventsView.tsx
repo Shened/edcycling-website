@@ -32,9 +32,9 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const [pending, setPending] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
-  // As propostas ficam no separador próprio até um admin as confirmar.
+  // As propostas futuras aparecem também em Próximos (com a votação no cartão), para todos verem e votarem.
   const propostas = sorted.filter((e) => e.estado === "proposta");
-  const up = sorted.filter((e) => !isPast(e) && e.estado !== "proposta");
+  const up = sorted.filter((e) => !isPast(e));
   const past = sorted.filter((e) => isPast(e) && e.estado !== "proposta").reverse();
   const lista = ver === "passados" ? past : ver === "todos" ? sorted : ver === "propostas" ? propostas : up;
   const porVotar = propostas.filter((e) => !votos.some((v) => v.evento_id === e.id && v.user_id === perfil?.id)).length;
@@ -125,11 +125,6 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         </div>
       </div>
       {!itens.length && <p className="empty">{vazio}</p>}
-      {ver === "proximos" && porVotar > 0 && (
-        <button type="button" className="evs-prop-av" onClick={() => mudar("propostas")}>
-          <span><b>{porVotar} {porVotar === 1 ? "proposta" : "propostas"}</b> de evento à espera do teu voto</span><span aria-hidden="true">→</span>
-        </button>
-      )}
       {ver === "propostas" && <p className="hint evs-nota">Eventos propostos pelos atletas. Vota se vale a pena; um admin confirma ou rejeita.</p>}
       {porSemanas && atividades.length > 0 && <p className="hint evs-nota">Inclui as tuas atividades pessoais, com contorno lilás. Só tu as vês aqui.</p>}
       {grupos.map((g, gi) => (
