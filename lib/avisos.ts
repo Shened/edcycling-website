@@ -22,7 +22,7 @@ export async function avisarNovo(kind: Kind, id: string): Promise<void> {
         await enviarAviso({
           tipo: "novo", chave: `proposta:evento:${id}`,
           titulo: `Proposta: ${e.titulo}`,
-          corpo: `${(quem?.nome as string | undefined)?.split(" ")[0] ?? "Um atleta"} propôs para ${quando(e)}. Vale a pena fazer? Vota.`,
+          corpo: `${(quem?.nome as string | undefined)?.split(" ")[0] ?? "Um atleta"} propôs para ${quando(e)}. Diz se vais: conforme as respostas, os admins decidem se avança.`,
           url: `/eventos/${id}`,
           destinatarios: sem(await membrosAtivos(admin, true), user.id),
         });
@@ -73,13 +73,12 @@ export async function avisarAlteracao(kind: Kind, id: string, antes: Antes): Pro
           destinatarios: sem(await membrosAtivos(admin), user.id),
         });
       } else if (r.estado === "cancelado") {
-        const { data: vs } = await admin.from("evento_votos").select("user_id").eq("evento_id", id);
         await enviarAviso({
           tipo: "alteracao", chave: `cancel:evento:${id}`,
           titulo: `Proposta não avançou: ${r.titulo}`,
           corpo: "Os admins decidiram não fazer este evento, para já.",
           url: `/eventos/${id}`,
-          destinatarios: sem([...(vs ?? []).map((v) => v.user_id as string), r.criador_id as string], user.id),
+          destinatarios: sem([...(await inscritos(admin, "evento", id)), r.criador_id as string], user.id),
         });
       }
       return;
@@ -313,25 +312,3 @@ export async function avisarConversa(kind: Kind, id: string, msgId: string): Pro
   } catch { /* nada */ }
 }
 
-/** Aviso a quem propôs quando alguém vota na proposta (uma vez por pessoa e evento). */
-export async function avisarVoto(eventoId: string): Promise<void> {
-  try {
-    const { user } = await getSession();
-    if (!user) return;
-    const admin = createAdminClient();
-    const [{ data: e }, { data: v }] = await Promise.all([
-      admin.from("eventos").select("id,titulo,estado,criador_id").eq("id", eventoId).single(),
-      admin.from("evento_votos").select("voto,perfis(nome)").eq("evento_id", eventoId).eq("user_id", user.id).single(),
-    ]);
-    if (!e || e.estado !== "proposta" || !e.criador_id || e.criador_id === user.id || !v) return;
-    const nome = ((v.perfis as unknown as { nome?: string } | null)?.nome ?? "Alguém").split(" ")[0];
-    const txt: Record<string, string> = { sim: "acha que vale a pena 👍", talvez: "talvez 🤔", nao: "acha que não 👎" };
-    await enviarAviso({
-      tipo: "reacoes", chave: `voto:${eventoId}:${user.id}`,
-      titulo: `Voto na tua proposta: ${e.titulo}`,
-      corpo: `${nome} ${txt[v.voto as string] ?? "votou"}.`,
-      url: `/eventos/${eventoId}`,
-      destinatarios: [e.criador_id as string],
-    });
-  } catch { /* nada */ }
-}

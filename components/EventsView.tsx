@@ -7,8 +7,7 @@ import { MESES, evAno, evMes, fmtDate, isPast, nextEvento, parseDate, sortEvento
 import { fmtDuracao, fmtKm } from "@/lib/gpx";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import AtividadeForm from "./AtividadeForm";
-import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil, VotoProposta } from "@/lib/types";
-import VotacaoProposta from "./VotacaoProposta";
+import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
 import EventoCartao from "./EventoCartao";
@@ -17,9 +16,9 @@ import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
 import { avisarInscricao } from "@/lib/avisos";
 
-interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[]; votos?: VotoProposta[] }
+interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[] }
 
-export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [], votos = [] }: Props) {
+export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [] }: Props) {
   const [atvEdit, setAtvEdit] = useState<Atividade | null>(null);
   const [presEv, setPresEv] = useState<Evento | null>(null);
   const [terEv, setTerEv] = useState<Evento | null>(null);
@@ -27,17 +26,14 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const sorted = useMemo(() => sortEventos(eventos), [eventos]);
   const params = useSearchParams();
   const pathname = usePathname();
-  const ver = (params.get("ver") as "proximos" | "passados" | "todos" | "propostas" | null) ?? "proximos";
+  const ver = (params.get("ver") as "proximos" | "passados" | "todos" | null) ?? "proximos";
   const [editing, setEditing] = useState<Evento | null | undefined>(undefined);
   const [pending, setPending] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
-  // As propostas futuras aparecem também em Próximos (com a votação no cartão), para todos verem e votarem.
-  const propostas = sorted.filter((e) => e.estado === "proposta");
   const up = sorted.filter((e) => !isPast(e));
-  const past = sorted.filter((e) => isPast(e) && e.estado !== "proposta").reverse();
-  const lista = ver === "passados" ? past : ver === "todos" ? sorted : ver === "propostas" ? propostas : up;
-  const porVotar = propostas.filter((e) => !votos.some((v) => v.evento_id === e.id && v.user_id === perfil?.id)).length;
+  const past = sorted.filter(isPast).reverse();
+  const lista = ver === "passados" ? past : ver === "todos" ? sorted : up;
   const porSemanas = ver === "passados" || ver === "todos";
   const prox = nextEvento(eventos);
   const souAtleta = !!perfil && membros.some((m) => m.id === perfil.id);
@@ -106,7 +102,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
     else { void avisarInscricao("evento", evId, antes); marcar("Resposta a evento", { resposta: estado ?? "retirou", onde: "lista" }); }
     router.refresh();
   }
-  const vazio = ver === "passados" ? "Ainda não há eventos passados." : ver === "todos" ? "Ainda não há eventos." : ver === "propostas" ? "Não há propostas à espera. Tens uma ideia de passeio? Propõe-a." : "Sem eventos marcados.";
+  const vazio = ver === "passados" ? "Ainda não há eventos passados." : ver === "todos" ? "Ainda não há eventos." : "Sem eventos marcados.";
   const podeCriar = isAdmin || souAtleta;
   return (
     <section className="view evs">
@@ -115,9 +111,9 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         <h2>Eventos</h2>
         <div className="evs-ctrl">
           <div className="tabseg" role="tablist" aria-label="Que eventos mostrar">
-            {([["proximos", "Próximos"], ["propostas", "Propostas"], ["passados", "Passados"], ["todos", "Todos"]] as const).map(([k, l]) => (
+            {([["proximos", "Próximos"], ["passados", "Passados"], ["todos", "Todos"]] as const).map(([k, l]) => (
               <button key={k} type="button" role="tab" aria-selected={ver === k} onClick={() => mudar(k)}>
-                {l}{k === "propostas" && porVotar > 0 && <span className="evs-tab-n" aria-label={`${porVotar} por votar`}>{porVotar}</span>}
+                {l}
               </button>
             ))}
           </div>
@@ -125,7 +121,6 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
         </div>
       </div>
       {!itens.length && <p className="empty">{vazio}</p>}
-      {ver === "propostas" && <p className="hint evs-nota">Eventos propostos pelos atletas. Vota se vale a pena; um admin confirma ou rejeita.</p>}
       {porSemanas && atividades.length > 0 && <p className="hint evs-nota">Inclui as tuas atividades pessoais, com contorno lilás. Só tu as vês aqui.</p>}
       {grupos.map((g, gi) => (
         <div key={g.ano} className="evs-grupo">
@@ -143,8 +138,8 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
             const minha = proposta && !!perfil && e.criador_id === perfil.id;
             const acoes = !isAdmin ? (minha ? [{ label: "Editar proposta", onClick: () => setEditing(e) }] : []) : [
               { label: proposta ? "Editar proposta" : "Editar evento", onClick: () => setEditing(e) },
-              ...(!proposta && isPast(e) && e.estado !== "realizado" && e.estado !== "cancelado" ? [{ label: "Dar como terminado", onClick: () => setTerEv(e) }] : []),
-              ...(!proposta && (isPast(e) || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: e.presencas_fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPresEv(e) }] : []),
+              ...(isPast(e) && e.estado !== "realizado" && e.estado !== "cancelado" ? [{ label: "Dar como terminado", onClick: () => setTerEv(e) }] : []),
+              ...((isPast(e) || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: e.presencas_fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPresEv(e) }] : []),
             ];
             return (
               <EventoCartao
@@ -159,7 +154,6 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
                 onPick={(v) => rsvp(e.id, v)}
                 acoes={acoes}
                 proximo={ver === "proximos" && prox?.id === e.id}
-                votacao={proposta ? <VotacaoProposta compacto evento={e} votos={votos.filter((v) => v.evento_id === e.id)} euId={perfil?.id} podeVotar={isMember && souAtleta} isAdmin={isAdmin} /> : undefined}
               />
             );
             })();

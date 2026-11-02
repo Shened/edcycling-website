@@ -93,10 +93,9 @@ interface Props {
   onPick: (v: EstadoInscricao | null) => void;
   acoes: Acao[];
   proximo?: boolean;
-  votacao?: React.ReactNode;
 }
 
-export default function EventoCartao({ e, insc, euId, mine, podeResponder, aviso, busy, onPick, acoes, proximo, votacao }: Props) {
+export default function EventoCartao({ e, insc, euId, mine, podeResponder, aviso, busy, onPick, acoes, proximo }: Props) {
   const fechado = e.estado === "cancelado" || e.estado === "realizado" || !!e.presencas_fechadas;
   const vai = insc.filter((p) => p.estado === "vai").sort((a, b) => (a.user_id === euId ? -1 : b.user_id === euId ? 1 : (a.perfis?.nome ?? "").localeCompare(b.perfis?.nome ?? "", "pt")));
   const talvez = insc.filter((p) => p.estado === "talvez").length;
@@ -119,7 +118,7 @@ export default function EventoCartao({ e, insc, euId, mine, podeResponder, aviso
           <MenuAcoes acoes={acoes} label={`Ações para ${e.titulo}`} />
         </div>
         <Meta e={e} />
-        {votacao ? <div className="evc-foot">{votacao}</div> : <div className="evc-foot">
+        <div className="evc-foot">
           <Link href={href} className="evc-gente">
             {gente.length > 0 && (
               <span className="av-stack" aria-hidden="true">
@@ -130,7 +129,7 @@ export default function EventoCartao({ e, insc, euId, mine, podeResponder, aviso
           </Link>
           {!fechado && podeResponder && <Resposta mine={mine} onPick={onPick} busy={busy} titulo={e.titulo} />}
           {!fechado && !podeResponder && aviso && <span className="evc-aviso">{aviso}</span>}
-        </div>}
+        </div>
       </div>
     </article>
   );

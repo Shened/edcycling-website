@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib/dates";
 import { avisarInscricao } from "@/lib/avisos";
-import type { EstadoInscricao, Evento, Inscricao, Membro, Post, VotoProposta } from "@/lib/types";
-import VotacaoProposta from "./VotacaoProposta";
+import type { EstadoInscricao, Evento, Inscricao, Membro, Post } from "@/lib/types";
 import Avatar from "./Avatar";
 import EventForm from "./EventForm";
 import PostCard from "./PostCard";
@@ -24,9 +23,9 @@ import { marcar } from "@/lib/metricas";
 import { Resposta, estadoFrase } from "./EventoCartao";
 
 type Insc = Inscricao & { perfis: { nome: string; avatar_path?: string | null } | null };
-interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean; votos?: VotoProposta[] }
+interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean }
 
-export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, eu, isAdmin, votos = [] }: Props) {
+export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, eu, isAdmin }: Props) {
   const router = useRouter();
   const [editar, setEditar] = useState(false);
   const [pres, setPres] = useState(false);
@@ -87,13 +86,13 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
   }
   const proposta = e.estado === "proposta";
   const minha = proposta && e.criador_id === eu.id;
-  const porFechar = !proposta && passado && e.estado !== "realizado" && e.estado !== "cancelado";
+  const porFechar = passado && e.estado !== "realizado" && e.estado !== "cancelado";
   const acoes = !isAdmin ? (minha ? [{ label: "Editar proposta", onClick: () => setEditar(true) }] : []) : [
     { label: proposta ? "Editar proposta" : "Editar evento", onClick: () => setEditar(true) },
     ...(porFechar || e.estado === "realizado" ? [{ label: e.estado === "realizado" ? "Mudar percurso (km)" : "Dar como terminado", onClick: () => setTerminar(true) }] : []),
-    ...(!proposta && (passado || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPres(true) }] : []),
+    ...((passado || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPres(true) }] : []),
   ];
-  const mostraResp = !closed && souAtleta && !proposta;
+  const mostraResp = !closed && souAtleta;
   const criador = proposta && e.criador_id ? membros.find((m) => m.id === e.criador_id)?.nome : null;
 
   const Pessoa = ({ i }: { i: Insc }) => (
@@ -182,16 +181,11 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
               <Resposta mine={mine} onPick={rsvp} busy={busy} titulo={e.titulo} />
             </div>
           )}
-          {!closed && !souAtleta && !proposta && <p className="empty">Conta de gestão: não responde como atleta.</p>}
+          {!closed && !souAtleta && <p className="empty">Conta de gestão: não responde como atleta.</p>}
         </div>
 
-        {proposta && (
-          <div className="evd-bloco evd-gente">
-            <h2>Proposta{criador ? ` de ${criador.split(" ")[0]}` : ""}</h2>
-            <VotacaoProposta evento={e} votos={votos} euId={eu.id} podeVotar={souAtleta} isAdmin={isAdmin} />
-          </div>
-        )}
-        {!proposta && <div className="evd-bloco evd-gente">
+        <div className="evd-bloco evd-gente">
+          {criador && <p className="hint" style={{ margin: "0 0 8px" }}>Proposto por {criador}. Um admin confirma conforme as respostas.</p>}
           {fechadas ? (
             <>
               <h2>Foram {presentes.length + convidados.length}</h2>
@@ -209,7 +203,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
               {g.nao.length > 0 && <><h3>Não vão {g.nao.length}</h3><ul className="pessoas">{g.nao.map((i) => <Pessoa key={i.id} i={i} />)}</ul></>}
             </>
           )}
-        </div>}
+        </div>
       </div>
 
       <div className="evd-conv">

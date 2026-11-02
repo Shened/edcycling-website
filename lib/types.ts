@@ -121,6 +121,3 @@ export interface Atividade {
   strava_id?: number | null;
   created_at?: string;
 }
-
-export type Voto = "sim" | "talvez" | "nao";
-export interface VotoProposta { evento_id: string; user_id: string; voto: Voto; comentario: string | null; perfis?: { nome: string | null; avatar_path?: string | null } | null }

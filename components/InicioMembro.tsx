@@ -22,13 +22,13 @@ function Dia({ iso }: { iso: string | null }) {
 }
 
 // Página inicial de quem tem conta: o que aí vem, as novidades da equipa e o que se publicou.
-export default function InicioMembro({ nome, eventos, treinos, noticias, posts, propostas = 0, porFechar = 0, isAdmin }: {
-  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; propostas?: number; porFechar?: number; isAdmin: boolean;
+export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, isAdmin }: {
+  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; isAdmin: boolean;
 }) {
   const hoje = hojeIso();
   // Próximos 5: eventos confirmados e treinos, por data.
   const agenda = [
-    ...sortEventos(eventos).filter((e) => !isPast(e) && e.estado !== "cancelado" && e.estado !== "proposta" && e.data).map((e) => ({ k: "e" as const, data: e.data!, hora: e.hora, id: e.id, titulo: e.titulo, sub: [TIPO_EVENTO[e.tipo] ?? "Evento", e.partida].filter(Boolean).join(" · "), href: `/eventos/${e.id}` })),
+    ...sortEventos(eventos).filter((e) => !isPast(e) && e.estado !== "cancelado" && e.data).map((e) => ({ k: "e" as const, data: e.data!, hora: e.hora, id: e.id, titulo: e.titulo, sub: [TIPO_EVENTO[e.tipo] ?? "Evento", e.partida].filter(Boolean).join(" · "), href: `/eventos/${e.id}` })),
     ...treinos.filter((t) => t.data >= hoje).map((t) => ({ k: "t" as const, data: t.data, hora: t.hora, id: t.id, titulo: t.titulo, sub: [`Treino de ${(TIPO_TREINO[t.tipo] ?? "bicicleta").toLowerCase()}`, t.partida].filter(Boolean).join(" · "), href: `/treinos?treino=${t.id}` })),
   ].sort((a, b) => (a.data + (a.hora ?? "")).localeCompare(b.data + (b.hora ?? ""))).slice(0, 5);
 
@@ -38,10 +38,9 @@ export default function InicioMembro({ nome, eventos, treinos, noticias, posts, 
         <h2>Olá, {nome.split(" ")[0] || "atleta"}</h2>
       </div>
 
-      {(propostas > 0 || (isAdmin && porFechar > 0)) && (
+      {isAdmin && porFechar > 0 && (
         <div className="ini-alertas">
-          {propostas > 0 && <Link href="/eventos?ver=propostas" className="ini-alerta"><b>{propostas}</b> {propostas === 1 ? "proposta de evento à espera do teu voto" : "propostas de eventos à espera do teu voto"} →</Link>}
-          {isAdmin && porFechar > 0 && <Link href="/eventos?ver=passados" className="ini-alerta"><b>{porFechar}</b> {porFechar === 1 ? "evento passado por dar como terminado" : "eventos passados por dar como terminados"} →</Link>}
+          <Link href="/eventos?ver=passados" className="ini-alerta"><b>{porFechar}</b> {porFechar === 1 ? "evento passado por dar como terminado" : "eventos passados por dar como terminados"} →</Link>
         </div>
       )}
 
