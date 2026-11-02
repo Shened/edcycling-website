@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib/dates";
 import { avisarInscricao } from "@/lib/avisos";
-import type { EstadoInscricao, Evento, Inscricao, Membro, Post } from "@/lib/types";
+import { ehDesporto, type EstadoInscricao, type Evento, type Inscricao, type Membro, type Post } from "@/lib/types";
 import Avatar from "./Avatar";
 import EventForm from "./EventForm";
 import PostCard from "./PostCard";
@@ -166,7 +166,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
           {e.trajeto && e.trajeto.length > 1 && <RoutePreview pontos={e.trajeto} />}
           {isAdmin && porFechar && (
             <div className="ev-fechar">
-              <span><b>Este evento já passou.</b> Dá-o como terminado para os km contarem nos totais da equipa.</span>
+              <span><b>Este evento já passou.</b> {ehDesporto(e) ? "Dá-o como terminado para contar como treino e os km entrarem nos totais da equipa." : "Dá-o como terminado (não desportivo: não conta como treino)."}</span>
               <button type="button" className="btn primary" onClick={() => setTerminar(true)}>Dar como terminado</button>
             </div>
           )}

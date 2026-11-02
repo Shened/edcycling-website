@@ -1254,3 +1254,6 @@ a.tdf-adm-l:hover b{text-decoration:underline}
   .evs-ctrl .tabseg button{padding-left:6px;padding-right:6px;font-size:13.5px;flex:1}
   .evs-novo{flex:none}
 }
+/* caixa de seleção com texto (ex.: evento desportivo) */
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);font-weight:400}
+.chk input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--pink)}

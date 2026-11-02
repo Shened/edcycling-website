@@ -129,7 +129,7 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
           <div className="hbars">
             {st.porTipo.map((t) => (
               <div key={t.tipo} className="hbar">
-                <span className="hl">{TIPOS_TREINO[t.tipo] ?? t.tipo}</span>
+                <span className="hl">{TIPOS_TREINO[t.tipo] ?? (t.tipo === "evento" ? "Eventos" : t.tipo)}</span>
                 <span className="ht"><span style={{ width: `${(t.km / maxTipo) * 100}%` }} /></span>
                 <span className="hv num">{fmtKm(t.km)} km · {t.treinos}</span>
               </div>

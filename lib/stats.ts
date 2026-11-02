@@ -1,5 +1,5 @@
 // Cálculo das estatísticas da equipa (puro, sem React, para ser fácil de testar).
-import type { Evento, Membro, Treino } from "./types";
+import { ehDesporto, type Evento, type Membro, type Treino } from "./types";
 
 export const CICLISMO = new Set(["estrada", "gravel", "btt", "rolo"]);
 
@@ -98,35 +98,50 @@ export function calcular(
       else if (t.tipo === "natacao") l.kmNatacao += km;
     }
   }
+  // Eventos desportivos contam como treino (contagem, km, D+, presenças); os outros só como evento.
+  let evDesporto = 0;
   for (const e of ev) {
-    const km = e.km ?? 0;
+    const desp = ehDesporto(e);
+    const km = desp ? Number(e.km ?? 0) : 0;
+    const dm = desp ? e.dmais ?? 0 : 0;
+    const mes = (e.data ? mesDe(e.data) : e.mes) - 1;
     kmEquipa += km;
-    dmaisEquipa += e.dmais ?? 0;
-    porMes[(e.data ? mesDe(e.data) : e.mes) - 1].km += km;
+    dmaisEquipa += dm;
+    segundosEquipa += desp ? e.duracao_s ?? 0 : 0;
+    porMes[mes].km += km;
+    if (desp) {
+      evDesporto += 1;
+      porMes[mes].treinos += 1;
+      const tp = tipos.get("evento") ?? { tipo: "evento", km: 0, treinos: 0 };
+      tp.km += km; tp.treinos += 1; tipos.set("evento", tp);
+    }
     const foram = inscricoes
       .filter((i) => i.evento_id === e.id && (e.presencas_fechadas ? i.presente === true : i.estado === "vai"))
       .filter((i) => atletaIds.has(i.user_id))
       .map((i) => linha(i.user_id));
     if (e.presencas_fechadas) (e.convidados ?? []).forEach((c) => foram.push(convidado(c)));
+    if (desp) somaAtletas += foram.length;
     for (const l of foram) {
-      l.eventos += 1; l.km += km; l.dmais += e.dmais ?? 0;
+      l.eventos += 1; l.km += km; l.dmais += dm;
+      if (desp) { l.treinos += 1; l.segundos += e.duracao_s ?? 0; }
     }
   }
+  const nTreinos = tr.length + evDesporto;
 
   const lista = [...atletas.values()];
   lista.forEach((l) => {
-    l.presenca = tr.length ? l.treinos / tr.length : 0;
+    l.presenca = nTreinos ? l.treinos / nTreinos : 0;
     l.km = Math.round(l.km * 10) / 10; l.kmCorrida = Math.round(l.kmCorrida * 10) / 10; l.kmNatacao = Math.round(l.kmNatacao * 100) / 100;
   });
 
   return {
-    treinosRealizados: tr.length,
+    treinosRealizados: nTreinos,
     eventosRealizados: ev.length,
     kmEquipa: Math.round(kmEquipa * 10) / 10,
     dmaisEquipa,
     segundosEquipa,
     kmAtletas: Math.round(lista.reduce((a, l) => a + l.km, 0) * 10) / 10,
-    mediaAtletas: tr.length ? somaAtletas / tr.length : 0,
+    mediaAtletas: nTreinos ? somaAtletas / nTreinos : 0,
     kmEstimados: tr.some((t) => t.km == null && (t.km_plano ?? 0) > 0),
     porMes: porMes.map((m) => ({ ...m, km: Math.round(m.km * 10) / 10 })),
     porTipo: [...tipos.values()].sort((a, b) => b.km - a.km),

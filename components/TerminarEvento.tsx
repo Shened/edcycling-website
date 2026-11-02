@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fmtDuracao, fmtKm, parseGpx } from "@/lib/gpx";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
-import type { Evento } from "@/lib/types";
+import { ehDesporto, type Evento } from "@/lib/types";
 import RoutePreview from "./RoutePreview";
 import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
@@ -70,7 +70,17 @@ export default function TerminarEvento({ evento: e, quemFoi, userId, onClose, on
     return { km, dmais: mao.dmais ? Math.max(0, Math.round(Number(mao.dmais))) : null, duracao_s: dur || null, trajeto: null };
   }
 
+  const desporto = ehDesporto(e);
   async function guardar() {
+    if (!desporto) {
+      setBusy(true); setErr("");
+      const { error } = await createClient().from("eventos").update({ estado: "realizado", updated_at: new Date().toISOString() }).eq("id", e.id);
+      setBusy(false);
+      if (error) { setErr("Não foi possível guardar."); return; }
+      marcar("Evento terminado", { fonte: "sem-desporto" });
+      onClose(); onFeito?.(); router.refresh();
+      return;
+    }
     const p = percurso();
     if (!p || p.km == null) { setErr(modo === "mao" ? "Indica os km do evento (ex.: 62,4)." : "Escolhe uma atividade ou carrega um ficheiro."); return; }
     setBusy(true); setErr("");
@@ -112,10 +122,10 @@ export default function TerminarEvento({ evento: e, quemFoi, userId, onClose, on
           <div>
             <p className="eyebrow" style={{ color: "var(--muted)" }}>Dar como terminado</p>
             <h3 id="terT">{e.titulo}</h3>
-            <p className="hint" style={{ margin: "4px 0 0" }}>Os km deste evento passam a contar para os totais da equipa.</p>
+            <p className="hint" style={{ margin: "4px 0 0" }}>{desporto ? "Conta como treino: os km passam a contar para os totais da equipa." : "Evento não desportivo: fica como realizado, sem km nem treino nos números."}</p>
           </div>
 
-          <div className="tabseg ter-modos" role="tablist" aria-label="De onde vem o percurso">
+          {desporto && <><div className="tabseg ter-modos" role="tablist" aria-label="De onde vem o percurso">
             {([["atividade", "Atividade de quem foi"], ["ficheiro", "GPX ou FIT"], ["mao", "À mão"]] as const).map(([k, l]) => (
               <button key={k} type="button" role="tab" aria-selected={modo === k} onClick={() => { setModo(k); setErr(""); }}>{l}</button>
             ))}
@@ -163,7 +173,7 @@ export default function TerminarEvento({ evento: e, quemFoi, userId, onClose, on
             </div>
           )}
 
-          {p?.trajeto && p.trajeto.length > 1 && <RoutePreview pontos={p.trajeto} />}
+          {p?.trajeto && p.trajeto.length > 1 && <RoutePreview pontos={p.trajeto} />}</>}
           {err && <div className="notice" role="alert">{err}</div>}
 
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>

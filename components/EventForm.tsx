@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { marcar } from "@/lib/metricas";
 import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
-import type { Evento } from "@/lib/types";
+import { ehDesporto, type Evento } from "@/lib/types";
 import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos";
 import { TEMAS, temaSugerido } from "@/lib/temas";
 import Link from "next/link";
@@ -28,7 +28,9 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
     notas: evento?.notas ?? "",
     tema: evento?.tema ?? "",
     equipamento_id: evento?.equipamento_id ?? "",
+    desporto: evento ? ehDesporto(evento) : true,
   });
+  const [despMexido, setDespMexido] = useState(!!evento);
   // Equipamentos da equipa (null = a tabela ainda não existe; nesse caso o campo não aparece).
   const [kits, setKits] = useState<{ id: string; nome: string }[] | null>(null);
   useEffect(() => {
@@ -50,6 +52,8 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
     const v = e.target.value;
     setF((p) => {
       const n = { ...p, [k]: v };
+      // Convívio sugere "não desportivo" (até a pessoa mexer na opção).
+      if (k === "tipo" && !despMexido) n.desporto = v !== "convivio";
       if (k === "data") { const d = parseDate(v); if (d) { n.mes = d.getMonth() + 1; n.ano = d.getFullYear(); } }
       return n;
     });
@@ -66,6 +70,7 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
       mes: +f.mes, ano: +f.ano, hora: f.hora || null, partida: f.partida.trim() || null,
       km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null, tema: f.tema || null,
       ...(kits ? { equipamento_id: f.equipamento_id || null } : {}),
+      desporto: f.desporto,
       updated_at: new Date().toISOString(),
     };
     const sb = createClient();
@@ -73,6 +78,7 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
       ? await sb.from("eventos").update(body).eq("id", evento.id)
       : await sb.from("eventos").insert(body).select("id").single();
     setBusy(false);
+    if (res.error && /desporto/.test(res.error.message)) { setErr("Falta correr a migration 028 no Supabase."); return; }
     if (res.error) { setErr(!isAdmin && /row-level|policy|criador_id/i.test(res.error.message) ? "Ainda não é possível propor eventos (falta a migration 026)." : "Não foi possível guardar. Tenta outra vez."); return; }
     // Avisos (correm no servidor; não atrasam quem guardou)
     if (evento) void avisarAlteracao("evento", evento.id, { data: evento.data, hora: evento.hora, partida: evento.partida, estado: evento.estado });
@@ -129,6 +135,12 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
                 {!f.tema && sug && <button type="button" className="btn" onClick={() => setF((p) => ({ ...p, tema: sug }))}>Usar tema de {TEMAS[sug].label}</button>}
               </div>
               <span className="hint">Muda as cores do cartão e da página do evento.</span>
+            </div>
+            <div className="field full">
+              <label className="chk" htmlFor="fDesp">
+                <input id="fDesp" type="checkbox" checked={f.desporto} onChange={(e) => { setDespMexido(true); setF((p) => ({ ...p, desporto: e.target.checked })); }} />
+                <span><b>Evento desportivo</b><span className="hint" style={{ display: "block" }}>Conta como treino nos números da equipa (treinos, km e D+). Desliga para jantares, convívios e afins.</span></span>
+              </label>
             </div>
             <div className="field full"><label htmlFor="fNotas">Notas</label><textarea id="fNotas" maxLength={800} placeholder="Almoço, carro de apoio, equipamento a levar…" value={f.notas} onChange={set("notas")} /></div>
           </div>

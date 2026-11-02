@@ -37,6 +37,7 @@ export interface Evento {
   trajeto?: [number, number][] | null;
   gpx_path?: string | null;
   criador_id?: string | null;
+  desporto?: boolean | null;
 }
 
 export interface Inscricao {
@@ -121,3 +122,6 @@ export interface Atividade {
   strava_id?: number | null;
   created_at?: string;
 }
+
+/** Evento desportivo (conta como treino nos números). Sem a coluna, os convívios não contam. */
+export const ehDesporto = (e: { desporto?: boolean | null; tipo?: string }) => e.desporto ?? e.tipo !== "convivio";
