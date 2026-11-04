@@ -1257,3 +1257,11 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 /* caixa de seleção com texto (ex.: evento desportivo) */
 .chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);font-weight:400}
 .chk input{width:20px;height:20px;margin:2px 0 0;flex:none;accent-color:var(--pink)}
+/* treinos de equipa na lista de eventos */
+.trc{box-shadow:inset 0 0 0 1.5px var(--blue)}
+.trc .atvc-d{color:var(--blue)}
+.trc h3 a{color:inherit;text-decoration:none}
+.trc-gente{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.trc-a{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.trc-abrir{font-size:14px}
+@media (max-width:640px){.trc-a{grid-column:1/-1;align-items:stretch}.trc-abrir{align-self:flex-start;padding-left:0}}

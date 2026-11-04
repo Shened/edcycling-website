@@ -7,7 +7,8 @@ import { MESES, evAno, evMes, fmtDate, isPast, nextEvento, parseDate, sortEvento
 import { fmtDuracao, fmtKm } from "@/lib/gpx";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import AtividadeForm from "./AtividadeForm";
-import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil } from "@/lib/types";
+import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil, Treino } from "@/lib/types";
+import { Resposta } from "./EventoCartao";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
 import EventoCartao from "./EventoCartao";
@@ -16,9 +17,9 @@ import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
 import { avisarInscricao } from "@/lib/avisos";
 
-interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[] }
+interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[]; treinos?: Treino[] }
 
-export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [] }: Props) {
+export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [], treinos = [] }: Props) {
   const [atvEdit, setAtvEdit] = useState<Atividade | null>(null);
   const [presEv, setPresEv] = useState<Evento | null>(null);
   const [terEv, setTerEv] = useState<Evento | null>(null);
@@ -38,19 +39,23 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const prox = nextEvento(eventos);
   const souAtleta = !!perfil && membros.some((m) => m.id === perfil.id);
   const anoAtual = today().getFullYear();
+  const hojeIso = (() => { const d = today(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
   // As atividades pessoais (só do próprio) entram em Passados e Todos, pela ordem das datas.
-  type Item = { k: "e"; e: Evento; ano: number; chave: string } | { k: "a"; a: Atividade; ano: number; chave: string };
+  type Item = { k: "e"; e: Evento; ano: number; chave: string } | { k: "a"; a: Atividade; ano: number; chave: string } | { k: "t"; t: Treino; ano: number; chave: string };
   const chaveEv = (e: Evento) => e.data ?? `${evAno(e)}-${String(evMes(e)).padStart(2, "0")}-99`;
   const itens: Item[] = lista.map((e) => ({ k: "e" as const, e, ano: evAno(e), chave: chaveEv(e) }));
   if (porSemanas && atividades.length) {
     atividades.forEach((a) => itens.push({ k: "a", a, ano: +a.data.slice(0, 4), chave: `${a.data}${a.hora ?? ""}` }));
-    itens.sort((x, y) => (ver === "passados" ? y.chave.localeCompare(x.chave) : x.chave.localeCompare(y.chave)));
   }
+  // Treinos de equipa entram na lista pela data (Próximos: de hoje em diante).
+  treinos
+    .filter((t) => (ver === "proximos" ? t.data >= hojeIso : ver === "passados" ? t.data < hojeIso : true))
+    .forEach((t) => itens.push({ k: "t", t, ano: +t.data.slice(0, 4), chave: `${t.data}${t.hora ?? ""}` }));
+  itens.sort((x, y) => (ver === "passados" ? y.chave.localeCompare(x.chave) : x.chave.localeCompare(y.chave)));
   // Passados e Todos: o passado mostra-se por semanas (4 de cada vez), para a lista não crescer sem fim.
   const [semanas, setSemanas] = useState(4);
   useEffect(() => setSemanas(4), [ver]);
-  const hojeIso = (() => { const d = today(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
-  const passado = (it: Item) => (it.k === "a" ? true : isPast(it.e));
+  const passado = (it: Item) => (it.k === "a" ? true : it.k === "t" ? it.t.data < hojeIso : isPast(it.e));
   const iniSemana = (chave: string) => {
     const [y, m, dd] = [+chave.slice(0, 4), +chave.slice(5, 7), Math.min(28, +chave.slice(8, 10) || 1)];
     const d = new Date(y, m - 1, chave.slice(8, 10) === "99" ? 1 : +chave.slice(8, 10) || dd);
@@ -131,6 +136,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
             const cab = sem && (!ant || !passado(ant) || iniSemana(ant.chave) !== sem) ? <p className="evs-semana" key={`s-${sem}-${ii}`} suppressHydrationWarning>{semanaTxt(sem)}</p> : null;
             const el = (() => {
             if (it.k === "a") return <AtvCartao key={it.a.id} a={it.a} onEdit={() => setAtvEdit(it.a)} />;
+            if (it.k === "t") return <TreinoCartao key={`t-${it.t.id}`} t={it.t} euId={perfil?.id} membros={membros} hoje={hojeIso} podeResponder={isMember && souAtleta} />;
             const e = it.e;
             const ps = inscricoes.filter((i) => i.evento_id === e.id);
             const mine = e.id in otimista ? otimista[e.id] : perfil ? ps.find((p) => p.user_id === perfil.id)?.estado ?? null : null;
@@ -225,6 +231,58 @@ function AtvCartao({ a, onEdit }: { a: Atividade; onEdit: () => void }) {
         <ul className="atvc-st">{det.map((x) => <li key={x}>{x}</li>)}</ul>
       </div>
       <button type="button" className="btn ghost atvc-ed" onClick={onEdit}>Editar</button>
+    </article>
+  );
+}
+
+const TIPO_T: Record<string, string> = { estrada: "estrada", gravel: "gravel", btt: "BTT", rolo: "rolo", corrida: "corrida", natacao: "natação" };
+const INT_T: Record<string, string> = { leve: "leve", moderado: "moderado", intenso: "intenso" };
+
+// Treino de equipa na lista de eventos: quando, onde, quem vai e resposta rápida.
+function TreinoCartao({ t, euId, membros, hoje, podeResponder }: { t: Treino; euId?: string; membros: Membro[]; hoje: string; podeResponder: boolean }) {
+  const router = useRouter();
+  const ps = t.treino_participantes ?? [];
+  const servidor = ps.find((p) => p.user_id === euId)?.estado ?? null;
+  const [mine, setMine] = useState<EstadoInscricao | null>(servidor);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setMine(servidor), [servidor]);
+  const d = parseDate(t.data);
+  const futuro = t.data >= hoje && !t.presencas_fechadas;
+  const nome = (id: string) => (membros.find((m) => m.id === id)?.nome || "Membro").split(" ")[0];
+  const vao = t.presencas_fechadas ? ps.filter((p) => p.presente) : ps.filter((p) => p.estado === "vai");
+  const n = vao.length + (t.presencas_fechadas ? t.convidados?.length ?? 0 : 0);
+  const nomes = vao.slice(0, 3).map((p) => (p.user_id === euId ? "tu" : nome(p.user_id)));
+  const gente = n ? `${t.presencas_fechadas ? "Foram" : "Vão"} ${n}: ${nomes.join(", ")}${n > nomes.length ? "…" : ""}` : futuro ? "Ainda ninguém disse que vai." : "Sem presenças registadas.";
+  const km = t.km ?? t.km_plano;
+  const det = [t.hora ? `Saída às ${t.hora.slice(0, 5)}` : "", t.partida ?? "", km ? `${fmtKm(Number(km))} km${t.km == null ? " (previsto)" : ""}` : "", t.dmais ? `${t.dmais.toLocaleString("pt-PT")} m D+` : ""].filter(Boolean);
+  async function responder(v: EstadoInscricao | null) {
+    const antes = mine;
+    setMine(v); setBusy(true);
+    const { error } = await createClient().rpc("marcar_treino", { p_treino: t.id, p_estado: v });
+    setBusy(false);
+    if (error) { setMine(antes); return; }
+    void avisarInscricao("treino", t.id, servidor);
+    marcar("Resposta a treino", { resposta: v ?? "retirou", onde: "eventos" });
+    router.refresh();
+  }
+  return (
+    <article className="atvc trc" id={`t-${t.id}`}>
+      <div className="atvc-d" suppressHydrationWarning>
+        <span className="atvc-n">{d?.getDate()}</span>
+        <span className="atvc-m">{d ? MESES[d.getMonth()] : ""}</span>
+      </div>
+      <div className="atvc-b">
+        <p className="atvc-k" suppressHydrationWarning>
+          Treino de equipa · {TIPO_T[t.tipo] ?? t.tipo}{t.intensidade ? ` · ${INT_T[t.intensidade]}` : ""} · {fmtDate(t.data, { weekday: "long" })}
+        </p>
+        <h3><Link href={`/treinos?treino=${t.id}`}>{t.titulo}</Link></h3>
+        {det.length > 0 && <ul className="atvc-st">{det.map((x) => <li key={x}>{x}</li>)}</ul>}
+        <p className="trc-gente">{gente}</p>
+      </div>
+      <div className="trc-a">
+        {futuro && podeResponder && <Resposta mine={mine} onPick={responder} busy={busy} titulo={t.titulo} />}
+        <Link href={`/treinos?treino=${t.id}`} className="btn ghost trc-abrir">Abrir treino</Link>
+      </div>
     </article>
   );
 }
