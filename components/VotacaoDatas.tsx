@@ -69,7 +69,7 @@ export default function VotacaoDatas({ evento: e, opcoes, euId, membros, podeVot
     const top = ord.filter((o) => votosDe(o).length === melhor);
     return (
       <div className="vd compacto">
-        <div className="vd-h"><b>Data em votação</b><span className="muted">{quemVotou ? `${quemVotou} ${quemVotou === 1 ? "atleta votou" : "atletas votaram"}` : "Ainda sem votos"}</span></div>
+        <div className="vd-h"><b>Data em votação{e.sondagem_ate ? <span className="muted" suppressHydrationWarning> · até {fmtDate(e.sondagem_ate, { day: "numeric", month: "short" })}</span> : null}</b><span className="muted">{quemVotou ? `${quemVotou} ${quemVotou === 1 ? "atleta votou" : "atletas votaram"}` : "Ainda sem votos"}</span></div>
         <div className="vd-chips" role="group" aria-label="Datas que te dão jeito">
           {ord.map((o) => (
             <button key={o.id} type="button" className={`vd-chip${meus.has(o.id) ? " on" : ""}${votosDe(o).length === melhor ? " top" : ""}`}
@@ -87,7 +87,7 @@ export default function VotacaoDatas({ evento: e, opcoes, euId, membros, podeVot
   return (
     <div className="vd">
       <div className="vd-h"><b>Que dia te dá jeito?</b><span className="muted">{quemVotou ? `${quemVotou} ${quemVotou === 1 ? "atleta votou" : "atletas votaram"}` : "Ainda sem votos"}</span></div>
-      {podeVotar && <p className="vd-dica" style={{ margin: 0 }}>Marca todas as datas em que podes ir. A data final é escolhida por um admin.</p>}
+      {podeVotar && <p className="vd-dica" style={{ margin: 0 }}>Marca todas as datas em que podes ir. A data final é escolhida por um admin.{e.sondagem_ate ? <> Votação até <b suppressHydrationWarning>{fmtDate(e.sondagem_ate, { weekday: "long", day: "numeric", month: "long" })}</b>.</> : null}</p>}
       <ul className="vd-lista">
         {ord.map((o) => {
           const vs = votosDe(o);

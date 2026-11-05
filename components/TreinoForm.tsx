@@ -8,6 +8,7 @@ import { fmtDate } from "@/lib/dates";
 import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
 import Conversa from "./Conversa";
 import RoutePreview from "./RoutePreview";
+import Meteo from "./Meteo";
 import PresencasEditor from "./PresencasEditor";
 import { apagarTreinoComAviso, avisarAlteracao, avisarInscricao, avisarNovo } from "@/lib/avisos";
 
@@ -194,6 +195,8 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
               <p className="empty" style={{ margin: 0 }}>{removeGpx ? "O GPX vai ser removido quando guardares." : "Depois da volta, carrega o GPX (Garmin, Strava, Komoot…) para contar os km feitos."}</p>
             )}
           </div>
+
+          {treino && <Meteo data={treino.data} hora={treino.hora} partida={treino.partida} trajeto={treino.trajeto} />}
 
           {treino && <Participantes treino={treino} userId={userId} isAdmin={isAdmin} membros={membros} hoje={hoje} />}
 

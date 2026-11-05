@@ -39,6 +39,8 @@ export interface Evento {
   criador_id?: string | null;
   desporto?: boolean | null;
   sondagem?: "aberta" | "fechada" | null;
+  sondagem_desde?: string | null;
+  sondagem_ate?: string | null;
 }
 
 export interface Inscricao {

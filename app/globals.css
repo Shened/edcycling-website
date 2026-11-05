@@ -1320,3 +1320,14 @@ a.tdf-adm-l:hover b{text-decoration:underline}
   .cal-col.vazio h4{gap:10px;justify-content:flex-start;font-size:15px}
   .cal-col.vazio .add{min-height:36px;padding:0 10px}
 }
+/* calendário para subscrever */
+.cal-sub-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.cal-sub-link{display:flex;gap:6px}
+.cal-sub-link input{flex:1;min-width:0;font-family:var(--f-mono);font-size:13px}
+/* previsão do tempo */
+.meteo{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.meteo.carregar{min-height:72px;background:var(--sunk);border-color:transparent}
+.meteo-ico{font-size:34px;line-height:1;flex:none}
+.meteo-t{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:14.5px}
+.meteo-t span{color:var(--muted);font-size:13.5px}
+.meteo-f{font-size:12px !important}

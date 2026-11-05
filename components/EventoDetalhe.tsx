@@ -7,6 +7,7 @@ import { MESES_L, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib
 import { avisarInscricao } from "@/lib/avisos";
 import { ehDesporto, type EstadoInscricao, type Evento, type Inscricao, type Membro, type OpcaoData, type Post } from "@/lib/types";
 import VotacaoDatas from "./VotacaoDatas";
+import Meteo from "./Meteo";
 import Avatar from "./Avatar";
 import EventForm from "./EventForm";
 import PostCard from "./PostCard";
@@ -166,6 +167,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
             {e.duracao_s ? <Linha icon={<><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2M9 2h6" /></>} t={fmtDuracao(e.duracao_s)} s="Tempo em movimento" /> : null}
           </ul>
           {e.trajeto && e.trajeto.length > 1 && <RoutePreview pontos={e.trajeto} />}
+          {e.estado !== "cancelado" && <Meteo data={e.data} hora={e.hora} partida={e.partida} trajeto={e.trajeto} />}
           {isAdmin && porFechar && (
             <div className="ev-fechar">
               <span><b>Este evento já passou.</b> {ehDesporto(e) ? "Dá-o como terminado para contar como treino e os km entrarem nos totais da equipa." : "Dá-o como terminado (não desportivo: não conta como treino)."}</span>

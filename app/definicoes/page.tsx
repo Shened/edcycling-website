@@ -4,6 +4,8 @@ import Definicoes from "@/components/Definicoes";
 import { getSession } from "@/lib/session";
 import { PREF_DEFAULTS } from "@/lib/notif-prefs";
 import StravaDefinicoes from "@/components/StravaDefinicoes";
+import CalendarioSub from "@/components/CalendarioSub";
+import { SITE } from "@/lib/notificar";
 import { contaStrava, stravaConfigurado } from "@/lib/strava";
 
 export const metadata = { title: "Definições · EDCycling" };
@@ -32,6 +34,7 @@ export default async function DefinicoesPage({ searchParams }: { searchParams: P
           isAdmin={isAdmin}
         />
       )}
+      {isMember && <CalendarioSub userId={perfil.id} site={SITE} />}
       {isMember && (
         <StravaDefinicoes
           configurado={configurado}

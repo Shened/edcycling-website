@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarAviso } from "@/lib/notificar";
-import { hojeLisboa, inscritos, linhaTreino, quando } from "@/lib/avisos-texto";
+import { hojeLisboa, inscritos, linhaTreino, membrosAtivos, quando } from "@/lib/avisos-texto";
 
 // Corre uma vez por dia (vercel.json → crons) e lembra os eventos e treinos de amanhã.
 export const dynamic = "force-dynamic";
@@ -37,6 +37,28 @@ export async function GET(req: Request) {
       destinatarios: await inscritos(admin, "treino", t.id),
     });
     enviados.push(`treino ${t.titulo}: ${r.push} push, ${r.email} email`);
+  }
+  // Votações de datas: lembra quem ainda não votou (na véspera do prazo ou, sem prazo, 3 dias depois de abrir).
+  const hoje = hojeLisboa();
+  const { data: votacoes } = await admin.from("eventos").select("id,titulo,sondagem_desde,sondagem_ate").eq("sondagem", "aberta");
+  for (const e of votacoes ?? []) {
+    const desde = e.sondagem_desde ? new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date(e.sondagem_desde as string)) : null;
+    const tresDias = desde ? hojeLisboa(-3) === desde : false;
+    const vespera = e.sondagem_ate === amanha;
+    const ultimoDia = e.sondagem_ate === hoje;
+    if (!(e.sondagem_ate ? vespera || ultimoDia : tresDias)) continue;
+    const { data: votos } = await admin.from("evento_opcao_votos").select("user_id").eq("evento_id", e.id);
+    const votaram = new Set((votos ?? []).map((v) => v.user_id as string));
+    const falta = (await membrosAtivos(admin)).filter((id) => !votaram.has(id));
+    if (!falta.length) continue;
+    const r = await enviarAviso({
+      tipo: "lembrete", chave: `votacao:${e.id}:${hoje}`,
+      titulo: ultimoDia ? `Último dia para votar: ${e.titulo}` : `Ainda não votaste: ${e.titulo}`,
+      corpo: e.sondagem_ate ? `A votação da data fecha ${ultimoDia ? "hoje" : "amanhã"}. Marca os dias que te dão jeito.` : "Marca os dias que te dão jeito para a equipa escolher a data.",
+      url: `/eventos/${e.id}`,
+      destinatarios: falta,
+    });
+    enviados.push(`votação ${e.titulo}: ${r.push} push, ${r.email} email`);
   }
   return NextResponse.json({ dia: amanha, enviados });
 }

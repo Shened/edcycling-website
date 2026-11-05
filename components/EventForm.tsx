@@ -41,6 +41,7 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
   const [votar, setVotar] = useState(evento?.sondagem === "aberta");
   const [datas, setDatas] = useState<{ id?: string; data: string; hora: string }[]>([]);
   const [origIds, setOrigIds] = useState<string[]>([]);
+  const [votarAte, setVotarAte] = useState(evento?.sondagem_ate ?? "");
   useEffect(() => {
     if (!evento || !isAdmin) return;
     createClient().from("evento_opcoes").select("id,data,hora").eq("evento_id", evento.id).order("data").then(({ data }) => {
@@ -91,13 +92,17 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
       km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null, tema: f.tema || null,
       ...(kits ? { equipamento_id: f.equipamento_id || null } : {}),
       desporto: f.desporto,
-      ...(isAdmin ? { sondagem: votar ? "aberta" : evento?.sondagem === "aberta" ? null : evento?.sondagem ?? null } : {}),
+      ...(isAdmin ? {
+        sondagem: votar ? "aberta" : evento?.sondagem === "aberta" ? null : evento?.sondagem ?? null,
+        ...(votar ? { sondagem_ate: votarAte || null, ...(abriu ? { sondagem_desde: new Date().toISOString() } : {}) } : {}),
+      } : {}),
       updated_at: new Date().toISOString(),
     };
     const sb = createClient();
     const res = evento
       ? await sb.from("eventos").update(body).eq("id", evento.id)
       : await sb.from("eventos").insert(body).select("id").single();
+    if (res.error && /sondagem_(desde|ate)/.test(res.error.message)) { setBusy(false); setErr("Falta correr a migration 032 no Supabase."); return; }
     if (res.error && /sondagem/.test(res.error.message)) { setBusy(false); setErr("Falta correr a migration 029 no Supabase."); return; }
     const id = evento?.id ?? (res.data as { id: string } | null)?.id;
     // Guarda as datas da votação (apaga as que saíram, atualiza as que ficaram, cria as novas).
@@ -157,7 +162,11 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
                       </div>
                     ))}
                     <button type="button" className="btn" style={{ alignSelf: "flex-start" }} onClick={() => setDatas((l) => [...l, { data: "", hora: "" }])}>+ Mais uma data</button>
-                    <span className="hint">A hora é opcional; se não puseres, fica a hora de saída do evento.{evento?.sondagem === "aberta" ? " Tirar uma data apaga os votos dessa data." : ""}</span>
+                    <div className="ef-data">
+                      <label htmlFor="fVotarAte" style={{ flex: "none", fontSize: 14 }}>Votar até (opcional)</label>
+                      <input id="fVotarAte" type="date" value={votarAte} onChange={(ev) => setVotarAte(ev.target.value)} />
+                    </div>
+                    <span className="hint">A hora é opcional; se não puseres, fica a hora de saída do evento. Com prazo, quem ainda não votou recebe um lembrete na véspera; sem prazo, recebe um 3 dias depois de a votação abrir.{evento?.sondagem === "aberta" ? " Tirar uma data apaga os votos dessa data." : ""}</span>
                   </div>
                 )}
               </div>
