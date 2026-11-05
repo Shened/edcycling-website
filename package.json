@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "types": "supabase gen types typescript --project-id vptoplkpcufclmmjzhzm --schema public > types/database.ts"
+    "types": "supabase gen types typescript --project-id vptoplkpcufclmmjzhzm --schema public > types/database.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@garmin/fitsdk": "^21.218.0",
@@ -30,6 +32,7 @@
     "@types/web-push": "^3.6.4",
     "eslint": "^9.39.1",
     "eslint-config-next": "15.5.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

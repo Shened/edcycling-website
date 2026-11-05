@@ -1,0 +1,57 @@
+# Verificações automáticas em cada push para a main e em cada pull request.
+# O deploy continua a ser feito pela Vercel; isto só confirma que o código está são antes (ou logo depois) do merge.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    name: Lint, tipos e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Tipos
+        run: npm run typecheck
+      - name: Testes
+        run: npm test
+
+  migrations:
+    # Lembrete: um PR com migrations novas obriga a correr o SQL no Supabase (projeto EDCycling) ANTES do merge.
+    name: Migrations novas?
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Procurar migrations novas
+        run: |
+          novas=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" -- supabase/migrations/ || true)
+          if [ -n "$novas" ]; then
+            echo "## ⚠️ Este PR tem migrations novas" >> "$GITHUB_STEP_SUMMARY"
+            echo "Corre-as no SQL Editor do Supabase (projeto **EDCycling**) antes de fazer merge:" >> "$GITHUB_STEP_SUMMARY"
+            for f in $novas; do
+              echo "- \`$f\`" >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning file=$f::Migration nova: corre-a no Supabase (projeto EDCycling) antes do merge."
+            done
+          else
+            echo "Sem migrations novas." >> "$GITHUB_STEP_SUMMARY"
+          fi

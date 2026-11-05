@@ -16,7 +16,8 @@ interface Props {
 // Barra fina em todas as páginas; o herói grande só aparece na página inicial.
 export default function Cabecalho({ isMember, isAdmin, perfil, proximo }: Props) {
   const path = usePathname();
-  const inicio = path === "/";
+  // O banner grande é só para visitantes; quem tem conta vê logo o resumo (InicioMembro).
+  const inicio = path === "/" && !isMember;
   return (
     <>
       <header className="appbar">

@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { parseDate } from "@/lib/dates";
-import { fmtDuracao, fmtKm, parseGpx } from "@/lib/gpx";
+import { fmtDuracao, fmtKm, parseGpx, horasMin } from "@/lib/gpx";
 import type { FitInfo } from "@/lib/fit";
 import type { Atividade } from "@/lib/types";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
@@ -25,8 +25,8 @@ export default function AtividadeForm({ userId, atividade, dataInicial, onClose 
     hora: a?.hora ?? "",
     km: a?.km != null ? String(a.km) : "",
     dmais: a?.dmais != null ? String(a.dmais) : "",
-    h: a?.duracao_s ? String(Math.floor(a.duracao_s / 3600)) : "",
-    min: a?.duracao_s ? String(Math.round((a.duracao_s % 3600) / 60)) : "",
+    h: a?.duracao_s ? String(horasMin(a.duracao_s).h) : "",
+    min: a?.duracao_s ? String(horasMin(a.duracao_s).m) : "",
     notas: a?.notas ?? "",
     privada: a?.privada ?? false,
   });
@@ -58,8 +58,8 @@ export default function AtividadeForm({ userId, atividade, dataInicial, onClose 
         hora: info.hora ?? p.hora,
         km: String(info.km),
         dmais: String(info.dmais),
-        h: info.duracaoS ? String(Math.floor(info.duracaoS / 3600)) : p.h,
-        min: info.duracaoS ? String(Math.round((info.duracaoS % 3600) / 60)) : p.min,
+        h: info.duracaoS ? String(horasMin(info.duracaoS).h) : p.h,
+        min: info.duracaoS ? String(horasMin(info.duracaoS).m) : p.min,
       }));
     } catch {
       setErr(ehFit ? "Não consegui ler esse ficheiro .fit. Confirma que é o ficheiro original da atividade (Garmin Connect: ⚙ e Exportar original)." : "Não consegui ler esse ficheiro. Confirma que é um .gpx exportado do Strava, Garmin ou Komoot.");

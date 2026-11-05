@@ -33,6 +33,7 @@ export default function AccountMenu({ nome, avatar, isAdmin, isMember }: { nome:
         <div className="acct-menu" role="menu">
           <div className="acct-cab"><b>{nome || "Sem nome"}</b></div>
           {isMember && <Link role="menuitem" href="/perfil">O meu perfil</Link>}
+          {isMember && <Link role="menuitem" href="/atletas" className="acct-so-m">Atletas da equipa</Link>}
           {isMember && <Link role="menuitem" href="/definicoes">Definições e notificações</Link>}
           {isAdmin && <Link role="menuitem" href="/gestao">Gestão do site</Link>}
           <Link role="menuitem" href="/tour-de-freixo">Tour de Freixo</Link>

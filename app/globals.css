@@ -1308,3 +1308,15 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .erro-pg h1{margin:0;font-size:44px;line-height:1;text-transform:uppercase;font-style:italic;font-weight:800}
 .erro-pg p{margin:0;font-size:16px;line-height:1.55;color:var(--muted)}
 .erro-pg .acoes{display:flex;gap:8px;flex-wrap:wrap}
+/* novidades sem imagem: cartão compacto com faixa de cor em vez do bloco vazio */
+.nov.sem-img{border-left:4px solid var(--pink)}
+.nov.first.sem-img{flex-direction:column}
+/* "Atletas" no menu da conta só faz falta no telemóvel (no computador está nos separadores) */
+.acct-menu a.acct-so-m{display:none}
+@media (max-width:640px){.acct-menu a.acct-so-m{display:flex}}
+/* semana no telemóvel: dias sem nada ocupam só uma linha */
+@media (max-width:860px){
+  .cal-col.vazio{flex-direction:row;align-items:center;justify-content:space-between;padding:6px 8px 6px 12px}
+  .cal-col.vazio h4{gap:10px;justify-content:flex-start;font-size:15px}
+  .cal-col.vazio .add{min-height:36px;padding:0 10px}
+}

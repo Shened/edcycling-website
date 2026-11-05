@@ -18,10 +18,10 @@ export default function MobileNav({ isMember }: { isAdmin?: boolean; isMember: b
   const path = usePathname();
   if (!isMember) return null;
   const tabs = [
+    { href: "/", label: "Início", icon: I.inicio },
     { href: "/eventos", label: "Eventos", icon: I.eventos },
     { href: "/treinos", label: "Treinos", icon: I.treinos },
     { href: "/fotos", label: "Feed", icon: I.fotos },
-    { href: "/atletas", label: "Atletas", icon: I.atletas },
     { href: "/estatisticas", label: "Números", icon: I.stats },
   ];
   return (

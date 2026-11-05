@@ -92,10 +92,18 @@ export function parseGpx(text: string): GpxInfo {
   };
 }
 
+/** Segundos → horas e minutos inteiros (arredondado ao minuto; nunca 60 minutos). */
+export function horasMin(s: number): { h: number; m: number } {
+  const total = Math.round(s / 60);
+  return { h: Math.floor(total / 60), m: total % 60 };
+}
+
 export function fmtDuracao(s: number | null | undefined): string {
   if (!s) return "";
-  const h = Math.floor(s / 3600);
-  const m = Math.round((s % 3600) / 60);
+  // Arredonda primeiro aos minutos, para 59 min 59 s dar "1h00" e não "0h60".
+  const total = Math.round(s / 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   return `${h}h${String(m).padStart(2, "0")}`;
 }
 

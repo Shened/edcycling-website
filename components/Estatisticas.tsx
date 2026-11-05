@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { MESES, MESES_L } from "@/lib/dates";
-import { fmtKm } from "@/lib/gpx";
+import { fmtKm, fmtDuracao } from "@/lib/gpx";
 import { calcular, passoEixo, type InscricaoMin, type LinhaAtleta } from "@/lib/stats";
 import type { Evento, Membro, Treino } from "@/lib/types";
 import { TIPOS_TREINO } from "./TreinoForm";
 
 type Col = "nome" | "treinos" | "presenca" | "km" | "dmais" | "segundos" | "eventos" | "kmCorrida" | "kmNatacao";
-const horas = (s: number) => (s ? `${Math.floor(s / 3600)}h${String(Math.round((s % 3600) / 60)).padStart(2, "0")}` : "—");
+const horas = (s: number) => (s ? fmtDuracao(s) : "—");
 const isoHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 interface Props { treinos: Treino[]; eventos: Evento[]; inscricoes: InscricaoMin[]; membros: Membro[]; userId: string }

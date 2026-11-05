@@ -44,7 +44,12 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
   useEffect(() => setHoje(iso(new Date())), []);
 
   // Lembra a vista escolhida neste browser.
-  useEffect(() => { try { const v = localStorage.getItem("edc-cal-view"); if (v === "semana" || v === "mes") setView(v); } catch {} }, []);
+  useEffect(() => {
+    let v: string | null = null;
+    try { v = localStorage.getItem("edc-cal-view"); } catch {}
+    if (v === "semana" || v === "mes") setView(v);
+    else if (window.matchMedia("(max-width: 640px)").matches) setView("semana"); // no telemóvel a lista por dia lê-se melhor
+  }, []);
   function pickView(v: "mes" | "semana") { setView(v); try { localStorage.setItem("edc-cal-view", v); } catch {} }
 
   const byDay = useMemo(() => {
@@ -194,7 +199,7 @@ export default function TrainingCalendar({ treinos, eventos, isAdmin, userId, me
             const k = iso(d);
             const it = byDay.get(k);
             return (
-              <div key={k} className={`cal-col${k === hoje ? " today" : ""}`}>
+              <div key={k} className={`cal-col${k === hoje ? " today" : ""}${it?.e.length || it?.t.length || it?.a.length ? "" : " vazio"}`}>
                 <h4><span>{DIAS[i]}</span><span className="num">{d.getDate()}</span></h4>
                 {it?.e.map((e) => <Card key={e.id} e={e} />)}
                 {it?.t.map((t) => <Card key={t.id} t={t} />)}

@@ -96,8 +96,8 @@ export default async function Inicio() {
           <div className="sechead" style={{ marginBottom: 14 }}><h2>Novidades</h2></div>
           <div className="nov-grid">
             {noticias.map((n, i) => (
-              <Link key={n.id} href={`/noticias/${n.id}`} className={`nov${i === 0 ? " first" : ""}`}>
-                {n.imagem_path ? <img src={imagemUrl(n.imagem_path)!} alt="" loading="lazy" /> : <span className="nov-ph" aria-hidden="true" />}
+              <Link key={n.id} href={`/noticias/${n.id}`} className={`nov${i === 0 ? " first" : ""}${n.imagem_path ? "" : " sem-img"}`}>
+                {n.imagem_path ? <img src={imagemUrl(n.imagem_path)!} alt="" loading="lazy" /> : null}
                 <span className="nov-b">
                   <span className="nov-d">{dataPub(n)}</span>
                   <span className="nov-t">{n.titulo}</span>
