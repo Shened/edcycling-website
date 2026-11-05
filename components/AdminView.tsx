@@ -102,8 +102,8 @@ export default function AdminView({ eventos, inscricoes, perfis, fotos, meId }: 
       <div>
         <div className="sechead" style={{ marginBottom: 10 }}><h2 style={{ fontSize: 24 }}>Membros</h2><span className="empty">Só entra quem for convidado.</span></div>
         <form className="panel" onSubmit={convidar} style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-end", marginBottom: 12, padding: 14 }}>
-          <div className="field" style={{ flex: "1 1 160px" }}><label htmlFor="cNome">Nome</label><input id="cNome" name="nome" type="text" maxLength={40} placeholder="ex.: Fábio" /></div>
-          <div className="field" style={{ flex: "2 1 220px" }}><label htmlFor="cEmail">Email</label><input id="cEmail" name="email" type="email" required placeholder="nome@exemplo.com" /></div>
+          <div className="field" style={{ flex: "1 1 160px" }}><label htmlFor="cNome">Nome</label><input id="cNome" name="nome" type="text" maxLength={40} placeholder="ex.: Fábio…" /></div>
+          <div className="field" style={{ flex: "2 1 220px" }}><label htmlFor="cEmail">Email</label><input id="cEmail" name="email" type="email" required placeholder="nome@exemplo.com…" autoComplete="off" spellCheck={false} /></div>
           <div className="field" style={{ flex: "0 1 130px" }}><label htmlFor="cRole">Role</label><select id="cRole" name="role" defaultValue="membro"><option value="membro">Membro</option><option value="admin">Admin</option></select></div>
           <label className="check" style={{ flex: "0 1 auto" }} title="Desmarca para contas só de gestão (ex.: email da equipa)"><input type="checkbox" name="atleta" defaultChecked /> <span>É atleta</span></label>
           <button className="btn primary" disabled={pendingInvite} aria-busy={pendingInvite}>{pendingInvite ? <><span className="spinner" aria-hidden="true" />A enviar…</> : "Enviar convite"}</button>

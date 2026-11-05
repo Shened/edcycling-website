@@ -29,7 +29,7 @@ export default function Entrar() {
     <section className="auth">
       <h2>Entrar</h2>
       <form className="panel" onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div className="field"><label htmlFor="email">Email</label><input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+        <div className="field"><label htmlFor="email">Email</label><input id="email" type="email" required autoComplete="email" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="field"><label htmlFor="password">Password</label><input id="password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
         <button className="btn primary" disabled={busy} aria-busy={busy} style={{ justifyContent: "center" }}>{busy ? <><span className="spinner" aria-hidden="true" />A entrar…</> : "Entrar"}</button>
         {err && <div className="notice">{err}</div>}

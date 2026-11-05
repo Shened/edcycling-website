@@ -63,7 +63,7 @@ export default function PresencasEditor({ membros, iniciais, convidadosIniciais,
       <div className="field">
         <label htmlFor="pConv">Participantes sem conta no site</label>
         <div style={{ display: "flex", gap: 6 }}>
-          <input id="pConv" type="text" maxLength={40} placeholder="Nome e apelido" style={{ flex: 1 }} value={nome}
+          <input id="pConv" type="text" maxLength={40} placeholder="Nome e apelido…" style={{ flex: 1 }} value={nome}
             onChange={(e) => setNome(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); adicionar(); } }} />
           <button type="button" className="btn" onClick={adicionar}>Adicionar</button>

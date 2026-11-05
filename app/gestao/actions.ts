@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { Convite, Id, valido } from "@/lib/validar";
 
 export type Resultado = { ok: boolean; msg: string };
 
@@ -18,11 +19,14 @@ async function siteUrl() {
 export async function convidarMembro(form: FormData): Promise<Resultado> {
   const { isAdmin } = await getSession();
   if (!isAdmin) return { ok: false, msg: "Só admins podem convidar membros." };
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
-  const nome = String(form.get("nome") ?? "").trim();
-  const role = form.get("role") === "admin" ? "admin" : "membro";
-  const atleta = form.get("atleta") === "on";
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, msg: "Esse email não parece válido." };
+  const dados = Convite.safeParse({
+    email: String(form.get("email") ?? ""),
+    nome: String(form.get("nome") ?? ""),
+    role: form.get("role") === "admin" ? "admin" : "membro",
+    atleta: form.get("atleta") === "on",
+  });
+  if (!dados.success) return { ok: false, msg: dados.error.issues.some((i) => i.path[0] === "nome") ? "O nome pode ter no máximo 60 caracteres." : "Esse email não parece válido." };
+  const { email, nome, role, atleta } = dados.data;
 
   let admin;
   try { admin = createAdminClient(); } catch { return { ok: false, msg: "Falta configurar a SUPABASE_SECRET_KEY no servidor." }; }
@@ -44,6 +48,7 @@ export async function convidarMembro(form: FormData): Promise<Resultado> {
 }
 
 export async function removerMembro(id: string): Promise<Resultado> {
+  if (!valido([Id, id])) return { ok: false, msg: "Pedido inválido." };
   const { isAdmin, perfil } = await getSession();
   if (!isAdmin) return { ok: false, msg: "Só admins podem remover membros." };
   if (id === perfil?.id) return { ok: false, msg: "Não te podes remover a ti próprio." };
@@ -57,6 +62,7 @@ export async function removerMembro(id: string): Promise<Resultado> {
 
 // Volta a enviar o convite a quem ainda não o aceitou (link novo, mesmos dados).
 export async function reenviarConvite(id: string): Promise<Resultado> {
+  if (!valido([Id, id])) return { ok: false, msg: "Pedido inválido." };
   const { isAdmin } = await getSession();
   if (!isAdmin) return { ok: false, msg: "Só admins podem reenviar convites." };
   let admin;

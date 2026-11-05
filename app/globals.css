@@ -201,7 +201,7 @@ textarea{min-height:70px;resize:vertical}
 @media (prefers-color-scheme: dark){:root{--blue-soft:#13324A}}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:none;padding:7px 14px;font-weight:600;font-size:14px;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--ink);color:var(--surface)}
 .cal-ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .cal-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 20px;margin-bottom:-14px}
 .cal-sum .lbl{font-family:var(--f-display);font-size:26px;font-weight:700;text-transform:uppercase;margin-right:4px}
@@ -1297,3 +1297,14 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .field label.chk{text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink);font-weight:400}
 .field label.chk b{font-weight:700}
 .evd-gente[hidden]{display:none}
+/* faixa para ativar notificações */
+.ativar-avisos{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:14px 16px;margin-bottom:16px;border-radius:14px;background:var(--pink-soft);border:1px solid var(--pink)}
+.ativar-ico{font-size:24px;flex:none}
+.ativar-t{flex:1 1 220px;display:flex;flex-direction:column;gap:2px;font-size:14.5px;line-height:1.4}
+.ativar-a{display:flex;gap:6px;flex:none}
+/* páginas de erro */
+.erro-pg{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:48px 0;max-width:560px}
+.erro-pg .eyebrow{color:var(--pink);margin:0}
+.erro-pg h1{margin:0;font-size:44px;line-height:1;text-transform:uppercase;font-style:italic;font-weight:800}
+.erro-pg p{margin:0;font-size:16px;line-height:1.55;color:var(--muted)}
+.erro-pg .acoes{display:flex;gap:8px;flex-wrap:wrap}

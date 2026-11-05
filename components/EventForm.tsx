@@ -138,7 +138,7 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
           <h3>{evento ? evento.titulo : isAdmin ? "Novo evento" : "Propor evento"}</h3>
           {!isAdmin && <p className="hint" style={{ margin: "-6px 0 0" }}>Fica como <b>proposta</b>: a equipa diz se vai e um admin confirma.</p>}
           <div className="fgrid">
-            <div className="field full"><label htmlFor="fTitulo">Nome do evento</label><input ref={first} id="fTitulo" type="text" required maxLength={60} placeholder="ex.: Serra da Estrela" value={f.titulo} onChange={set("titulo")} /></div>
+            <div className="field full"><label htmlFor="fTitulo">Nome do evento</label><input ref={first} id="fTitulo" type="text" required maxLength={60} placeholder="ex.: Serra da Estrela…" value={f.titulo} onChange={set("titulo")} /></div>
             <div className="field"><label htmlFor="fTipo">Tipo</label><select id="fTipo" value={f.tipo} onChange={set("tipo")}>{Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
             {isAdmin && <div className="field"><label htmlFor="fEstado">Estado</label><select id="fEstado" value={f.estado} onChange={set("estado")}>{Object.entries(ESTADOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>}
             {isAdmin && (

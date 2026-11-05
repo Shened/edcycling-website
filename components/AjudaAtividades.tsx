@@ -31,7 +31,7 @@ export default function AjudaAtividades() {
     <div className="ajuda-inst">
       <div className="seg" role="tablist" aria-label="De onde vem a atividade">
         {([["strava", "Strava"], ["garmin", "Garmin"], ["outras", "Outras apps"]] as const).map(([k, l]) => (
-          <button key={k} type="button" role="tab" aria-selected={app === k} aria-pressed={app === k} onClick={() => setApp(k)}>{l}</button>
+          <button key={k} type="button" role="tab" aria-selected={app === k} onClick={() => setApp(k)}>{l}</button>
         ))}
       </div>
       <ol className="passos">

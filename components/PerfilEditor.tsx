@@ -114,7 +114,7 @@ export default function PerfilEditor({ perfil }: { perfil: PerfilAtleta }) {
         <legend>Dados de atleta</legend>
         <div className="fgrid">
           <div className="field"><label htmlFor="pNasc">Data de nascimento</label><input id="pNasc" type="date" max={new Date().toISOString().slice(0, 10)} value={f.data_nascimento} onChange={set("data_nascimento")} />{anos != null && <span className="hint">{anos} anos</span>}</div>
-          <div className="field"><label htmlFor="pFtp">FTP (W)</label><input id="pFtp" type="number" inputMode="numeric" min={50} max={700} value={f.ftp} onChange={set("ftp")} placeholder="ex.: 250" /></div>
+          <div className="field"><label htmlFor="pFtp">FTP (W)</label><input id="pFtp" type="number" inputMode="numeric" min={50} max={700} value={f.ftp} onChange={set("ftp")} placeholder="ex.: 250…" /></div>
           <div className="field"><label htmlFor="pPeso">Peso (kg)</label><input id="pPeso" type="number" inputMode="decimal" min={25} max={250} step={0.1} value={f.peso} onChange={set("peso")} />{rel != null && <span className="hint"><b className="num">{rel.toFixed(2)}</b> W/kg</span>}</div>
           <div className="field"><label htmlFor="pFc">FC máxima (bpm)</label><input id="pFc" type="number" inputMode="numeric" min={100} max={230} value={f.fc_max} onChange={set("fc_max")} /></div>
           <div className="field"><label htmlFor="pAlt">Altura (cm)</label><input id="pAlt" type="number" inputMode="numeric" min={100} max={230} value={f.altura} onChange={set("altura")} /></div>
@@ -139,9 +139,9 @@ export default function PerfilEditor({ perfil }: { perfil: PerfilAtleta }) {
         <legend>Sobre ti</legend>
         <div className="fgrid">
           <div className="field"><label htmlFor="pLoc">Localidade</label><input id="pLoc" type="text" maxLength={60} value={f.localidade} onChange={set("localidade")} /></div>
-          <div className="field"><label htmlFor="pBike">Bicicleta de estrada</label><input id="pBike" type="text" maxLength={80} placeholder="ex.: Canyon Ultimate CF SL" value={f.bicicleta} onChange={set("bicicleta")} /></div>
-          <div className="field"><label htmlFor="pBtt">Bicicleta de BTT <span className="hint">(se tiveres)</span></label><input id="pBtt" type="text" maxLength={80} placeholder="ex.: Specialized Epic" value={f.bicicleta_btt} onChange={set("bicicleta_btt")} /></div>
-          <div className="field"><label htmlFor="pCx">Ciclocrosse / Gravel <span className="hint">(se tiveres)</span></label><input id="pCx" type="text" maxLength={80} placeholder="ex.: Orbea Terra" value={f.bicicleta_cx} onChange={set("bicicleta_cx")} /></div>
+          <div className="field"><label htmlFor="pBike">Bicicleta de estrada</label><input id="pBike" type="text" maxLength={80} placeholder="ex.: Canyon Ultimate CF SL…" value={f.bicicleta} onChange={set("bicicleta")} /></div>
+          <div className="field"><label htmlFor="pBtt">Bicicleta de BTT <span className="hint">(se tiveres)</span></label><input id="pBtt" type="text" maxLength={80} placeholder="ex.: Specialized Epic…" value={f.bicicleta_btt} onChange={set("bicicleta_btt")} /></div>
+          <div className="field"><label htmlFor="pCx">Ciclocrosse / Gravel <span className="hint">(se tiveres)</span></label><input id="pCx" type="text" maxLength={80} placeholder="ex.: Orbea Terra…" value={f.bicicleta_cx} onChange={set("bicicleta_cx")} /></div>
           <div className="field full"><label htmlFor="pBio">Apresentação</label><textarea id="pBio" maxLength={400} rows={3} placeholder="Há quanto tempo pedalas, que provas gostas…" value={f.bio} onChange={set("bio")} /></div>
           <div className="field full"><label htmlFor="pStrava">Perfil do Strava</label><input id="pStrava" type="url" inputMode="url" maxLength={200} placeholder="strava.com/athletes/…" value={f.strava_url} onChange={set("strava_url")} /></div>
         </div>

@@ -15,7 +15,7 @@ const MAX = 10;
 interface Escolhida { id: string; blob: Blob; url: string }
 
 
-export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicial = "", noticias = [] }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null }; eventoInicial?: string; noticias?: Noticia[] }) {
+export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicial = "", noticias = [], temMais = false, pagina = 1 }: { posts: Post[]; eventos: Evento[]; userId: string; isAdmin: boolean; eu: { id: string; nome: string; avatar: string | null }; eventoInicial?: string; noticias?: Noticia[]; temMais?: boolean; pagina?: number }) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
   const [fotos, setFotos] = useState<Escolhida[]>([]);
@@ -25,6 +25,14 @@ export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicia
   const [armed, setArmed] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => () => fotos.forEach((f) => URL.revokeObjectURL(f.url)), []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Avisa antes de sair da página com uma publicação escrita mas por enviar.
+  const porEnviar = !busy && (texto.trim().length > 0 || fotos.length > 0);
+  useEffect(() => {
+    if (!porEnviar) return;
+    const aviso = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", aviso);
+    return () => window.removeEventListener("beforeunload", aviso);
+  }, [porEnviar]);
 
   async function escolher(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -87,7 +95,7 @@ export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicia
   // As novidades da gestão entram no feed pela data; a mais recente fica fixada no topo durante 7 dias.
   const quando = (n: Noticia) => n.publicado_em ?? n.created_at;
   const fixada = noticias.find((n) => Date.now() - new Date(quando(n)).getTime() < 7 * 86400_000) ?? null;
-  const maisAntigo = posts.length >= 60 ? posts[posts.length - 1].created_at : "";
+  const maisAntigo = temMais && posts.length ? posts[posts.length - 1].created_at : "";
   const lista: ({ k: "p"; p: Post; t: string } | { k: "n"; n: Noticia; t: string })[] = [
     ...posts.map((p) => ({ k: "p" as const, p, t: p.created_at })),
     ...noticias.filter((n) => n.id !== fixada?.id && quando(n) >= maisAntigo).map((n) => ({ k: "n" as const, n, t: quando(n) })),
@@ -129,12 +137,13 @@ export default function Feed({ posts, eventos, userId, isAdmin, eu, eventoInicia
         {status && <span className="hint">{status}</span>}
       </form>
 
-      {posts.length ? (
+      {posts.length || noticias.length ? (
         <div className="feed-list">
           {fixada && <NoticiaCard n={fixada} fixada />}
           {lista.map((it) => it.k === "n"
             ? <NoticiaCard key={`n-${it.n.id}`} n={it.n} />
             : <PostCard key={it.p.id} p={it.p} eu={eu} isAdmin={isAdmin} armed={armed === it.p.id} onApagar={() => apagar(it.p)} />)}
+          {temMais && <Link href={`/fotos?n=${pagina + 1}`} scroll={false} className="btn evs-mais">Ver publicações mais antigas</Link>}
         </div>
       ) : (
         <p className="empty">Ainda não há publicações. Partilha a primeira: o resumo do último treino, fotos de um passeio ou um aviso para a equipa.</p>

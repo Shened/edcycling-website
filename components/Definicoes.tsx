@@ -5,17 +5,7 @@ import { marcar } from "@/lib/metricas";
 import { TIPOS_AVISO, type Canal, type Prefs, type TipoAviso } from "@/lib/notif-prefs";
 import { testarAviso } from "@/lib/avisos";
 
-type EstadoPush = "?" | "sem-suporte" | "ios-instalar" | "bloqueado" | "desligado" | "ligado" | "sem-chave";
-
-function b64ToUint8(b64: string): Uint8Array {
-  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
-}
-
-async function registo(): Promise<ServiceWorkerRegistration> {
-  return (await navigator.serviceWorker.getRegistration()) ?? navigator.serviceWorker.register("/sw.js");
-}
+import { ativarPush, estadoPush, type EstadoPush } from "@/lib/push";
 
 export default function Definicoes({ userId, email, inicial, vapid, emailAtivo, isAdmin = false }: { userId: string; email: string; inicial: Prefs; vapid: string; emailAtivo: boolean; isAdmin?: boolean }) {
   const [prefs, setPrefs] = useState<Prefs>(inicial);
@@ -25,33 +15,15 @@ export default function Definicoes({ userId, email, inicial, vapid, emailAtivo, 
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    (async () => {
-      if (!vapid) { setPush("sem-chave"); return; }
-      const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone;
-      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) { setPush(ios && !standalone ? "ios-instalar" : "sem-suporte"); return; }
-      if (Notification.permission === "denied") { setPush("bloqueado"); return; }
-      const reg = await navigator.serviceWorker.getRegistration();
-      const sub = await reg?.pushManager.getSubscription();
-      setPush(sub ? "ligado" : "desligado");
-    })().catch(() => setPush("sem-suporte"));
+    void estadoPush(vapid).then(setPush);
   }, [vapid]);
 
   async function ligar() {
     setBusy(true); setMsg("");
     try {
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") { setPush(perm === "denied" ? "bloqueado" : "desligado"); setBusy(false); return; }
-      const reg = await registo();
-      await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToUint8(vapid) as BufferSource });
-      const j = sub.toJSON();
-      const { error } = await createClient().from("push_subscricoes").upsert(
-        { user_id: userId, endpoint: sub.endpoint, p256dh: j.keys?.p256dh ?? "", auth: j.keys?.auth ?? "", dispositivo: navigator.userAgent.slice(0, 200) },
-        { onConflict: "endpoint" },
-      );
-      if (error) throw error;
-      setPush("ligado");
+      const r = await ativarPush(userId, vapid);
+      setPush(r);
+      if (r !== "ligado") { setBusy(false); return; }
       marcar("Notificações ativadas");
       setMsg("Notificações ativadas neste dispositivo.");
     } catch {

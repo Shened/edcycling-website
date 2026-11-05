@@ -6,8 +6,11 @@ import type { Noticia } from "@/lib/noticias";
 import type { Evento, Post } from "@/lib/types";
 
 // Feed da equipa: publicações com texto e/ou fotos, opcionalmente ligadas a um evento.
-export default async function FeedPage({ searchParams }: { searchParams: Promise<{ evento?: string }> }) {
-  const { evento: eventoInicial } = await searchParams;
+export default async function FeedPage({ searchParams }: { searchParams: Promise<{ evento?: string; n?: string }> }) {
+  const { evento: eventoInicial, n } = await searchParams;
+  // 40 publicações por "página"; "Ver mais antigas" pede a seguinte (até 20 páginas).
+  const pagina = Math.min(20, Math.max(1, parseInt(n ?? "1", 10) || 1));
+  const limite = 40 * pagina;
   const { supabase, perfil, isMember, isAdmin } = await getSession();
   if (!isMember) {
     return (
@@ -23,7 +26,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
     supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,evento_id,created_at,perfis!posts_autor_id_fkey(nome,avatar_path),eventos(titulo),post_gostos(user_id,perfis!post_gostos_user_id_fkey(nome)),post_comentarios(id,autor_id,texto,created_at,perfis!post_comentarios_autor_id_fkey(nome,avatar_path))")
       .order("created_at", { ascending: false })
       .order("created_at", { referencedTable: "post_comentarios", ascending: true })
-      .limit(60),
+      .limit(limite + 1),
     supabase.from("eventos").select("id,titulo,data,mes,ano,estado,tipo"),
     supabase.from("noticias").select("*").eq("publicado", true).order("publicado_em", { ascending: false }).limit(20),
   ]);
@@ -36,7 +39,9 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
       </section>
     );
   }
-  const posts = (postsRaw ?? []) as unknown as Post[];
+  const todos = (postsRaw ?? []) as unknown as Post[];
+  const temMais = todos.length > limite;
+  const posts = todos.slice(0, limite);
   const paths = [...new Set(posts.flatMap((p) => (p.fotos?.length ? p.fotos : p.foto_path ? [p.foto_path] : [])))];
   const map = new Map<string, string>();
   if (paths.length) {
@@ -49,5 +54,5 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   });
   const evs = sortEventos((eventos ?? []) as Evento[]).filter((e) => e.estado !== "cancelado");
   const eu = { id: perfil!.id, nome: perfil!.nome || "Eu", avatar: (perfil as { avatar_path?: string | null }).avatar_path ?? null };
-  return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} eu={eu} eventoInicial={eventoInicial ?? ""} noticias={(nots ?? []) as Noticia[]} />;
+  return <Feed posts={posts} eventos={evs} userId={perfil!.id} isAdmin={isAdmin} eu={eu} eventoInicial={eventoInicial ?? ""} noticias={(nots ?? []) as Noticia[]} temMais={temMais} pagina={pagina} />;
 }

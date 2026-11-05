@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ESTADOS, MESES, TIPOS, evAno, evMes, sortEventos, today, isPast } from "@/lib/dates";
+import { ESTADOS, MESES, TIPOS, evAno, evMes, sortEventos, today, isPast, fmtDate } from "@/lib/dates";
 import type { Evento, Inscricao } from "@/lib/types";
 import EventForm from "../EventForm";
 
@@ -28,7 +28,7 @@ export default function EventosAdmin({ eventos, inscricoes }: { eventos: Evento[
                 const foram = inscricoes.filter((i) => i.evento_id === e.id && i.presente).length + (e.convidados?.length ?? 0);
                 return (
                   <tr key={e.id}>
-                    <td className="num">{e.data ? e.data.split("-").reverse().join("/") : `${MESES[evMes(e) - 1]} ${evAno(e)}`}</td>
+                    <td className="num">{e.data ? fmtDate(e.data, { day: "2-digit", month: "2-digit", year: "numeric" }) : `${MESES[evMes(e) - 1]} ${evAno(e)}`}</td>
                     <td><b>{e.titulo}</b></td>
                     <td>{TIPOS[e.tipo] ?? "Passeio"}</td>
                     <td><span className={`pill ${e.estado}`}>{ESTADOS[e.estado] ?? "Proposta"}</span></td>

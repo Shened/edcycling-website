@@ -35,8 +35,8 @@ export default function AjudaInstalar() {
   return (
     <div className="ajuda-inst">
       <div className="seg" role="tablist" aria-label="Sistema do telemóvel">
-        <button type="button" role="tab" aria-selected={so === "android"} aria-pressed={so === "android"} onClick={() => setSo("android")}>Android</button>
-        <button type="button" role="tab" aria-selected={so === "iphone"} aria-pressed={so === "iphone"} onClick={() => setSo("iphone")}>iPhone</button>
+        <button type="button" role="tab" aria-selected={so === "android"} onClick={() => setSo("android")}>Android</button>
+        <button type="button" role="tab" aria-selected={so === "iphone"} onClick={() => setSo("iphone")}>iPhone</button>
       </div>
       <ol className="passos">
         {PASSOS[so].map((p, i) => (

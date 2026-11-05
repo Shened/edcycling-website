@@ -18,9 +18,12 @@ import { getSession } from "@/lib/session";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, nextEvento } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
 
+const SITE = (process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://edcycling-website.vercel.app").replace(/\/$/, "");
 export const metadata: Metadata = {
-  title: "EDCycling",
-  description: "EDCycling: equipa de ciclismo desde 2023.",
+  metadataBase: new URL(SITE),
+  title: { default: "EDCycling", template: "%s · EDCycling" },
+  description: "EDCycling: equipa de ciclismo de Gondomar, desde 2023. Treinos em grupo, passeios e provas.",
+  openGraph: { type: "website", locale: "pt_PT", siteName: "EDCycling", images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "EDCycling" }] },
   applicationName: "EDCycling",
   appleWebApp: { capable: true, title: "EDCycling", statusBarStyle: "black-translucent" },
   formatDetection: { telephone: false },
@@ -29,7 +32,7 @@ export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, user, perfil, isAdmin, isMember } = await getSession();
+  const { supabase, perfil, isAdmin, isMember } = await getSession();
   // Eventos só são lidos para membros (o RLS também o garante).
   const [{ data }, { data: patro }] = await Promise.all([
     isMember ? supabase.from("eventos").select("id,titulo,data,mes,ano,estado") : Promise.resolve({ data: [] }),

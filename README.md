@@ -1,11 +1,35 @@
 # EDCycling — site da equipa
 
-Next.js 15 (App Router) + Supabase (auth, Postgres, Storage), pronto para a Vercel.
+Next.js 15 (App Router) + Supabase (Auth, Postgres, Storage) + Vercel. PWA com notificações push.
 
-- **Eventos** (`/`): calendário só para membros. Membros veem quem vai e respondem Vou / Talvez / Não vou.
-- **Fotos** (`/fotos`): feed privado da equipa. As fotos são reduzidas no browser antes do upload.
-- **Gestão** (`/gestao`): só admins. Criar e editar eventos, aprovar contas, dar role de admin, grelha "quem vai a quê".
-- **Entrar** (`/entrar`): login sem password, com magic link por email. Contas novas ficam *pendentes* até um admin aprovar.
+**O que tem:** página pública (apresentação, números, novidades, Tour de Freixo) e, para a equipa, Início, Eventos
+(com votação de datas e propostas dos atletas), Treinos (calendário, GPX/FIT), Feed, Atletas e perfis, Números,
+atividades pessoais com importação do Strava, conversas em eventos e treinos, avisos (sino, push e email) e a Gestão.
+
+## Arranque rápido
+
+```bash
+cp .env.example .env.local   # preencher as chaves (ver abaixo)
+npm install
+npm run dev                  # http://localhost:3000
+npm run lint                 # ESLint (regras do Next.js)
+npx tsc --noEmit             # verificação de tipos
+```
+
+**Variáveis** (todas no `.env.example`, sem valores; espelhar na Vercel): `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` (só servidor), `SITE_URL`, `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `CRON_SECRET`, `STRAVA_CLIENT_ID`,
+`STRAVA_CLIENT_SECRET`. Nunca pôr o prefixo `NEXT_PUBLIC_` a chaves secretas.
+
+**Base de dados:** num projeto novo, corre `supabase/schema.sql` e depois todas as migrations de
+`supabase/migrations/` por ordem numérica. Cada alteração nova ao schema é uma migration nova (nunca à mão).
+Para atualizar os tipos TypeScript do Supabase: `npx supabase login` (uma vez) e `npm run types`.
+
+**Cuidado:** o SQL Editor do Supabase tem de estar no projeto **EDCycling** (há também o projeto antigo do Tour de Freixo).
+
+---
+
+Instruções originais de instalação (algumas partes descrevem versões antigas do site):
 
 ## 1. Supabase (≈5 min)
 

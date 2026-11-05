@@ -84,7 +84,7 @@ export default async function GestaoTour({ searchParams }: { searchParams: Promi
           <Formulario action={adicionarEtapa} botao="Criar etapa" className="tdf-adm-f" limpar>
             {ed && <input type="hidden" name="edicao_id" value={ed.id} />}
             <label className="field"><span className="field-l">N.º</span><input name="number" type="number" min={1} defaultValue={proxima} required style={{ width: 80 }} /></label>
-            <label className="field" style={{ flex: 1 }}><span className="field-l">Nome</span><input name="name" required placeholder="Ex: Alto do Freixo" /></label>
+            <label className="field" style={{ flex: 1 }}><span className="field-l">Nome</span><input name="name" required placeholder="ex.: Alto do Freixo…" /></label>
             <label className="field"><span className="field-l">Data</span><input name="date" type="date" /></label>
           </Formulario>
         </section>

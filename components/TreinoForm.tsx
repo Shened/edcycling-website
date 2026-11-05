@@ -153,7 +153,7 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
           </div>
           <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <div className="fgrid">
-              <div className="field full"><label htmlFor="tTitulo">Título</label><input id="tTitulo" type="text" maxLength={60} placeholder="ex.: Subida à Senhora do Salto" value={f.titulo} onChange={set("titulo")} /></div>
+              <div className="field full"><label htmlFor="tTitulo">Título</label><input id="tTitulo" type="text" maxLength={60} placeholder="ex.: Subida à Senhora do Salto…" value={f.titulo} onChange={set("titulo")} /></div>
               <div className="field"><label htmlFor="tData">Data</label><input id="tData" type="date" required value={f.data} onChange={set("data")} /></div>
               <div className="field"><label htmlFor="tHora">Hora de saída</label><input id="tHora" type="time" value={f.hora} onChange={set("hora")} /></div>
               <div className="field"><label htmlFor="tTipo">Tipo</label><select id="tTipo" value={f.tipo} onChange={set("tipo")}>{Object.entries(TIPOS_TREINO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>

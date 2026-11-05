@@ -18,7 +18,6 @@ export default function VotacaoDatas({ evento: e, opcoes, euId, membros, podeVot
   const doServidor = new Set(opcoes.filter((o) => o.evento_opcao_votos?.some((v) => v.user_id === euId)).map((o) => o.id));
   const chaveServ = [...doServidor].sort().join(",");
   const [meus, setMeus] = useState<Set<string>>(doServidor);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setMeus(new Set(chaveServ ? chaveServ.split(",") : [])), [chaveServ]);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState("");

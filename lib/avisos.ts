@@ -3,11 +3,13 @@
 import { getSession } from "./session";
 import { createAdminClient } from "./supabase/admin";
 import { enviarAviso } from "./notificar";
+import { Estado, Id, Kind as KindZ, valido } from "./validar";
 import { admins, hojeLisboa, inscritos, linhaTreino, membrosAtivos, quando, type Kind } from "./avisos-texto";
 
 const sem = (ids: string[], quem?: string | null) => ids.filter((i) => i !== quem);
 
 export async function avisarNovo(kind: Kind, id: string): Promise<void> {
+  if (!valido([KindZ, kind], [Id, id])) return;
   try {
     const { user, isAdmin } = await getSession();
     if (!user) return;
@@ -54,6 +56,7 @@ export async function avisarNovo(kind: Kind, id: string): Promise<void> {
 type Antes = { data?: string | null; hora?: string | null; partida?: string | null; estado?: string | null };
 
 export async function avisarAlteracao(kind: Kind, id: string, antes: Antes): Promise<void> {
+  if (!valido([KindZ, kind], [Id, id])) return;
   try {
     const { user, isAdmin } = await getSession();
     if (!user) return;
@@ -109,6 +112,7 @@ export async function avisarAlteracao(kind: Kind, id: string, antes: Antes): Pro
 
 /** Apaga um treino e avisa quem ia. Devolve null se correu bem, ou a mensagem de erro. */
 export async function apagarTreinoComAviso(id: string): Promise<string | null> {
+  if (!valido([Id, id])) return "Pedido inválido.";
   const { supabase, user } = await getSession();
   if (!user) return "Sessão expirada.";
   const { data: t } = await supabase.from("treinos").select("*").eq("id", id).single();
@@ -131,6 +135,7 @@ export async function apagarTreinoComAviso(id: string): Promise<string | null> {
 
 /** Apaga um evento e avisa quem estava inscrito. */
 export async function apagarEventoComAviso(id: string): Promise<string | null> {
+  if (!valido([Id, id])) return "Pedido inválido.";
   const { supabase, user, isAdmin } = await getSession();
   if (!user) return "Sessão expirada.";
   const { data: e } = await supabase.from("eventos").select("*").eq("id", id).single();
@@ -157,6 +162,7 @@ export async function apagarEventoComAviso(id: string): Promise<string | null> {
 }
 
 export async function avisarFeed(postId: string): Promise<void> {
+  if (!valido([Id, postId])) return;
   try {
     const { user } = await getSession();
     if (!user) return;
@@ -179,6 +185,7 @@ export async function avisarFeed(postId: string): Promise<void> {
 
 /** Alguém respondeu a um evento/treino: avisa os admins e quem já vai. */
 export async function avisarInscricao(kind: Kind, id: string, antes: string | null): Promise<void> {
+  if (!valido([KindZ, kind], [Id, id], [Estado.nullable(), antes])) return;
   try {
     const { user, perfil } = await getSession();
     if (!user || !perfil) return;
@@ -241,6 +248,7 @@ export async function testarAviso(): Promise<{ push: number; email: number; erro
 
 /** Gosto ou comentário numa publicação: avisa o autor (e, nos comentários, quem já comentou). */
 export async function avisarReacao(tipo: "gosto" | "comentario", postId: string, comentarioId?: string): Promise<void> {
+  if (!valido([Id, postId], [Id.optional(), comentarioId]) || (tipo !== "gosto" && tipo !== "comentario")) return;
   try {
     const { user, perfil } = await getSession();
     if (!user || !perfil) return;
@@ -277,6 +285,7 @@ export async function avisarReacao(tipo: "gosto" | "comentario", postId: string,
 
 /** Comentário na conversa de um evento ou treino: avisa quem criou o treino (ou os admins, nos eventos) e quem já comentou. */
 export async function avisarConversa(kind: Kind, id: string, msgId: string): Promise<void> {
+  if (!valido([KindZ, kind], [Id, id], [Id, msgId])) return;
   try {
     const { user, perfil } = await getSession();
     if (!user || !perfil) return;
@@ -315,6 +324,7 @@ export async function avisarConversa(kind: Kind, id: string, msgId: string): Pro
 
 /** Votação de datas aberta: pede a toda a equipa para marcar os dias que dão jeito. */
 export async function avisarSondagem(eventoId: string): Promise<void> {
+  if (!valido([Id, eventoId])) return;
   try {
     const { user, isAdmin } = await getSession();
     if (!user || !isAdmin) return;
@@ -336,6 +346,7 @@ export async function avisarSondagem(eventoId: string): Promise<void> {
 
 /** Data escolhida no fim da votação: avisa toda a equipa. */
 export async function avisarDataDecidida(eventoId: string): Promise<void> {
+  if (!valido([Id, eventoId])) return;
   try {
     const { user, isAdmin } = await getSession();
     if (!user || !isAdmin) return;

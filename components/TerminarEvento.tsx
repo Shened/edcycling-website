@@ -162,7 +162,7 @@ export default function TerminarEvento({ evento: e, quemFoi, userId, onClose, on
 
           {modo === "mao" && (
             <div className="fgrid">
-              <div className="field"><label htmlFor="terKm">Distância (km)</label><input id="terKm" inputMode="decimal" placeholder="Ex.: 62,4" value={mao.km} onChange={(ev) => setMao({ ...mao, km: ev.target.value })} /></div>
+              <div className="field"><label htmlFor="terKm">Distância (km)</label><input id="terKm" inputMode="decimal" placeholder="ex.: 62,4…" value={mao.km} onChange={(ev) => setMao({ ...mao, km: ev.target.value })} /></div>
               <div className="field"><label htmlFor="terD">Desnível (m)</label><input id="terD" type="number" min={0} inputMode="numeric" value={mao.dmais} onChange={(ev) => setMao({ ...mao, dmais: ev.target.value })} /></div>
               <div className="field"><span className="atv-lab" id="terDurL">Duração (opcional)</span>
                 <span className="atv-dur" role="group" aria-labelledby="terDurL">

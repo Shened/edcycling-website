@@ -1,4 +1,6 @@
 "use server";
+import { z } from "zod";
+import { Id, Pagina, StravaId, valido } from "@/lib/validar";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import { contaStrava, desligar, listarAtividades, paraAtividade, stravaConfigurado, tokenValido } from "@/lib/strava";
@@ -32,6 +34,7 @@ export type ListaStrava =
   | { estado: "desligado" | "sem-config" | "erro" | "limite"; msg?: string };
 
 export async function atividadesStrava(pagina = 1): Promise<ListaStrava> {
+  if (!valido([Pagina, pagina])) return { estado: "erro", msg: "Pedido inválido." };
   const { supabase, user, isMember } = await getSession();
   if (!user || !isMember) return { estado: "erro", msg: "Precisas de ter sessão iniciada." };
   if (!stravaConfigurado()) return { estado: "sem-config" };
@@ -68,6 +71,7 @@ export async function atividadesStrava(pagina = 1): Promise<ListaStrava> {
 // Importa as atividades escolhidas (pelo id do Strava). Vai buscar a lista outra vez ao Strava
 // para não confiar nos dados que vêm do browser.
 export async function importarStrava(ids: number[], pagina = 1): Promise<{ ok: boolean; n: number; msg?: string }> {
+  if (!valido([z.array(StravaId).min(1).max(100), ids], [Pagina, pagina])) return { ok: false, n: 0, msg: "Pedido inválido." };
   const { supabase, user, isMember } = await getSession();
   if (!user || !isMember) return { ok: false, n: 0, msg: "Precisas de ter sessão iniciada." };
   const token = await tokenValido(user.id).catch(() => null);
@@ -102,6 +106,7 @@ export async function desligarStrava(): Promise<void> {
 // Marca uma atividade que já estava no site como sendo esta do Strava (não cria outra).
 // Se a do site não tiver mapa, fica com o percurso do Strava.
 export async function juntarStrava(stravaId: number, atividadeId: string, pagina = 1): Promise<{ ok: boolean; msg?: string }> {
+  if (!valido([StravaId, stravaId], [Id, atividadeId], [Pagina, pagina])) return { ok: false, msg: "Pedido inválido." };
   const { supabase, user, isMember } = await getSession();
   if (!user || !isMember) return { ok: false, msg: "Precisas de ter sessão iniciada." };
   const token = await tokenValido(user.id).catch(() => null);

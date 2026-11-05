@@ -44,7 +44,7 @@ export default function ImportarStrava({ onVoltar, onFeito }: { onVoltar: () => 
     // Por omissão ficam escolhidas as que ainda não estão no site.
     if (p === 1) setSel(new Set(novos.filter((x) => !x.importada && !x.parecida).slice(0, 10).map((x) => x.id)));
   }
-  useEffect(() => { carregar(1); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { carregar(1); }, []);
 
   function alternar(id: number) {
     setMsg("");

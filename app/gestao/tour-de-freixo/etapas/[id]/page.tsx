@@ -101,7 +101,7 @@ export default async function GestaoEtapa({ params }: { params: Promise<{ id: st
           <label className="field"><span className="field-l">Tipo</span>
             <select name="type"><option value="SPRINT">Sprint</option><option value="MOUNTAIN">Montanha</option></select>
           </label>
-          <label className="field" style={{ flex: 1 }}><span className="field-l">Nome da meta</span><input name="name" required placeholder="Ex: Alto do Freixo" /></label>
+          <label className="field" style={{ flex: 1 }}><span className="field-l">Nome da meta</span><input name="name" required placeholder="ex.: Alto do Freixo…" /></label>
         </Formulario>
       </section>
     </div>

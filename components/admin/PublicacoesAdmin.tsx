@@ -117,7 +117,7 @@ function EditorNoticia({ noticia, onClose }: { noticia: Noticia | null; onClose:
         <div className="stripe" />
         <div className="mbody">
           <h3>{noticia ? "Editar publicação" : "Nova publicação"}</h3>
-          <div className="field"><label htmlFor="nTitulo">Título</label><input id="nTitulo" type="text" required maxLength={100} placeholder="ex.: Equipamento novo para 2027" value={titulo} onChange={(e) => setTitulo(e.target.value)} /></div>
+          <div className="field"><label htmlFor="nTitulo">Título</label><input id="nTitulo" type="text" required maxLength={100} placeholder="ex.: Equipamento novo para 2027…" value={titulo} onChange={(e) => setTitulo(e.target.value)} /></div>
           <div className="field">
             <span className="field-l">Imagem</span>
             <div className="pub-img">
@@ -131,7 +131,7 @@ function EditorNoticia({ noticia, onClose }: { noticia: Noticia | null; onClose:
           </div>
           <div className="field">
             <label htmlFor="nTexto">Texto</label>
-            <textarea id="nTexto" rows={10} maxLength={8000} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escreve aqui. Deixa uma linha em branco para começar um novo parágrafo." />
+            <textarea id="nTexto" rows={10} maxLength={8000} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escreve aqui. Deixa uma linha em branco para começar um novo parágrafo…" />
             <span className="hint">{texto.length.toLocaleString("pt-PT")} / 8 000 caracteres</span>
           </div>
           <label className="check" style={{ alignSelf: "flex-start" }}>
