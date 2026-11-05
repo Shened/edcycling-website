@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { marcar } from "@/lib/metricas";
 import { ESTADOS, MESES_L, TIPOS, evAno, evMes, parseDate } from "@/lib/dates";
 import { ehDesporto, type Evento } from "@/lib/types";
-import { apagarEventoComAviso, avisarAlteracao, avisarNovo } from "@/lib/avisos";
+import { apagarEventoComAviso, avisarAlteracao, avisarNovo, avisarSondagem } from "@/lib/avisos";
 import { TEMAS, temaSugerido } from "@/lib/temas";
 import Link from "next/link";
 
@@ -37,6 +37,22 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
     createClient().from("equipamentos").select("id,nome").eq("ativo", true).order("ordem").order("nome")
       .then(({ data, error }) => setKits(error ? null : (data ?? [])));
   }, []);
+  // Votação de datas (só admins): várias datas possíveis, a equipa marca as que dão jeito.
+  const [votar, setVotar] = useState(evento?.sondagem === "aberta");
+  const [datas, setDatas] = useState<{ id?: string; data: string; hora: string }[]>([]);
+  const [origIds, setOrigIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!evento || !isAdmin) return;
+    createClient().from("evento_opcoes").select("id,data,hora").eq("evento_id", evento.id).order("data").then(({ data }) => {
+      const l = (data ?? []) as { id: string; data: string; hora: string | null }[];
+      setDatas(l.map((o) => ({ id: o.id, data: o.data, hora: o.hora?.slice(0, 5) ?? "" })));
+      setOrigIds(l.map((o) => o.id));
+    });
+  }, [evento, isAdmin]);
+  function ligarVotacao(on: boolean) {
+    setVotar(on);
+    if (on && !datas.length) setDatas([{ data: f.data, hora: "" }, { data: "", hora: "" }]);
+  }
   const [busy, setBusy] = useState(false);
   const [armed, setArmed] = useState(false);
   const [err, setErr] = useState("");
@@ -64,24 +80,43 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!f.titulo.trim()) return;
+    const opcoes = votar ? datas.filter((d) => d.data).sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora)) : [];
+    if (votar && opcoes.length < 2) { setErr("Para votar, põe pelo menos 2 datas possíveis."); return; }
+    if (votar && new Set(opcoes.map((o) => o.data + o.hora)).size !== opcoes.length) { setErr("Há datas repetidas na votação."); return; }
     setBusy(true); setErr("");
+    const abriu = isAdmin && votar && evento?.sondagem !== "aberta";
     const body = {
-      titulo: f.titulo.trim(), tipo: f.tipo, estado: isAdmin ? f.estado : "proposta", data: f.data || null,
-      mes: +f.mes, ano: +f.ano, hora: f.hora || null, partida: f.partida.trim() || null,
+      titulo: f.titulo.trim(), tipo: f.tipo, estado: isAdmin ? f.estado : "proposta", data: votar ? null : f.data || null,
+      mes: votar ? +opcoes[0].data.slice(5, 7) : +f.mes, ano: votar ? +opcoes[0].data.slice(0, 4) : +f.ano, hora: f.hora || null, partida: f.partida.trim() || null,
       km: f.km ? +f.km : null, dmais: f.dmais ? +f.dmais : null, notas: f.notas.trim() || null, tema: f.tema || null,
       ...(kits ? { equipamento_id: f.equipamento_id || null } : {}),
       desporto: f.desporto,
+      ...(isAdmin ? { sondagem: votar ? "aberta" : evento?.sondagem === "aberta" ? null : evento?.sondagem ?? null } : {}),
       updated_at: new Date().toISOString(),
     };
     const sb = createClient();
     const res = evento
       ? await sb.from("eventos").update(body).eq("id", evento.id)
       : await sb.from("eventos").insert(body).select("id").single();
+    if (res.error && /sondagem/.test(res.error.message)) { setBusy(false); setErr("Falta correr a migration 029 no Supabase."); return; }
+    const id = evento?.id ?? (res.data as { id: string } | null)?.id;
+    // Guarda as datas da votação (apaga as que saíram, atualiza as que ficaram, cria as novas).
+    if (!res.error && isAdmin && id && (votar || origIds.length)) {
+      const ficam = new Set(opcoes.filter((o) => o.id).map((o) => o.id!));
+      const sair = origIds.filter((x) => !ficam.has(x));
+      if (sair.length) await sb.from("evento_opcoes").delete().in("id", sair);
+      for (const [i, o] of opcoes.entries()) {
+        const linha = { data: o.data, hora: o.hora || null, ordem: i };
+        if (o.id) await sb.from("evento_opcoes").update(linha).eq("id", o.id);
+        else await sb.from("evento_opcoes").insert({ ...linha, evento_id: id });
+      }
+    }
     setBusy(false);
     if (res.error && /desporto/.test(res.error.message)) { setErr("Falta correr a migration 028 no Supabase."); return; }
     if (res.error) { setErr(!isAdmin && /row-level|policy|criador_id/i.test(res.error.message) ? "Ainda não é possível propor eventos (falta a migration 026)." : "Não foi possível guardar. Tenta outra vez."); return; }
     // Avisos (correm no servidor; não atrasam quem guardou)
-    if (evento) void avisarAlteracao("evento", evento.id, { data: evento.data, hora: evento.hora, partida: evento.partida, estado: evento.estado });
+    if (abriu && id) { void avisarSondagem(id); if (!evento) marcar("Evento criado", { tipo: f.tipo, tema: f.tema || "nenhum", votacao: "sim" }); }
+    else if (evento) void avisarAlteracao("evento", evento.id, { data: evento.data, hora: evento.hora, partida: evento.partida, estado: evento.estado });
     else if (res.data) { void avisarNovo("evento", (res.data as { id: string }).id); marcar("Evento criado", { tipo: f.tipo, tema: f.tema || "nenhum" }); }
     onClose(); router.refresh();
   }
@@ -101,18 +136,41 @@ export default function EventForm({ evento, onClose, dataInicial, isAdmin = true
         <div className="stripe" />
         <div className="mbody">
           <h3>{evento ? evento.titulo : isAdmin ? "Novo evento" : "Propor evento"}</h3>
-          {!isAdmin && <p className="hint" style={{ margin: "-6px 0 0" }}>Fica como <b>proposta</b>: a equipa vota se vale a pena e um admin confirma.</p>}
+          {!isAdmin && <p className="hint" style={{ margin: "-6px 0 0" }}>Fica como <b>proposta</b>: a equipa diz se vai e um admin confirma.</p>}
           <div className="fgrid">
             <div className="field full"><label htmlFor="fTitulo">Nome do evento</label><input ref={first} id="fTitulo" type="text" required maxLength={60} placeholder="ex.: Serra da Estrela" value={f.titulo} onChange={set("titulo")} /></div>
             <div className="field"><label htmlFor="fTipo">Tipo</label><select id="fTipo" value={f.tipo} onChange={set("tipo")}>{Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
             {isAdmin && <div className="field"><label htmlFor="fEstado">Estado</label><select id="fEstado" value={f.estado} onChange={set("estado")}>{Object.entries(ESTADOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>}
-            <div className="field"><label htmlFor="fData">Data</label><input id="fData" type="date" value={f.data} onChange={set("data")} /><span className="hint">Sem data? Escolhe só o mês.</span></div>
+            {isAdmin && (
+              <div className="field full">
+                <label className="chk" htmlFor="fVotar">
+                  <input id="fVotar" type="checkbox" checked={votar} onChange={(ev) => ligarVotacao(ev.target.checked)} />
+                  <span><b>Decidir a data por votação</b><span className="hint" style={{ display: "block" }}>Pões várias datas possíveis, os atletas marcam as que lhes dão jeito e depois escolhes a final.</span></span>
+                </label>
+                {votar && (
+                  <div className="ef-datas">
+                    {datas.map((d, i) => (
+                      <div key={d.id ?? `n${i}`} className="ef-data">
+                        <input type="date" aria-label={`Data ${i + 1}`} value={d.data} onChange={(ev) => setDatas((l) => l.map((x, j) => (j === i ? { ...x, data: ev.target.value } : x)))} />
+                        <input type="time" aria-label={`Hora da data ${i + 1} (opcional)`} value={d.hora} onChange={(ev) => setDatas((l) => l.map((x, j) => (j === i ? { ...x, hora: ev.target.value } : x)))} />
+                        <button type="button" className="btn ghost" aria-label={`Tirar a data ${i + 1}`} onClick={() => setDatas((l) => l.filter((_, j) => j !== i))}>✕</button>
+                      </div>
+                    ))}
+                    <button type="button" className="btn" style={{ alignSelf: "flex-start" }} onClick={() => setDatas((l) => [...l, { data: "", hora: "" }])}>+ Mais uma data</button>
+                    <span className="hint">A hora é opcional; se não puseres, fica a hora de saída do evento.{evento?.sondagem === "aberta" ? " Tirar uma data apaga os votos dessa data." : ""}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {!votar && <div className="field"><label htmlFor="fData">Data</label><input id="fData" type="date" value={f.data} onChange={set("data")} /><span className="hint">Sem data? Escolhe só o mês.</span></div>}
+            {!votar && (
             <div className="field"><label htmlFor="fMes">Mês / ano</label>
               <div style={{ display: "flex", gap: 6 }}>
                 <select id="fMes" style={{ flex: 1 }} value={f.mes} onChange={set("mes")}>{MESES_L.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>
                 <input type="number" aria-label="Ano" min={2023} max={2040} style={{ width: 84 }} value={f.ano} onChange={set("ano")} />
               </div>
             </div>
+            )}
             <div className="field"><label htmlFor="fHora">Hora de saída</label><input id="fHora" type="time" value={f.hora} onChange={set("hora")} /></div>
             <div className="field"><label htmlFor="fPartida">Ponto de encontro</label><input id="fPartida" type="text" maxLength={80} value={f.partida} onChange={set("partida")} /></div>
             <div className="field"><label htmlFor="fKm">Distância (km)</label><input id="fKm" type="number" min={0} value={f.km} onChange={set("km")} /></div>

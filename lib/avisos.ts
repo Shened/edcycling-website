@@ -312,3 +312,42 @@ export async function avisarConversa(kind: Kind, id: string, msgId: string): Pro
   } catch { /* nada */ }
 }
 
+
+/** Votação de datas aberta: pede a toda a equipa para marcar os dias que dão jeito. */
+export async function avisarSondagem(eventoId: string): Promise<void> {
+  try {
+    const { user, isAdmin } = await getSession();
+    if (!user || !isAdmin) return;
+    const admin = createAdminClient();
+    const [{ data: e }, { data: ops }] = await Promise.all([
+      admin.from("eventos").select("id,titulo,sondagem").eq("id", eventoId).single(),
+      admin.from("evento_opcoes").select("id").eq("evento_id", eventoId),
+    ]);
+    if (!e || e.sondagem !== "aberta") return;
+    await enviarAviso({
+      tipo: "novo", chave: `sondagem:evento:${eventoId}`,
+      titulo: `Escolhe a data: ${e.titulo}`,
+      corpo: `Há ${ops?.length ?? 0} datas em votação. Marca os dias que te dão jeito.`,
+      url: `/eventos/${eventoId}`,
+      destinatarios: sem(await membrosAtivos(admin), user.id),
+    });
+  } catch { /* nada */ }
+}
+
+/** Data escolhida no fim da votação: avisa toda a equipa. */
+export async function avisarDataDecidida(eventoId: string): Promise<void> {
+  try {
+    const { user, isAdmin } = await getSession();
+    if (!user || !isAdmin) return;
+    const admin = createAdminClient();
+    const { data: e } = await admin.from("eventos").select("*").eq("id", eventoId).single();
+    if (!e || !e.data) return;
+    await enviarAviso({
+      tipo: "alteracao", chave: `datadecidida:evento:${eventoId}:${e.data}`,
+      titulo: `Data marcada: ${e.titulo}`,
+      corpo: `Ficou para ${quando(e)}${e.partida ? ` · ${e.partida}` : ""}. Diz se vais.`,
+      url: `/eventos/${eventoId}`,
+      destinatarios: sem(await membrosAtivos(admin), user.id),
+    });
+  } catch { /* nada */ }
+}

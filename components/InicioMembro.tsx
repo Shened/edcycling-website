@@ -22,8 +22,8 @@ function Dia({ iso }: { iso: string | null }) {
 }
 
 // Página inicial de quem tem conta: o que aí vem, as novidades da equipa e o que se publicou.
-export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, isAdmin }: {
-  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; isAdmin: boolean;
+export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, votacoes = 0, isAdmin }: {
+  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; votacoes?: number; isAdmin: boolean;
 }) {
   const hoje = hojeIso();
   // Próximos 5: eventos confirmados e treinos, por data.
@@ -38,9 +38,10 @@ export default function InicioMembro({ nome, eventos, treinos, noticias, posts, 
         <h2>Olá, {nome.split(" ")[0] || "atleta"}</h2>
       </div>
 
-      {isAdmin && porFechar > 0 && (
+      {(votacoes > 0 || (isAdmin && porFechar > 0)) && (
         <div className="ini-alertas">
-          <Link href="/eventos?ver=passados" className="ini-alerta"><b>{porFechar}</b> {porFechar === 1 ? "evento passado por dar como terminado" : "eventos passados por dar como terminados"} →</Link>
+          {votacoes > 0 && <Link href="/eventos" className="ini-alerta"><b>{votacoes}</b> {votacoes === 1 ? "evento à espera do teu voto na data" : "eventos à espera do teu voto na data"} →</Link>}
+          {isAdmin && porFechar > 0 && <Link href="/eventos?ver=passados" className="ini-alerta"><b>{porFechar}</b> {porFechar === 1 ? "evento passado por dar como terminado" : "eventos passados por dar como terminados"} →</Link>}
         </div>
       )}
 

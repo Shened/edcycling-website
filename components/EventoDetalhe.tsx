@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESES_L, daysTo, evAno, evMes, fmtDate, isPast, parseDate } from "@/lib/dates";
 import { avisarInscricao } from "@/lib/avisos";
-import { ehDesporto, type EstadoInscricao, type Evento, type Inscricao, type Membro, type Post } from "@/lib/types";
+import { ehDesporto, type EstadoInscricao, type Evento, type Inscricao, type Membro, type OpcaoData, type Post } from "@/lib/types";
+import VotacaoDatas from "./VotacaoDatas";
 import Avatar from "./Avatar";
 import EventForm from "./EventForm";
 import PostCard from "./PostCard";
@@ -23,9 +24,9 @@ import { marcar } from "@/lib/metricas";
 import { Resposta, estadoFrase } from "./EventoCartao";
 
 type Insc = Inscricao & { perfis: { nome: string; avatar_path?: string | null } | null };
-interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean }
+interface Props { evento: Evento; inscricoes: Insc[]; membros: Membro[]; posts: Post[]; eu: { id: string; nome: string; avatar: string | null }; isAdmin: boolean; opcoes?: OpcaoData[] }
 
-export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, eu, isAdmin }: Props) {
+export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, eu, isAdmin, opcoes = [] }: Props) {
   const router = useRouter();
   const [editar, setEditar] = useState(false);
   const [pres, setPres] = useState(false);
@@ -92,7 +93,8 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
     ...(porFechar || e.estado === "realizado" ? [{ label: e.estado === "realizado" ? "Mudar percurso (km)" : "Dar como terminado", onClick: () => setTerminar(true) }] : []),
     ...((passado || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPres(true) }] : []),
   ];
-  const mostraResp = !closed && souAtleta;
+  const emVotacao = e.sondagem === "aberta";
+  const mostraResp = !closed && souAtleta && !emVotacao;
   const criador = proposta && e.criador_id ? membros.find((m) => m.id === e.criador_id)?.nome : null;
 
   const Pessoa = ({ i }: { i: Insc }) => (
@@ -147,7 +149,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
             <Linha
               icon={<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>}
               t={<span suppressHydrationWarning>{d ? fmtDate(e.data, { weekday: "long", day: "numeric", month: "long", year: evAno(e) !== new Date().getFullYear() ? "numeric" : undefined }) : `${MESES_L[evMes(e) - 1]} de ${evAno(e)}`}</span>}
-              s={e.hora ? `Saída às ${e.hora.slice(0, 5)}` : d ? "Hora por definir" : "Dia por marcar"}
+              s={emVotacao ? "Data em votação, escolhe abaixo" : e.hora ? `Saída às ${e.hora.slice(0, 5)}` : d ? "Hora por definir" : "Dia por marcar"}
               extra={e.data && e.estado !== "cancelado" ? <a className="evd-cal" href={`/eventos/${e.id}/ics`}>Adicionar ao calendário</a> : undefined}
             />
             {e.partida && <Linha icon={<><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>} t={e.partida} s="Ponto de encontro" />}
@@ -171,6 +173,12 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
             </div>
           )}
 
+          {emVotacao && (
+            <div className="evd-bloco">
+              <h2>Escolher a data</h2>
+              <VotacaoDatas evento={e} opcoes={opcoes} euId={eu.id} membros={membros} podeVotar={souAtleta} isAdmin={isAdmin} />
+            </div>
+          )}
           {e.notas && <div className="evd-bloco"><h2>Informações</h2><Texto texto={e.notas} /></div>}
 
           {msg && <div className="notice" role="alert">{msg}</div>}
@@ -184,7 +192,7 @@ export default function EventoDetalhe({ evento: e, inscricoes, membros, posts, e
           {!closed && !souAtleta && <p className="empty">Conta de gestão: não responde como atleta.</p>}
         </div>
 
-        <div className="evd-bloco evd-gente">
+        <div className="evd-bloco evd-gente" hidden={emVotacao}>
           {criador && <p className="hint" style={{ margin: "0 0 8px" }}>Proposto por {criador}. Um admin confirma conforme as respostas.</p>}
           {fechadas ? (
             <>

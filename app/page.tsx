@@ -12,13 +12,16 @@ export default async function Inicio() {
   const { supabase, perfil, isMember, isAdmin } = await getSession();
   if (isMember && perfil) {
     const hoje = hojeIso();
-    const [{ data: evs }, { data: trs }, { data: nots }, { data: postsRaw }] = await Promise.all([
+    const [{ data: evs }, { data: trs }, { data: nots }, { data: postsRaw }, meusVotos] = await Promise.all([
       supabase.from("eventos").select("*"),
       supabase.from("treinos").select("id,titulo,data,hora,tipo,partida").gte("data", hoje).order("data").limit(10),
       supabase.from("noticias").select("*").eq("publicado", true).order("publicado_em", { ascending: false }).limit(3),
       supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,created_at,perfis!posts_autor_id_fkey(nome),eventos(titulo)").order("created_at", { ascending: false }).limit(4),
+      supabase.from("evento_opcao_votos").select("evento_id").eq("user_id", perfil.id),
     ]);
     const eventos = (evs ?? []) as Evento[];
+    const votei = new Set(((meusVotos.data ?? []) as { evento_id: string }[]).map((v) => v.evento_id));
+    const votacoes = meusVotos.error ? 0 : eventos.filter((e) => e.sondagem === "aberta" && !votei.has(e.id)).length;
     const porFechar = eventos.filter((e) => e.data && e.data < hoje && (e.estado === "confirmado" || e.estado === "proposta")).length;
     const raw = (postsRaw ?? []) as unknown as (PostMin & { fotos: string[] | null; foto_path: string | null })[];
     const primeiras = raw.map((p) => (p.fotos?.length ? p.fotos[0] : p.foto_path)).filter((x): x is string => !!x);
@@ -36,6 +39,7 @@ export default async function Inicio() {
         noticias={(nots ?? []) as Noticia[]}
         posts={posts}
         porFechar={porFechar}
+        votacoes={votacoes}
         isAdmin={isAdmin}
       />
     );

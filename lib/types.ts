@@ -38,6 +38,7 @@ export interface Evento {
   gpx_path?: string | null;
   criador_id?: string | null;
   desporto?: boolean | null;
+  sondagem?: "aberta" | "fechada" | null;
 }
 
 export interface Inscricao {
@@ -125,3 +126,6 @@ export interface Atividade {
 
 /** Evento desportivo (conta como treino nos números). Sem a coluna, os convívios não contam. */
 export const ehDesporto = (e: { desporto?: boolean | null; tipo?: string }) => e.desporto ?? e.tipo !== "convivio";
+
+/** Opção de data numa votação de datas de um evento. */
+export interface OpcaoData { id: string; evento_id: string; data: string; hora: string | null; nota: string | null; ordem: number; evento_opcao_votos?: { user_id: string }[] }

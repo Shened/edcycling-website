@@ -7,7 +7,8 @@ import { MESES, evAno, evMes, fmtDate, isPast, nextEvento, parseDate, sortEvento
 import { fmtDuracao, fmtKm } from "@/lib/gpx";
 import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import AtividadeForm from "./AtividadeForm";
-import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, Perfil, Treino } from "@/lib/types";
+import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, OpcaoData, Perfil, Treino } from "@/lib/types";
+import VotacaoDatas from "./VotacaoDatas";
 import { Resposta } from "./EventoCartao";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
@@ -17,9 +18,9 @@ import { useEsc } from "./useEsc";
 import { marcar } from "@/lib/metricas";
 import { avisarInscricao } from "@/lib/avisos";
 
-interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[]; treinos?: Treino[] }
+interface Props { eventos: Evento[]; inscricoes: Inscricao[]; perfil: Perfil | null; isMember: boolean; isAdmin: boolean; membros: Membro[]; atividades?: Atividade[]; treinos?: Treino[]; opcoes?: OpcaoData[] }
 
-export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [], treinos = [] }: Props) {
+export default function EventsView({ eventos, inscricoes, perfil, isMember, isAdmin, membros, atividades = [], treinos = [], opcoes = [] }: Props) {
   const [atvEdit, setAtvEdit] = useState<Atividade | null>(null);
   const [presEv, setPresEv] = useState<Evento | null>(null);
   const [terEv, setTerEv] = useState<Evento | null>(null);
@@ -160,6 +161,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
                 onPick={(v) => rsvp(e.id, v)}
                 acoes={acoes}
                 proximo={ver === "proximos" && prox?.id === e.id}
+                extra={e.sondagem === "aberta" ? <VotacaoDatas compacto evento={e} opcoes={opcoes.filter((o) => o.evento_id === e.id)} euId={perfil?.id} membros={membros} podeVotar={isMember && souAtleta} isAdmin={isAdmin} /> : undefined}
               />
             );
             })();
