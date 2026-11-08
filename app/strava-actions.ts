@@ -3,30 +3,13 @@ import { z } from "zod";
 import { Id, Pagina, StravaId, valido } from "@/lib/validar";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
-import { contaStrava, desligar, listarAtividades, paraAtividade, stravaConfigurado, tokenValido } from "@/lib/strava";
+import { contaStrava, desligar, listarAtividades, paraAtividade, procurarParecida, stravaConfigurado, tokenValido, type Existente } from "@/lib/strava";
 
 export interface ItemStrava {
   id: number; titulo: string; tipo: string; data: string; hora: string | null;
   km: number; dmais: number; duracao_s: number | null; privada: boolean; importada: boolean;
   /** Atividade do site que parece ser a mesma (registada à mão ou com GPX/FIT). */
   parecida: { id: string; titulo: string } | null;
-}
-
-interface Existente { id: string; titulo: string; data: string; hora: string | null; km: number | null; duracao_s: number | null; strava_id?: number | null }
-
-const minutos = (h: string | null) => (h ? Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5)) : null);
-
-// A mesma atividade: mesmo dia, hora de início próxima (quando há) e distância ou duração parecidas.
-function procurarParecida(x: { data: string; hora: string | null; km: number; duracao_s: number | null }, lista: Existente[]) {
-  return lista.find((e) => {
-    if (e.strava_id || e.data !== x.data) return false;
-    const h1 = minutos(x.hora), h2 = minutos(e.hora);
-    if (h1 != null && h2 != null && Math.abs(h1 - h2) > 45) return false;
-    const km = Number(e.km ?? 0);
-    if (x.km > 0 && km > 0) return Math.abs(x.km - km) <= Math.max(0.5, x.km * 0.05);
-    if (x.duracao_s && e.duracao_s) return Math.abs(x.duracao_s - e.duracao_s) <= Math.max(300, x.duracao_s * 0.1);
-    return h1 != null && h2 != null;
-  }) ?? null;
 }
 
 export type ListaStrava =
@@ -126,4 +109,47 @@ export async function juntarStrava(stravaId: number, atividadeId: string, pagina
   if (error) return { ok: false, msg: "Não foi possível juntar. Tenta outra vez." };
   revalidatePath("/perfil");
   return { ok: true };
+}
+
+/* ---------- sincronização automática ---------- */
+
+// Botão "Atualizar do Strava" (forcar) e sincronização silenciosa ao abrir o site (no máximo de 30 em 30 min).
+export async function sincronizarStrava(forcar = false): Promise<{ estado: string; novas: number; juntadas: number }> {
+  if (typeof forcar !== "boolean") return { estado: "erro", novas: 0, juntadas: 0 };
+  const { user, isMember } = await getSession();
+  if (!user || !isMember || !stravaConfigurado()) return { estado: "desligado", novas: 0, juntadas: 0 };
+  const { sincronizarAtleta } = await import("@/lib/strava-sync");
+  const r = await sincronizarAtleta(user.id, forcar ? 2 : 30);
+  if (r.novas || r.juntadas) { revalidatePath("/perfil"); revalidatePath("/eventos"); revalidatePath("/treinos"); revalidatePath("/estatisticas"); }
+  return r;
+}
+
+/* ---------- webhook (Gestão) ---------- */
+
+const PUSH = "https://www.strava.com/api/v3/push_subscriptions";
+
+export async function estadoWebhookStrava(): Promise<{ ok: boolean; ativo: boolean; id?: number; msg?: string }> {
+  const { isAdmin } = await getSession();
+  if (!isAdmin) return { ok: false, ativo: false, msg: "Só admins." };
+  if (!stravaConfigurado()) return { ok: false, ativo: false, msg: "O Strava não está configurado." };
+  const q = new URLSearchParams({ client_id: process.env.STRAVA_CLIENT_ID!, client_secret: process.env.STRAVA_CLIENT_SECRET! });
+  const r = await fetch(`${PUSH}?${q}`, { cache: "no-store" }).catch(() => null);
+  if (!r?.ok) return { ok: false, ativo: false, msg: "O Strava não respondeu." };
+  const lista = (await r.json()) as { id: number }[];
+  return { ok: true, ativo: lista.length > 0, id: lista[0]?.id };
+}
+
+export async function ativarWebhookStrava(): Promise<{ ok: boolean; msg: string }> {
+  const { isAdmin } = await getSession();
+  if (!isAdmin) return { ok: false, msg: "Só admins." };
+  const token = process.env.STRAVA_WEBHOOK_TOKEN;
+  if (!stravaConfigurado() || !token) return { ok: false, msg: "Falta a variável STRAVA_WEBHOOK_TOKEN na Vercel (e um novo deploy)." };
+  const { SITE } = await import("@/lib/notificar");
+  const corpo = new URLSearchParams({ client_id: process.env.STRAVA_CLIENT_ID!, client_secret: process.env.STRAVA_CLIENT_SECRET!, callback_url: `${SITE}/api/strava/webhook`, verify_token: token });
+  const r = await fetch(PUSH, { method: "POST", body: corpo, cache: "no-store" }).catch(() => null);
+  if (!r) return { ok: false, msg: "O Strava não respondeu." };
+  const j = (await r.json().catch(() => ({}))) as { id?: number; errors?: { code?: string; field?: string }[] };
+  if (r.ok && j.id) return { ok: true, msg: `Sincronização automática ativa (subscrição ${j.id}). Guarda este número na Vercel como STRAVA_WEBHOOK_ID.` };
+  if (j.errors?.some((e) => e.code === "already exists")) return { ok: true, msg: "Já estava ativa." };
+  return { ok: false, msg: `O Strava recusou (${j.errors?.map((e) => `${e.field} ${e.code}`).join(", ") || r.status}). Confirma que o site está publicado com a STRAVA_WEBHOOK_TOKEN.` };
 }

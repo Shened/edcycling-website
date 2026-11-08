@@ -9,6 +9,8 @@ import { TIPOS_ATIVIDADE } from "@/lib/atividades";
 import AtividadeForm from "./AtividadeForm";
 import type { Atividade, EstadoInscricao, Evento, Inscricao, Membro, OpcaoData, Perfil, Treino } from "@/lib/types";
 import VotacaoDatas from "./VotacaoDatas";
+import BotaoWhatsApp, { JanelaWhatsApp } from "./PartilharWhatsApp";
+import { mensagemEvento, mensagemTreino } from "@/lib/whatsapp";
 import { Resposta } from "./EventoCartao";
 import EventForm from "./EventForm";
 import PresencasEditor from "./PresencasEditor";
@@ -24,6 +26,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
   const [atvEdit, setAtvEdit] = useState<Atividade | null>(null);
   const [presEv, setPresEv] = useState<Evento | null>(null);
   const [terEv, setTerEv] = useState<Evento | null>(null);
+  const [waTexto, setWaTexto] = useState<string | null>(null);
   const router = useRouter();
   const sorted = useMemo(() => sortEventos(eventos), [eventos]);
   const params = useSearchParams();
@@ -143,7 +146,15 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
             const mine = e.id in otimista ? otimista[e.id] : perfil ? ps.find((p) => p.user_id === perfil.id)?.estado ?? null : null;
             const proposta = e.estado === "proposta";
             const minha = proposta && !!perfil && e.criador_id === perfil.id;
-            const acoes = !isAdmin ? (minha ? [{ label: "Editar proposta", onClick: () => setEditing(e) }] : []) : [
+            const partilhar = !isPast(e) && e.estado !== "cancelado" ? [{
+              label: "Partilhar no WhatsApp",
+              onClick: () => setWaTexto(mensagemEvento(e, {
+                link: `${window.location.origin}/eventos/${e.id}`,
+                vao: ps.filter((p) => p.estado === "vai").map((p) => (p as { perfis?: { nome?: string | null } | null }).perfis?.nome ?? ""),
+                opcoes: opcoes.filter((o) => o.evento_id === e.id),
+              })),
+            }] : [];
+            const acoes = !isAdmin ? [...(minha ? [{ label: "Editar proposta", onClick: () => setEditing(e) }] : []), ...partilhar] : [...partilhar,
               { label: proposta ? "Editar proposta" : "Editar evento", onClick: () => setEditing(e) },
               ...(isPast(e) && e.estado !== "realizado" && e.estado !== "cancelado" ? [{ label: "Dar como terminado", onClick: () => setTerEv(e) }] : []),
               ...((isPast(e) || e.estado === "realizado") && e.estado !== "cancelado" ? [{ label: e.presencas_fechadas ? "Editar presenças" : "Registar presenças", onClick: () => setPresEv(e) }] : []),
@@ -174,6 +185,7 @@ export default function EventsView({ eventos, inscricoes, perfil, isMember, isAd
           Mostrar mais 4 semanas <span className="muted">({escondidos} mais antig{escondidos === 1 ? "o" : "os"})</span>
         </button>
       )}
+      {waTexto !== null && <JanelaWhatsApp texto={waTexto} onClose={() => setWaTexto(null)} />}
       {atvEdit && perfil && <AtividadeForm userId={perfil.id} atividade={atvEdit} onClose={() => setAtvEdit(null)} />}
       {terEv && perfil && (
         <TerminarEvento
@@ -283,7 +295,10 @@ function TreinoCartao({ t, euId, membros, hoje, podeResponder }: { t: Treino; eu
       </div>
       <div className="trc-a">
         {futuro && podeResponder && <Resposta mine={mine} onPick={responder} busy={busy} titulo={t.titulo} />}
-        <Link href={`/treinos?treino=${t.id}`} className="btn ghost trc-abrir">Abrir treino</Link>
+        <span className="trc-b">
+          {futuro && <BotaoWhatsApp compacto gerar={(o) => mensagemTreino(t, { link: `${o}/treinos/${t.id}`, vao: vao.map((p) => membros.find((m) => m.id === p.user_id)?.nome ?? ""), criador: membros.find((m) => m.id === t.criador_id)?.nome })} />}
+          <Link href={`/treinos?treino=${t.id}`} className="btn ghost trc-abrir">Abrir treino</Link>
+        </span>
       </div>
     </article>
   );

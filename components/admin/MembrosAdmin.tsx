@@ -10,7 +10,7 @@ import MenuAcoes from "@/components/MenuAcoes";
 
 const ROLES: Record<Role, string> = { pendente: "Pendente", membro: "Membro", admin: "Admin" };
 
-export default function MembrosAdmin({ perfis, meId }: { perfis: Perfil[]; meId: string }) {
+export default function MembrosAdmin({ perfis, meId, completos = {} }: { perfis: Perfil[]; meId: string; completos?: Record<string, number> }) {
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [msgOk, setMsgOk] = useState(false);
@@ -116,7 +116,7 @@ export default function MembrosAdmin({ perfis, meId }: { perfis: Perfil[]; meId:
                   {p.ativo ? <Avatar nome={p.nome || p.email || "?"} path={p.avatar_path} size={40} /> : <span className="mbr-env" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg></span>}
                   <span className="mbr-nome">
                     <b>{p.nome || "Sem nome"}{eu && <span className="pessoa-tu"> (tu)</span>}</b>
-                    <span>{p.email}</span>
+                    <span>{p.email}{completos[p.id] != null && <> · <span className="mbr-pct" style={{ color: completos[p.id] === 100 ? "var(--go, #2E9E5B)" : "var(--pink)" }}>perfil {completos[p.id]}%</span></>}</span>
                   </span>
                 </span>
                 <span className="mbr-tags">

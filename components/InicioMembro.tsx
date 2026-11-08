@@ -3,6 +3,9 @@ import { MESES, parseDate, sortEventos, isPast } from "@/lib/dates";
 import { dataPub, imagemUrl, resumo, type Noticia } from "@/lib/noticias";
 import type { Evento } from "@/lib/types";
 import AtivarAvisos from "./AtivarAvisos";
+import SincronizarStrava from "./SincronizarStrava";
+import PerfilCompleto from "./PerfilCompleto";
+import type { Completude } from "@/lib/completo";
 
 const TIPO_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo", corrida: "Corrida", natacao: "Natação" };
 const TIPO_EVENTO: Record<string, string> = { passeio: "Passeio", treino: "Treino", prova: "Prova", convivio: "Convívio" };
@@ -23,8 +26,8 @@ function Dia({ iso }: { iso: string | null }) {
 }
 
 // Página inicial de quem tem conta: o que aí vem, as novidades da equipa e o que se publicou.
-export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, votacoes = 0, isAdmin, userId, vapid = "" }: {
-  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; votacoes?: number; userId: string; vapid?: string; isAdmin: boolean;
+export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, votacoes = 0, isAdmin, userId, vapid = "", stravaLigado = false, completo = null }: {
+  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; votacoes?: number; userId: string; vapid?: string; stravaLigado?: boolean; completo?: Completude | null; isAdmin: boolean;
 }) {
   const hoje = hojeIso();
   // Próximos 5: eventos confirmados e treinos, por data.
@@ -37,9 +40,11 @@ export default function InicioMembro({ nome, eventos, treinos, noticias, posts, 
     <section className="view ini">
       <div className="sechead">
         <h2>Olá, {nome.split(" ")[0] || "atleta"}</h2>
+        {stravaLigado && <SincronizarStrava compacto />}
       </div>
 
       {vapid && <AtivarAvisos userId={userId} vapid={vapid} />}
+      {completo && completo.pct < 100 && <PerfilCompleto c={completo} compacto />}
 
       {(votacoes > 0 || (isAdmin && porFechar > 0)) && (
         <div className="ini-alertas">

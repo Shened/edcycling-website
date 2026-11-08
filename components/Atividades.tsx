@@ -1,4 +1,5 @@
 "use client";
+import SincronizarStrava from "./SincronizarStrava";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -66,7 +67,7 @@ export default function Atividades({ atividades, userId, meuId, isAdmin, nome, a
     <section className="atv" id="atividades" aria-labelledby="atvH">
       <div className="atv-cab">
         <h2 id="atvH">Atividades</h2>
-        {meu && <button className="btn primary" onClick={() => setForm(null)}>+ Adicionar atividade</button>}
+        {meu && <span className="atv-cab-a"><SincronizarStrava compacto /><button className="btn primary" onClick={() => setForm(null)}>+ Adicionar atividade</button></span>}
       </div>
 
       {doAno.length > 0 && (

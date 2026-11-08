@@ -90,6 +90,23 @@ export async function listarAtividades(token: string, pagina = 1, porPagina = 30
   return r.json();
 }
 
+export interface Existente { id: string; titulo: string; data: string; hora: string | null; km: number | null; duracao_s: number | null; strava_id?: number | null }
+
+const minutos = (h: string | null) => (h ? Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5)) : null);
+
+// A mesma atividade: mesmo dia, hora de início próxima (quando há) e distância ou duração parecidas.
+export function procurarParecida(x: { data: string; hora: string | null; km: number; duracao_s: number | null }, lista: Existente[]) {
+  return lista.find((e) => {
+    if (e.strava_id || e.data !== x.data) return false;
+    const h1 = minutos(x.hora), h2 = minutos(e.hora);
+    if (h1 != null && h2 != null && Math.abs(h1 - h2) > 45) return false;
+    const km = Number(e.km ?? 0);
+    if (x.km > 0 && km > 0) return Math.abs(x.km - km) <= Math.max(0.5, x.km * 0.05);
+    if (x.duracao_s && e.duracao_s) return Math.abs(x.duracao_s - e.duracao_s) <= Math.max(300, x.duracao_s * 0.1);
+    return h1 != null && h2 != null;
+  }) ?? null;
+}
+
 /* ---------- conversão para as atividades do site ---------- */
 
 const TIPOS: Record<string, string> = {
@@ -132,4 +149,12 @@ export function paraAtividade(a: AtividadeStrava) {
     trajeto: trajeto.length > 1 ? trajeto : null,
     privada: a.private === true || a.visibility === "only_me",
   };
+}
+
+export async function obterAtividade(token: string, id: number): Promise<AtividadeStrava | null> {
+  const r = await fetch(`${API}/activities/${id}?include_all_efforts=false`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  if (r.status === 404) return null;
+  if (r.status === 429) throw new Error("limite");
+  if (!r.ok) throw new Error(`Strava respondeu ${r.status}`);
+  return r.json();
 }

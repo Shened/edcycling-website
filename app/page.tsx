@@ -4,6 +4,7 @@ import { dataPub, imagemUrl, resumo, type Noticia } from "@/lib/noticias";
 import { getSession } from "@/lib/session";
 import InicioMembro, { type PostMin, type TreinoMin } from "@/components/InicioMembro";
 import type { Evento } from "@/lib/types";
+import { completude } from "@/lib/completo";
 
 const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
@@ -19,6 +20,7 @@ export default async function Inicio() {
       supabase.from("posts").select("id,autor_id,legenda,foto_path,fotos,created_at,perfis!posts_autor_id_fkey(nome),eventos(titulo)").order("created_at", { ascending: false }).limit(4),
       supabase.from("evento_opcao_votos").select("evento_id").eq("user_id", perfil.id),
     ]);
+    const comp = await completude(perfil.id);
     const eventos = (evs ?? []) as Evento[];
     const votei = new Set(((meusVotos.data ?? []) as { evento_id: string }[]).map((v) => v.evento_id));
     const votacoes = meusVotos.error ? 0 : eventos.filter((e) => e.sondagem === "aberta" && !votei.has(e.id)).length;
@@ -41,6 +43,8 @@ export default async function Inicio() {
         porFechar={porFechar}
         votacoes={votacoes}
         userId={perfil.id}
+        completo={comp}
+        stravaLigado={!!comp?.itens.find((i) => i.k === "strava")?.feito}
         vapid={(process.env.VAPID_PUBLIC_KEY ?? process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) ?? ""}
         isAdmin={isAdmin}
       />

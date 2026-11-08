@@ -1331,3 +1331,35 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .meteo-t{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:14.5px}
 .meteo-t span{color:var(--muted);font-size:13.5px}
 .meteo-f{font-size:12px !important}
+/* atualizar do Strava */
+.stv-sync{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stv-sync-b{gap:6px;font-size:14px;min-height:38px}
+.stv-sync.compacto .hint{font-size:13px}
+.atv-cab-a{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+/* perfil completo */
+.pcomp{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:16px}
+.pcomp.cheio{border-color:var(--go,#2E9E5B)}
+.pcomp-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pcomp-h h3{margin:0;font-size:22px;text-transform:uppercase;font-style:italic}
+.pcomp-pct{font-size:22px;font-weight:800;color:var(--pink)}
+.pcomp.cheio .pcomp-pct{color:var(--go,#2E9E5B)}
+.pcomp-barra{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.pcomp-barra span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--violet),var(--pink-g))}
+.pcomp.cheio .pcomp-barra span{background:var(--go,#2E9E5B)}
+.pcomp-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pcomp-l a{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:10px;text-decoration:none;color:inherit;background:var(--sunk)}
+.pcomp-l a:hover{outline:1px solid var(--pink)}
+.pcomp-l a b{font-size:15px}
+.pcomp-l a span{font-size:13.5px;color:var(--muted)}
+.pcomp-mais a{background:none;font-weight:700;color:var(--pink)}
+.mbr-pct{font-weight:700}
+/* partilhar no WhatsApp */
+.wa-btn{gap:7px;color:#128C4A;border-color:#25D366}
+.wa-btn:hover{background:#E8FBEF}
+.wa-btn.compacto{min-height:36px;font-size:14px;padding:0 10px}
+@media (prefers-color-scheme: dark){.wa-btn{color:#5BE38D}.wa-btn:hover{background:#0F2E1C}}
+.wa-texto{width:100%;font:15px/1.5 var(--f-body);resize:vertical;min-height:200px}
+.wa-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.wa-abrir{gap:7px}
+.trc-b{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.evd-wa{display:flex}

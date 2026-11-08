@@ -9,6 +9,8 @@ import type { EstadoInscricao, Membro, Treino } from "@/lib/types";
 import Conversa from "./Conversa";
 import RoutePreview from "./RoutePreview";
 import Meteo from "./Meteo";
+import BotaoWhatsApp from "./PartilharWhatsApp";
+import { mensagemTreino } from "@/lib/whatsapp";
 import PresencasEditor from "./PresencasEditor";
 import { apagarTreinoComAviso, avisarAlteracao, avisarInscricao, avisarNovo } from "@/lib/avisos";
 
@@ -197,6 +199,13 @@ export default function TreinoForm({ treino, data, userId, isAdmin, membros, hoj
           </div>
 
           {treino && <Meteo data={treino.data} hora={treino.hora} partida={treino.partida} trajeto={treino.trajeto} />}
+          {treino && hoje && treino.data >= hoje && (
+            <BotaoWhatsApp gerar={(o) => mensagemTreino(treino, {
+              link: `${o}/treinos/${treino.id}`,
+              vao: (treino.treino_participantes ?? []).filter((p) => p.estado === "vai").map((p) => membros.find((m) => m.id === p.user_id)?.nome ?? ""),
+              criador: treino.perfis?.nome,
+            })} />
+          )}
 
           {treino && <Participantes treino={treino} userId={userId} isAdmin={isAdmin} membros={membros} hoje={hoje} />}
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StravaWebhookAdmin from "@/components/admin/StravaWebhookAdmin";
 import { getSession } from "@/lib/session";
 import { MESES, evAno, evMes, fmtDate, isPast, sortEventos } from "@/lib/dates";
 import type { Evento } from "@/lib/types";
@@ -44,6 +45,8 @@ export default async function Resumo() {
         <Link className="btn" href="/gestao/eventos">+ Criar evento</Link>
         <Link className="btn" href="/treinos">Planear treino</Link>
       </div>
+
+      <StravaWebhookAdmin />
 
       <div className="adm-cols">
         <div className="panel">

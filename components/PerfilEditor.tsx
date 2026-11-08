@@ -93,7 +93,7 @@ export default function PerfilEditor({ perfil }: { perfil: PerfilAtleta }) {
   return (
     <form className="perfil" onSubmit={guardar} autoComplete="off">
       <div className="panel perfil-top">
-        <div className="perfil-foto">
+        <div className="perfil-foto" id="perfil-foto">
           {foto ? <img src={foto} alt="A tua foto de perfil" /> : <span className="av" style={{ width: 96, height: 96, fontSize: 44 }}>{(f.nome || "?").charAt(0).toUpperCase()}</span>}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <button type="button" className="btn" disabled={fotoBusy} aria-busy={fotoBusy} onClick={() => fileRef.current?.click()}>

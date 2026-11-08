@@ -11,6 +11,7 @@ import Cabecalho from "@/components/Cabecalho";
 import RegistarSW from "@/components/RegistarSW";
 import Analise from "@/components/Analise";
 import MobileNav from "@/components/MobileNav";
+import { StravaAuto } from "@/components/SincronizarStrava";
 import Atualizar from "@/components/Atualizar";
 import Patrocinadores from "@/components/Patrocinadores";
 import type { Patrocinador } from "@/lib/patrocinadores";
@@ -71,6 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <MobileNav isAdmin={isAdmin} isMember={isMember} />
         <RegistarSW />
         <Atualizar />
+        {isMember && <StravaAuto />}
         <Analise />
       </body>
     </html>

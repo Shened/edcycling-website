@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import EventoDetalhe from "@/components/EventoDetalhe";
+import { cartaoEvento, descricao } from "@/lib/partilha";
 import { getSession } from "@/lib/session";
 import type { Evento, Inscricao, Membro, OpcaoData, Post } from "@/lib/types";
+
+// Título e resumo para a pré-visualização do link (WhatsApp); a imagem vem de opengraph-image.tsx.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const c = await cartaoEvento((await params).id);
+  if (!c) return { title: "Evento" };
+  return { title: c.titulo, description: descricao(c), robots: { index: false }, openGraph: { title: `${c.tipo}: ${c.titulo}`, description: descricao(c) } };
+}
 
 // Página dedicada a um evento (só para a equipa).
 export default async function EventoPage({ params }: { params: Promise<{ id: string }> }) {
