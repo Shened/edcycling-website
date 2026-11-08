@@ -6,6 +6,8 @@ import AtivarAvisos from "./AtivarAvisos";
 import SincronizarStrava from "./SincronizarStrava";
 import PerfilCompleto from "./PerfilCompleto";
 import type { Completude } from "@/lib/completo";
+import type { Pendente } from "@/lib/associar";
+import AssociarAtividades from "./AssociarAtividades";
 
 const TIPO_TREINO: Record<string, string> = { estrada: "Estrada", gravel: "Gravel", btt: "BTT", rolo: "Rolo", corrida: "Corrida", natacao: "Natação" };
 const TIPO_EVENTO: Record<string, string> = { passeio: "Passeio", treino: "Treino", prova: "Prova", convivio: "Convívio" };
@@ -26,8 +28,8 @@ function Dia({ iso }: { iso: string | null }) {
 }
 
 // Página inicial de quem tem conta: o que aí vem, as novidades da equipa e o que se publicou.
-export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, votacoes = 0, isAdmin, userId, vapid = "", stravaLigado = false, completo = null }: {
-  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; votacoes?: number; userId: string; vapid?: string; stravaLigado?: boolean; completo?: Completude | null; isAdmin: boolean;
+export default function InicioMembro({ nome, eventos, treinos, noticias, posts, porFechar = 0, votacoes = 0, isAdmin, userId, vapid = "", stravaLigado = false, completo = null, pendentes = [] }: {
+  nome: string; eventos: Evento[]; treinos: TreinoMin[]; noticias: Noticia[]; posts: PostMin[]; porFechar?: number; votacoes?: number; userId: string; vapid?: string; stravaLigado?: boolean; completo?: Completude | null; pendentes?: Pendente[]; isAdmin: boolean;
 }) {
   const hoje = hojeIso();
   // Próximos 5: eventos confirmados e treinos, por data.
@@ -43,6 +45,7 @@ export default function InicioMembro({ nome, eventos, treinos, noticias, posts, 
         {stravaLigado && <SincronizarStrava compacto />}
       </div>
 
+      <AssociarAtividades pendentes={pendentes} userId={userId} />
       {vapid && <AtivarAvisos userId={userId} vapid={vapid} />}
       {completo && completo.pct < 100 && <PerfilCompleto c={completo} compacto />}
 

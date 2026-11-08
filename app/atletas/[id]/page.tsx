@@ -4,7 +4,9 @@ import Texto from "@/components/Texto";
 import Atividades, { type ResumoAno } from "@/components/Atividades";
 import { getSession } from "@/lib/session";
 import { bicicletas, comBicicletas, avatarUrl, idade, wkg, type PerfilAtleta } from "@/lib/atleta";
-import { calcular, type InscricaoMin } from "@/lib/stats";
+import { calcular, type InscricaoMin, type Ligada } from "@/lib/stats";
+import AssociarAtividades from "@/components/AssociarAtividades";
+import { pendentesAssociacao } from "@/lib/associar";
 import { fmtKm } from "@/lib/gpx";
 import { historicoAtleta } from "@/lib/tdf";
 import type { Atividade, Evento, Membro, Treino } from "@/lib/types";
@@ -21,7 +23,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
   if (!data) notFound();
   const p = data as unknown as PerfilAtleta;
   const ano = new Date().getFullYear();
-  const [{ data: treinos }, { data: eventos }, { data: insc }, { data: membros }, { data: atvs }, { data: atvsAno }] = await Promise.all([
+  const [{ data: treinos }, { data: eventos }, { data: insc }, { data: membros }, { data: atvs }, { data: atvsAno }, { data: ligadas }] = await Promise.all([
     supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)").gte("data", `${ano}-01-01`).lte("data", `${ano}-12-31`),
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("evento_id,user_id,estado,presente").eq("user_id", id),
@@ -29,10 +31,13 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
     supabase.from("atividades").select("*").eq("user_id", id).order("data", { ascending: false }).order("hora", { ascending: false, nullsFirst: false }).limit(100),
     // Totais do ano: só as colunas precisas, sem o limite da lista.
     supabase.from("atividades").select("tipo,km,dmais,duracao_s").eq("user_id", id).gte("data", `${ano}-01-01`).lte("data", `${ano}-12-31`).range(0, 9999),
+    // Atividades associadas a treinos/eventos (os km que este atleta fez em cada um).
+    supabase.from("atividades").select("user_id,evento_id,treino_id,km,dmais,duracao_s").eq("user_id", id).or("evento_id.not.is.null,treino_id.not.is.null").then((r) => (r.error ? { data: [] } : r)),
   ]);
+  const pendentes = eu?.id === id ? await pendentesAssociacao(supabase, id) : [];
   const tdf = await historicoAtleta(supabase, id).catch(() => []);
   const hoje = new Date().toISOString().slice(0, 10);
-  const st = calcular((treinos ?? []) as unknown as Treino[], (eventos ?? []) as Evento[], (insc ?? []) as InscricaoMin[], (membros ?? []) as Membro[], ano, hoje);
+  const st = calcular((treinos ?? []) as unknown as Treino[], (eventos ?? []) as Evento[], (insc ?? []) as InscricaoMin[], (membros ?? []) as Membro[], ano, hoje, (ligadas ?? []) as Ligada[]);
   const linha = st.atletas.find((a) => a.id === id);
   const anos = idade(p.data_nascimento);
   const rel = wkg(p.ftp, p.peso);
@@ -107,6 +112,7 @@ export default async function AtletaPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
+      {pendentes.length > 0 && <AssociarAtividades pendentes={pendentes} userId={id} />}
       <Atividades anoTodo={(atvsAno ?? undefined) as ResumoAno | undefined} atividades={(atvs ?? []) as Atividade[]} userId={id} meuId={eu?.id ?? ""} isAdmin={isAdmin} nome={p.nome || ""} />
     </section>
   );

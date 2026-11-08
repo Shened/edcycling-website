@@ -1363,3 +1363,14 @@ a.tdf-adm-l:hover b{text-decoration:underline}
 .wa-abrir{gap:7px}
 .trc-b{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .evd-wa{display:flex}
+/* associar atividades a treinos/eventos */
+.assoc{display:flex;flex-direction:column;gap:10px;padding:16px;margin-bottom:16px;border-radius:14px;border:1px solid var(--blue);background:var(--surface)}
+.assoc h3{margin:0;font-size:22px;text-transform:uppercase;font-style:italic}
+.assoc-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.assoc-i{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--sunk)}
+.assoc-a{display:flex;flex-direction:column;gap:2px}
+.assoc-a span{font-size:13.5px;color:var(--muted)}
+.assoc-b{display:flex;gap:6px;flex-wrap:wrap}
+.assoc-b .btn{font-size:14px;min-height:38px;white-space:normal;text-align:left}
+.assoc-ok{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px}
+.atv-assoc{font-size:13px;font-weight:600;color:var(--blue);text-decoration:none}

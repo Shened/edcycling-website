@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MESES, MESES_L } from "@/lib/dates";
 import { fmtKm, fmtDuracao } from "@/lib/gpx";
-import { calcular, passoEixo, type InscricaoMin, type LinhaAtleta } from "@/lib/stats";
+import { calcular, passoEixo, type InscricaoMin, type LinhaAtleta, type Ligada } from "@/lib/stats";
 import type { Evento, Membro, Treino } from "@/lib/types";
 import { TIPOS_TREINO } from "./TreinoForm";
 
@@ -10,9 +10,9 @@ type Col = "nome" | "treinos" | "presenca" | "km" | "dmais" | "segundos" | "even
 const horas = (s: number) => (s ? fmtDuracao(s) : "—");
 const isoHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
-interface Props { treinos: Treino[]; eventos: Evento[]; inscricoes: InscricaoMin[]; membros: Membro[]; userId: string }
+interface Props { treinos: Treino[]; eventos: Evento[]; inscricoes: InscricaoMin[]; membros: Membro[]; userId: string; ligadas?: Ligada[] }
 
-export default function Estatisticas({ treinos, eventos, inscricoes, membros, userId }: Props) {
+export default function Estatisticas({ treinos, eventos, inscricoes, membros, userId, ligadas = [] }: Props) {
   const [hoje, setHoje] = useState("");
   useEffect(() => setHoje(isoHoje()), []);
   const anoAtual = new Date().getFullYear();
@@ -27,7 +27,7 @@ export default function Estatisticas({ treinos, eventos, inscricoes, membros, us
   const [desc, setDesc] = useState(true);
   const [hover, setHover] = useState<number | null>(null);
 
-  const st = useMemo(() => calcular(treinos, eventos, inscricoes, membros, ano, hoje || isoHoje()), [treinos, eventos, inscricoes, membros, ano, hoje]);
+  const st = useMemo(() => calcular(treinos, eventos, inscricoes, membros, ano, hoje || isoHoje(), ligadas), [treinos, eventos, inscricoes, membros, ano, hoje, ligadas]);
 
   const atletas = useMemo(() => {
     const l = [...st.atletas];

@@ -1,6 +1,8 @@
 // Sincronização automática do Strava (só servidor): traz as atividades novas de um atleta para o site.
 // Usada pelo botão "Atualizar do Strava", pela sincronização ao abrir o site e pelo webhook do Strava.
 import { createAdminClient } from "@/lib/supabase/admin";
+import { candidatosParaAtividade } from "@/lib/associar";
+import { enviarAviso } from "@/lib/notificar";
 import { listarAtividades, obterAtividade, paraAtividade, procurarParecida, tokenValido, type AtividadeStrava, type Existente } from "@/lib/strava";
 
 export interface ResultadoSync { estado: "ok" | "desligado" | "recente" | "limite" | "erro"; novas: number; juntadas: number }
@@ -20,7 +22,24 @@ async function guardar(userId: string, a: AtividadeStrava, existentes: Existente
   const { error } = await admin.from("atividades").upsert({ ...x, user_id: userId }, { onConflict: "user_id,strava_id", ignoreDuplicates: true });
   if (error) throw new Error(error.message);
   existentes.push({ id: "", titulo: x.titulo, data: x.data, hora: x.hora, km: x.km, duracao_s: x.duracao_s, strava_id: a.id });
+  await perguntarAssociacao(userId, a.id, x).catch(() => null);
   return "nova";
+}
+
+// Atividade recente num dia com treino/evento da equipa: pergunta ao atleta se foi lá (aviso no sino, push e email).
+async function perguntarAssociacao(userId: string, stravaId: number, x: ReturnType<typeof paraAtividade>) {
+  if (!["estrada", "gravel", "btt", "rolo", "corrida"].includes(x.tipo)) return;
+  if (Date.now() - new Date(x.data + "T12:00:00").getTime() > 3 * 864e5) return; // só atividades dos últimos dias
+  const c = await candidatosParaAtividade(userId, x.data, x.hora);
+  if (!c.length) return;
+  const nome = c.length === 1 ? `no ${c[0].k} ${c[0].titulo}` : "com a equipa";
+  await enviarAviso({
+    tipo: "lembrete", chave: `assoc:${stravaId}`,
+    titulo: `Foi ${nome}?`,
+    corpo: `A tua volta "${x.titulo}" (${x.km.toLocaleString("pt-PT")} km) entrou do Strava. Confirma se foi com a equipa, para contar os teus km.`,
+    url: "/",
+    destinatarios: [userId],
+  });
 }
 
 async function existentesDe(userId: string, desde: string, ate: string): Promise<Existente[]> {

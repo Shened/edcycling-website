@@ -4,6 +4,14 @@ import { ehDesporto, type Evento, type Membro, type Treino } from "./types";
 export const CICLISMO = new Set(["estrada", "gravel", "btt", "rolo"]);
 
 export interface InscricaoMin { evento_id: string; user_id: string; estado: string; presente?: boolean | null }
+/** Atividade de um atleta associada a um treino ou evento: dá os km que ELE fez (de casa, com desvios, etc.). */
+export interface Ligada { user_id: string; evento_id?: string | null; treino_id?: string | null; km: number | null; dmais: number | null; duracao_s: number | null }
+
+const somaLigadas = (l: Ligada[]) => ({
+  km: l.reduce((a, x) => a + Number(x.km ?? 0), 0),
+  dmais: l.reduce((a, x) => a + Number(x.dmais ?? 0), 0),
+  s: l.reduce((a, x) => a + Number(x.duracao_s ?? 0), 0),
+});
 
 export interface LinhaAtleta {
   id: string;
@@ -51,6 +59,7 @@ export function calcular(
   membros: Membro[],
   ano: number,
   hoje: string,
+  ligadas: Ligada[] = [],
 ): Estatisticas {
   const tr = treinos.filter((t) => anoDe(t.data) === ano && t.data <= hoje);
   const ev = eventos.filter((e) => {
@@ -88,14 +97,22 @@ export function calcular(
     porMes[mesDe(t.data) - 1].treinos += 1;
     const tp = tipos.get(t.tipo) ?? { tipo: t.tipo, km: 0, treinos: 0 };
     tp.km += km; tp.treinos += 1; tipos.set(t.tipo, tp);
-    const ps = presentes(t).filter((u) => atletaIds.has(u)).map((u) => linha(u));
+    // Quem foi: a lista do admin (ou quem disse "vou") e quem associou a sua atividade a este treino.
+    const lig = ligadas.filter((a) => a.treino_id === t.id && atletaIds.has(a.user_id));
+    const ids = new Set(presentes(t).filter((u) => atletaIds.has(u)));
+    lig.forEach((a) => ids.add(a.user_id));
+    const ps = [...ids].map((u) => linha(u));
     if (t.presencas_fechadas) (t.convidados ?? []).forEach((c) => ps.push(convidado(c)));
     somaAtletas += ps.length;
     for (const l of ps) {
-      l.treinos += 1; l.segundos += t.duracao_s ?? 0;
-      if (bike) { l.km += km; l.dmais += t.dmais ?? 0; }
-      else if (t.tipo === "corrida") l.kmCorrida += km;
-      else if (t.tipo === "natacao") l.kmNatacao += km;
+      // Cada atleta conta os km da SUA atividade, se a associou; senão, os do treino.
+      const minhas = lig.filter((a) => a.user_id === l.id);
+      const m = minhas.length ? somaLigadas(minhas) : null;
+      const kmL = m ? m.km : km;
+      l.treinos += 1; l.segundos += m ? m.s : t.duracao_s ?? 0;
+      if (bike) { l.km += kmL; l.dmais += m ? m.dmais : t.dmais ?? 0; }
+      else if (t.tipo === "corrida") l.kmCorrida += kmL;
+      else if (t.tipo === "natacao") l.kmNatacao += kmL;
     }
   }
   // Eventos desportivos contam como treino (contagem, km, D+, presenças); os outros só como evento.
@@ -115,15 +132,19 @@ export function calcular(
       const tp = tipos.get("evento") ?? { tipo: "evento", km: 0, treinos: 0 };
       tp.km += km; tp.treinos += 1; tipos.set("evento", tp);
     }
-    const foram = inscricoes
+    const lig = ligadas.filter((a) => a.evento_id === e.id && atletaIds.has(a.user_id));
+    const ids = new Set(inscricoes
       .filter((i) => i.evento_id === e.id && (e.presencas_fechadas ? i.presente === true : i.estado === "vai"))
-      .filter((i) => atletaIds.has(i.user_id))
-      .map((i) => linha(i.user_id));
+      .filter((i) => atletaIds.has(i.user_id)).map((i) => i.user_id));
+    lig.forEach((a) => ids.add(a.user_id));
+    const foram = [...ids].map((u) => linha(u));
     if (e.presencas_fechadas) (e.convidados ?? []).forEach((c) => foram.push(convidado(c)));
     if (desp) somaAtletas += foram.length;
     for (const l of foram) {
-      l.eventos += 1; l.km += km; l.dmais += dm;
-      if (desp) { l.treinos += 1; l.segundos += e.duracao_s ?? 0; }
+      const minhas = desp ? lig.filter((a) => a.user_id === l.id) : [];
+      const m = minhas.length ? somaLigadas(minhas) : null;
+      l.eventos += 1; l.km += m ? m.km : km; l.dmais += m ? m.dmais : dm;
+      if (desp) { l.treinos += 1; l.segundos += m ? m.s : e.duracao_s ?? 0; }
     }
   }
   const nTreinos = tr.length + evDesporto;

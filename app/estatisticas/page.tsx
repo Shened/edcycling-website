@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Estatisticas from "@/components/Estatisticas";
 import { getSession } from "@/lib/session";
-import type { InscricaoMin } from "@/lib/stats";
+import type { InscricaoMin, Ligada } from "@/lib/stats";
 import type { Evento, Membro, Treino } from "@/lib/types";
 
 export default async function EstatisticasPage() {
@@ -14,11 +14,13 @@ export default async function EstatisticasPage() {
       </section>
     );
   }
-  const [{ data: treinos }, { data: eventos }, { data: inscricoes }, { data: membros }] = await Promise.all([
+  const [{ data: treinos }, { data: eventos }, { data: inscricoes }, { data: membros }, { data: ligadas }] = await Promise.all([
     supabase.from("treinos").select("id,titulo,data,tipo,km,km_plano,dmais,duracao_s,presencas_fechadas,convidados,treino_participantes(user_id,estado,presente)"),
     supabase.from("eventos").select("*"),
     supabase.from("inscricoes").select("evento_id,user_id,estado,presente"),
     supabase.from("perfis").select("id,nome").in("role", ["membro", "admin"]).eq("atleta", true).order("nome"),
+    // Atividades associadas (as privadas de outros atletas não chegam aqui: o RLS esconde-as e conta o km do treino).
+    supabase.from("atividades").select("user_id,evento_id,treino_id,km,dmais,duracao_s").or("evento_id.not.is.null,treino_id.not.is.null").range(0, 9999).then((r) => (r.error ? { data: [] } : r)),
   ]);
   return (
     <Estatisticas
@@ -27,6 +29,7 @@ export default async function EstatisticasPage() {
       inscricoes={(inscricoes ?? []) as InscricaoMin[]}
       membros={(membros ?? []) as Membro[]}
       userId={perfil!.id}
+      ligadas={(ligadas ?? []) as Ligada[]}
     />
   );
 }

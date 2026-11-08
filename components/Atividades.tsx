@@ -114,6 +114,7 @@ export default function Atividades({ atividades, userId, meuId, isAdmin, nome, a
                 </dl>
                 {a.trajeto && a.trajeto.length > 1 && <RoutePreview pontos={a.trajeto} />}
                 {a.notas && <p className="atv-notas">{a.notas}</p>}
+                {a.evento_id ? <a className="atv-assoc" href={`/eventos/${a.evento_id}`}>No evento da equipa ›</a> : a.treino_id ? <a className="atv-assoc" href={`/treinos/${a.treino_id}`}>No treino da equipa ›</a> : null}
                 {a.strava_id ? <a className="atv-strava" href={`https://www.strava.com/activities/${a.strava_id}`} target="_blank" rel="noopener noreferrer">Ver no Strava</a> : null}
               </li>
             );

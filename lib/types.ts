@@ -124,6 +124,9 @@ export interface Atividade {
   privada: boolean;
   strava_id?: number | null;
   created_at?: string;
+  evento_id?: string | null;
+  treino_id?: string | null;
+  associacao_recusada?: boolean;
 }
 
 /** Evento desportivo (conta como treino nos números). Sem a coluna, os convívios não contam. */

@@ -91,3 +91,24 @@ describe("calcular (Números da equipa)", () => {
     expect(st.atletas.some((l) => l.convidado && l.nome === "Zé Amigo")).toBe(true);
   });
 });
+
+describe("atividades associadas (km de cada atleta)", () => {
+  it("cada atleta conta os km da sua atividade; a equipa conta o treino uma vez", () => {
+    const st = calcular(
+      [treino({ id: "t1", km: 60, treino_participantes: [{ user_id: "a", estado: "vai", presente: true }, { user_id: "b", estado: "vai", presente: true }] })],
+      [], [], membros, 2026, HOJE,
+      [{ user_id: "a", treino_id: "t1", km: 74.5, dmais: 800, duracao_s: 9000 }],
+    );
+    expect(st.kmEquipa).toBe(60);
+    expect(st.atletas.find((l) => l.id === "a")!.km).toBe(74.5);
+    expect(st.atletas.find((l) => l.id === "b")!.km).toBe(60);
+  });
+
+  it("quem associou a atividade conta como presente, mesmo sem ter dito “vou”", () => {
+    const st = calcular([], [evento({ id: "e1", km: 80, presencas_fechadas: false })], [], membros, 2026, HOJE,
+      [{ user_id: "b", evento_id: "e1", km: 95, dmais: 1200, duracao_s: 12000 }]);
+    const b = st.atletas.find((l) => l.id === "b")!;
+    expect(b.eventos).toBe(1);
+    expect(b.km).toBe(95);
+  });
+});
